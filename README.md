@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="figs/logo.png" alt="UltimateMedSeg Logo" width="300"/>
+  <img src="figs/logo.png" alt="UltimateMedSeg Logo" width="500"/>
   <p>
     <strong>Juntao Jiang</strong>,
     <strong>Jinsheng Bai</strong>,
@@ -17,7 +17,7 @@
 
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
@@ -32,7 +32,7 @@
 
 ---
 
-## Installation
+## 📦 Installation
 
 ### Requirements
 
@@ -93,7 +93,7 @@ timm encoder weights are downloaded automatically, no manual management needed.
 
 ---
 
-## Quick Start
+## 🚀 Quick Start
 
 ### 1. Standard Supervised Training
 
@@ -153,7 +153,7 @@ print(f"Trainable params: {trainable / 1e6:.2f}M")
 
 ---
 
-## Project Structure
+## 🏗️ Project Structure
 
 ```
 segmentation_tool/
@@ -287,7 +287,7 @@ segmentation_tool/
 
 ---
 
-## Model Components
+## 🧩 Model Components
 
 > Detailed docs: [docs/models/](docs/models/README.md)
 
@@ -354,7 +354,7 @@ encoder:
 
 ---
 
-## Training Paradigms
+## 🎓 Training Paradigms
 
 > Detailed docs: [docs/paradigms/](docs/paradigms/README.md)
 
@@ -459,7 +459,7 @@ Box · CAM · Point · Scribble · MIL · EM · GatedCRF · TreeEnergy · SEAM �
 
 ---
 
-## Deployment & Efficiency
+## ⚡ Deployment & Efficiency
 
 > Detailed docs: [docs/deployment/README.md](docs/deployment/README.md)
 
@@ -485,7 +485,7 @@ print(f"Trainable: {trainable/1e6:.2f}M / Total: {total/1e6:.2f}M")
 
 ---
 
-## Datasets
+## 📊 Datasets
 
 > Detailed docs: [docs/data/README.md](docs/data/README.md)
 > Dataset example configs: [configs/intro_to_datasets/](configs/intro_to_datasets/)
@@ -535,7 +535,7 @@ data:
 
 ---
 
-## Config System
+## 🔧 Config System
 
 ### Two Model Config Modes
 
@@ -627,7 +627,7 @@ training:
 
 ---
 
-## Custom Extensions
+## 🔌 Custom Extensions
 
 ### Add New Encoder
 
@@ -696,13 +696,14 @@ After registration and import in `__init__.py`, use via `name: my_encoder` in YA
 
 ---
 
-## Citation & License
+## 📜 Citation & License
 
 ```bibtex
 @software{ultimatemedseg_2026,
   title  = {UltimateMedSeg: A Modern Modular 2D Medical Image Segmentation Toolbox},
   author = {Juntao Jiang and Jinsheng Bai and Linxuan Fan and Jiangning Zhang and Yong Liu},
   year   = {2026},
+  url    = {https://github.com/juntaoJianggavin/UltimateMedSeg},
 }
 ```
 
