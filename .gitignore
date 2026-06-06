@@ -7,14 +7,15 @@ runs/
 checkpoints/
 
 # Data directories (user datasets)
-data/_test_dummy/
-data/YourDataset/
-data/source/
-data/target/
-data/target_val/
-data/test_dummy/
+data/_test_dummy
+data/YourDataset
+data/source
+data/target
+data/target_val
+data/test_dummy
 
-# IDE
+# IDE & tools
+.claude/
 .idea/
 .vscode/
 *.swp

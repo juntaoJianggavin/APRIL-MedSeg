@@ -1,9 +1,5 @@
 <div align="center">
-  <img src="figs/logo.png" alt="UltimateMedSeg Logo" width="200"/>
-
-  <h1>UltimateMedSeg</h1>
-  <h3>A Modern Modular 2D Medical Image Segmentation Toolbox</h3>
-
+  <img src="figs/logo.png" alt="UltimateMedSeg Logo" width="300"/>
   <p>
     <strong>Juntao Jiang</strong>,
     <strong>Jinsheng Bai</strong>,
