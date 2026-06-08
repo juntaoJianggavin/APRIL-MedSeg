@@ -41,10 +41,10 @@ Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
-| `phikon` | Scaling Self-Supervised Learning for Histopathology (Phikon) | 2024 | `owkin/phikon` | [basic](../../configs/architectures/combinations/general/phikon_basic.yaml) |
-| `uni` | Towards a General-Purpose Foundation Model for Computational Pathology | Nature Med 2024 | `MahmoodLab/UNI` (gated) | [basic](../../configs/architectures/combinations/general/uni_basic.yaml) |
-| `plip` | PLIP: A Visual-Language Foundation Model for Pathology | Nature Med 2023 | `vinid/plip` | [basic](../../configs/architectures/combinations/general/plip_basic.yaml) |
-| `musk` | MUSK: Multi-task Self-supervised Pathology | 2024 | - | [basic](../../configs/architectures/combinations/general/musk_basic.yaml) |
+| `phikon` | Scaling Self-Supervised Learning for Histopathology (Phikon) | 2024 | `owkin/phikon` | [basic](../../configs/architectures/foundation/pathology/phikon.yaml) |
+| `uni` | Towards a General-Purpose Foundation Model for Computational Pathology | Nature Med 2024 | `MahmoodLab/UNI` (gated) | [basic](../../configs/architectures/foundation/pathology/uni.yaml) |
+| `plip` | PLIP: A Visual-Language Foundation Model for Pathology | Nature Med 2023 | `vinid/plip` | [basic](../../configs/architectures/foundation/pathology/plip.yaml) |
+| `musk` | MUSK: Multi-task Self-supervised Pathology | 2024 | - | [basic](../../configs/architectures/foundation/pathology/musk.yaml) |
 | `phikon_v2` | Phikon-v2 | 2024 | `owkin/phikon-v2` | [cascade_full](../../configs/architectures/combinations/general/phikon_v2_cascade_full.yaml) |
 
 ### Radiology
@@ -53,15 +53,15 @@ Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to
 |---|---|---|---|---|
 | `raddino` | RAD-DINO: Scalable Medical Image Encoders Beyond Text Supervision | 2024 | `microsoft/rad-dino` | [cascade_full](../../configs/architectures/combinations/general/raddino_cascade_full.yaml) |
 | `omnirad` | OmniRad | 2024 | - | [cascade_full](../../configs/architectures/combinations/general/omnirad_cascade_full.yaml) |
-| `medsiglip` | MedSigLIP | 2024 | - | [basic](../../configs/architectures/combinations/general/medsiglip_basic.yaml) |
+| `medsiglip` | MedSigLIP | 2024 | - | not provided |
 
 ### Ophthalmology
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
-| `retfound` | RETFound | Nature 2023 | - | [basic](../../configs/architectures/combinations/general/retfound_basic.yaml) |
+| `retfound` | RETFound | Nature 2023 | - | not provided |
 | `retfound_dinov2` | RETFound-DINOv2 | 2024 | - | [cascade_full](../../configs/architectures/combinations/general/retfound_dinov2_cascade_full.yaml) |
-| `flair` | FLAIR: Fine-grained Language-informed Retinal Analysis | 2024 | - | [basic](../../configs/architectures/combinations/general/flair_basic.yaml) |
+| `flair` | FLAIR: Fine-grained Language-informed Retinal Analysis | 2024 | - | [basic](../../configs/architectures/foundation/ophthalmology/flair.yaml) |
 | `ophmae` | OphMAE | 2024 | - | [cascade_full](../../configs/architectures/combinations/general/ophmae_cascade_full.yaml) |
 
 ### Dermatology
@@ -69,28 +69,28 @@ Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
 | `panderm` | PanDerm | 2024 | - | [cascade_full](../../configs/architectures/combinations/general/panderm_cascade_full.yaml) |
-| `dermclip` | DermCLIP | 2024 | - | [basic](../../configs/architectures/combinations/general/dermclip_basic.yaml) |
-| `monet_derm` | Monet-Derm | 2024 | - | [basic](../../configs/architectures/combinations/general/monet_derm_basic.yaml) |
+| `dermclip` | DermCLIP | 2024 | - | not provided |
+| `monet_derm` | Monet-Derm | 2024 | - | not provided |
 
 ### Endoscopy
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
-| `endo_vit` | EndoViT | 2024 | - | [basic](../../configs/architectures/combinations/general/endo_vit_basic.yaml) |
+| `endo_vit` | EndoViT | 2024 | - | [basic](../../configs/architectures/foundation/endoscopy/endo_vit.yaml) |
 
 ### Multimodal Medical
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
 | `biomedclip` | BiomedCLIP | NeurIPS 2023 | `microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224` | [cascade_full](../../configs/architectures/combinations/general/biomedclip_cascade_full.yaml), [emcad](../../configs/architectures/combinations/general/biomedclip_emcad.yaml) |
-| `medclip` | MedCLIP | EMNLP 2022 | - | [basic](../../configs/architectures/combinations/general/medclip_basic.yaml) |
-| `keep` | KEEP | 2024 | - | [basic](../../configs/architectures/combinations/general/keep_basic.yaml) |
+| `medclip` | MedCLIP | EMNLP 2022 | - | [basic](../../configs/architectures/foundation/multimodal_med/medclip.yaml) |
+| `keep` | KEEP | 2024 | - | [basic](../../configs/architectures/foundation/multimodal_med/keep.yaml) |
 
 ### Ultrasound
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
-| `usfmae` | USF-MAE | 2024 | - | [basic](../../configs/architectures/combinations/general/usfmae_basic.yaml) |
+| `usfmae` | USF-MAE | 2024 | - | [basic](../../configs/architectures/foundation/ultrasound/usfmae.yaml) |
 | `ultradino` | UltraDINO | 2024 | - | [cascade_full](../../configs/architectures/combinations/general/ultradino_cascade_full.yaml) |
 | `ultrafedfm` | UltraFedFM | 2024 | - | [cascade_full](../../configs/architectures/combinations/general/ultrafedfm_cascade_full.yaml) |
 
@@ -100,14 +100,14 @@ Extract vision encoders from Multimodal LLMs for segmentation tasks.
 
 | Name | Paper | Year | YAML |
 |---|---|---|---|
-| `qwen3_vl_vision` | Qwen3-VL | 2025 | [basic](../../configs/architectures/combinations/general/qwen3_vl_vision_basic.yaml) |
-| `qwen25_vl_vision` | Qwen2.5-VL | 2025 | [basic](../../configs/architectures/combinations/general/qwen25_vl_vision_basic.yaml) |
-| `llava_med_vision` | LLaVA-Med | NeurIPS 2023 | [basic](../../configs/architectures/combinations/general/llava_med_vision_basic.yaml) |
-| `medgemma_vision` | MedGemma | 2025 | [basic](../../configs/architectures/combinations/general/medgemma_vision_basic.yaml) |
-| `healthgpt_vision` | HealthGPT | 2025 | [basic](../../configs/architectures/combinations/general/healthgpt_vision_basic.yaml) |
-| `huatuogpt_vision` | HuatuoGPT-Vision | 2024 | [basic](../../configs/architectures/combinations/general/huatuogpt_vision_basic.yaml) |
-| `hulumed_vision` | HuluMed-Vision | 2024 | [basic](../../configs/architectures/combinations/general/hulumed_vision_basic.yaml) |
-| `lingshu_vision` | LingShu-Vision | 2024 | [basic](../../configs/architectures/combinations/general/lingshu_vision_basic.yaml) |
+| `qwen3_vl_vision` | Qwen3-VL | 2025 | [basic](../../configs/architectures/foundation/mllm_vision/qwen3_vl_vision.yaml) |
+| `qwen25_vl_vision` | Qwen2.5-VL | 2025 | [basic](../../configs/architectures/foundation/mllm_vision/qwen25_vl_vision.yaml) |
+| `llava_med_vision` | LLaVA-Med | NeurIPS 2023 | [basic](../../configs/architectures/foundation/mllm_vision/llava_med_vision.yaml) |
+| `medgemma_vision` | MedGemma | 2025 | [basic](../../configs/architectures/foundation/mllm_vision/medgemma_vision.yaml) |
+| `healthgpt_vision` | HealthGPT | 2025 | [basic](../../configs/architectures/foundation/mllm_vision/healthgpt_vision.yaml) |
+| `huatuogpt_vision` | HuatuoGPT-Vision | 2024 | [basic](../../configs/architectures/foundation/mllm_vision/huatuogpt_vision.yaml) |
+| `hulumed_vision` | HuluMed-Vision | 2024 | [basic](../../configs/architectures/foundation/mllm_vision/hulumed_vision.yaml) |
+| `lingshu_vision` | LingShu-Vision | 2024 | [basic](../../configs/architectures/foundation/mllm_vision/lingshu_vision.yaml) |
 
 ---
 

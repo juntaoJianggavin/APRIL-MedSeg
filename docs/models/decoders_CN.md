@@ -11,7 +11,7 @@
 | 名称 | 说明 | YAML |
 |---|---|---|
 | `unet` | 标准 UNet 反卷积解码器 | [unet_basic](../../configs/architectures/combinations/general/unet_basic.yaml) |
-| `bilinear` | 双线性插值上采样 | [bilinear](../../configs/architectures/combinations/general/bilinear_basic.yaml) |
+| `bilinear` | 双线性插值上采样 | [bilinear](../../configs/architectures/decoder_study/general/basic_bilinear.yaml) |
 | `deconv` | 转置卷积上采样 | [deconv](../../configs/architectures/combinations/general/deconv_resnet34.yaml) |
 | `dw_sep` | 深度可分离卷积解码器 | [dw_sep](../../configs/architectures/combinations/general/dwsep_resnet34.yaml) |
 
@@ -21,8 +21,8 @@
 
 | 名称 | 说明 | YAML |
 |---|---|---|
-| `unetpp` | UNet++ 密集嵌套解码器 | [unetpp](../../configs/architectures/combinations/general/unetpp_emcad.yaml) |
-| `unet3plus` | UNet 3+ 全尺度跳跃连接解码器 | [unet3plus](../../configs/architectures/combinations/general/unet3plus_basic.yaml) |
+| `unetpp` | UNet++ 密集嵌套解码器 | [unetpp](../../configs/architectures/decoder_study/general/basic_unetpp.yaml) |
+| `unet3plus` | UNet 3+ 全尺度跳跃连接解码器 | [unet3plus](../../configs/architectures/decoder_study/general/basic_unet3plus.yaml) |
 
 ## 级联 (10)
 
@@ -37,9 +37,9 @@
 | `emcad` | EMCAD 高效多尺度级联注意力解码器 | [mednext_emcad](../../configs/architectures/combinations/general/mednext_emcad.yaml) |
 | `edldnet` | EDLDNet 解码器 | [pvtv2_edldnet](../../configs/architectures/combinations/general/pvtv2_edldnet.yaml) |
 | `gcascade` | G-CASCADE（add 融合） | [pvtv2_gcascade](../../configs/architectures/combinations/general/pvtv2_gcascade.yaml) |
-| `gcascade_cat` | G-CASCADE（concat 融合） | [gcascade_cat](../../configs/architectures/combinations/general/gcascade_cat_basic.yaml) |
-| `merit_add` | MERIT 解码器（add 融合） | [merit_add](../../configs/architectures/combinations/general/merit_add_basic.yaml) |
-| `merit_cat` | MERIT 解码器（concat 融合） | [merit_cat](../../configs/architectures/combinations/general/merit_cat_basic.yaml) |
+| `gcascade_cat` | G-CASCADE（concat 融合） | [gcascade_cat](../../configs/architectures/decoder_study/general/basic_gcascade_cat.yaml) |
+| `merit_add` | MERIT 解码器（add 融合） | [merit_add](../../configs/architectures/decoder_study/general/basic_merit_add.yaml) |
+| `merit_cat` | MERIT 解码器（concat 融合） | [merit_cat](../../configs/architectures/decoder_study/general/basic_merit_cat.yaml) |
 
 ## 金字塔 (1)
 
@@ -47,7 +47,7 @@
 
 | 名称 | 说明 | YAML |
 |---|---|---|
-| `upernet` | UPerNet 统一感知金字塔 | [upernet](../../configs/architectures/combinations/general/upernet_basic.yaml) |
+| `upernet` | UPerNet 统一感知金字塔 | [upernet](../../configs/architectures/decoder_study/general/basic_upernet.yaml) |
 
 ## MLP (2)
 
@@ -64,18 +64,18 @@ MLP 解码器。
 
 | 名称 | 对应网络 | YAML |
 |---|---|---|
-| `cfanet` | CFA-Net | [cfanet](../../configs/architectures/combinations/general/cfanet_basic.yaml) |
-| `dcsaunet` | DCSAU-Net | [dcsaunet](../../configs/architectures/combinations/general/dcsaunet_basic.yaml) |
+| `cfanet` | CFA-Net | [cfanet](../../configs/architectures/decoder_study/general/basic_cfanet.yaml) |
+| `dcsaunet` | DCSAU-Net | [dcsaunet](../../configs/architectures/decoder_study/general/basic_dcsaunet.yaml) |
 | `rwkv_unet` | RWKV-UNet | [rwkv_unet](../../configs/architectures/combinations/general/rwkv_unet.yaml) |
-| `kiunet` | KiU-Net | [kiunet](../../configs/architectures/combinations/general/kiunet_basic.yaml) |
+| `kiunet` | KiU-Net | [kiunet](../../configs/architectures/decoder_study/general/basic_kiunet.yaml) |
 | `transunet` | TransUNet (CUP) | [transunet](../../configs/architectures/combinations/general/transunet_cascade_full.yaml) |
-| `fatnet` | FAT-Net | [fatnet](../../configs/architectures/combinations/general/fatnet_basic.yaml) |
-| `h2former` | H2Former | [h2former](../../configs/architectures/combinations/general/h2former_basic.yaml) |
+| `fatnet` | FAT-Net | [fatnet](../../configs/architectures/decoder_study/general/basic_fatnet.yaml) |
+| `h2former` | H2Former | [h2former](../../configs/architectures/decoder_study/general/basic_h2former.yaml) |
 | `hiformer` | HiFormer | [hiformer](../../configs/architectures/combinations/general/hiformer_cascade.yaml) |
-| `missformer` | MISSFormer | [missformer](../../configs/architectures/combinations/general/missformer_basic.yaml) |
+| `missformer` | MISSFormer | [missformer](../../configs/architectures/decoder_study/general/basic_missformer.yaml) |
 | `scaleformer` | ScaleFormer | [scaleformer](../../configs/architectures/combinations/general/scaleformer_cascade_full.yaml) |
-| `malunet` | MALUNet | [malunet](../../configs/architectures/combinations/general/malunet_basic.yaml) |
-| `ege_unet` | EGE-UNet | [ege_unet](../../configs/architectures/combinations/general/ege_unet_basic.yaml) |
+| `malunet` | MALUNet | [malunet](../../configs/architectures/decoder_study/general/basic_malunet.yaml) |
+| `ege_unet` | EGE-UNet | [ege_unet](../../configs/architectures/decoder_study/general/basic_ege_unet.yaml) |
 
 ## Transformer (5)
 
@@ -84,7 +84,7 @@ Transformer 解码器。
 | 名称 | 说明 | YAML |
 |---|---|---|
 | `daeformer` | DAEFormer 解码器 | [daeformer](../../configs/architectures/combinations/general/daeformer_emcad.yaml) |
-| `mtunet` | MT-UNet 解码器 | [mtunet](../../configs/architectures/combinations/general/mtunet_basic.yaml) |
+| `mtunet` | MT-UNet 解码器 | [mtunet](../../configs/architectures/decoder_study/general/basic_mtunet.yaml) |
 | `nnformer` | nnFormer 解码器 | [mednext_nnformer](../../configs/architectures/combinations/general/mednext_nnformer.yaml) |
 | `swinunet` | Swin-UNet 解码器 | [swinunet](../../configs/architectures/combinations/general/swinunet_segformer.yaml) |
 | `uctransnet` | UCTransNet 解码器 | [uctransnet](../../configs/architectures/combinations/general/uctransnet.yaml) |
@@ -103,7 +103,7 @@ Transformer 解码器。
 
 | 名称 | 说明 | YAML |
 |---|---|---|
-| `vmunet` | VM-UNet Mamba 解码器 | [vmunet](../../configs/architectures/combinations/general/vm_unet_basic.yaml) |
+| `vmunet` | VM-UNet Mamba 解码器 | [vmunet](../../configs/architectures/networks/general/vm_unet.yaml) |
 
 ---
 
