@@ -9,7 +9,7 @@ This project provides a highly modular medical image segmentation model zoo, sup
 | Module | Count |
 |---|---|
 | Complete Networks | 128 |
-| Encoders | 172 |
+| Encoders | 169 |
 | Decoders | 40 |
 | Skip Connections | 25 |
 | Bottlenecks | 17 |

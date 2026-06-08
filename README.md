@@ -13,7 +13,7 @@
   </p>
 </div>
 
-> **128** networks · **169** encoders · **40** decoders · **88** losses · **25** skip connections · **17** bottlenecks · **6** training paradigms · **24** augmentations · **872** YAML configs · switch anything with one line of YAML
+> **128** networks · **169** encoders · **40** decoders · **88** losses · **25** skip connections · **17** bottlenecks · **6** training paradigms · **24** augmentations · **876** YAML configs · switch anything with one line of YAML
 
 ---
 
@@ -21,6 +21,7 @@
 
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Tutorial](#tutorial)
 - [Project Structure](#project-structure)
 - [Model Components](#model-components)
 - [Training Paradigms](#training-paradigms)
@@ -153,6 +154,21 @@ print(f"Trainable params: {trainable / 1e6:.2f}M")
 
 ---
 
+## 📚 Tutorial
+
+A step-by-step tutorial series covering deep learning medical image segmentation from fundamentals to advanced topics:
+
+| Chapter | Title | Key Topics |
+|---------|-------|------------|
+| [01](docs/tutorial/01_introduction.md) | Introduction to Medical Image Segmentation | Concepts, clinical significance, metrics, method evolution |
+| [02](docs/tutorial/02_unet.md) | U-Net in Detail | Architecture, skip connections, U-Net family variants |
+| [03](docs/tutorial/03_data.md) | Data and Preprocessing | Formats, split strategies, augmentation pipeline |
+| [04](docs/tutorial/04_training.md) | Training and Evaluation | Loss functions, optimizers, AMP/DDP, evaluation |
+
+[Full tutorial index](docs/tutorial/README.md)
+
+---
+
 ## 🏗️ Project Structure
 
 ```
@@ -242,14 +258,14 @@ segmentation_tool/
 │   └── logo.png                                 #   Project logo
 ├── examples/                                    # Usage examples
 │   └── grounding_dino_example.py                #   GroundingDINO detection example
-├── configs/                      (872 yamls)    # YAML configs
-│   ├── architectures/            (745 yamls)    #   Network architecture configs
+├── configs/                      (876 yamls)    # YAML configs
+│   ├── architectures/            (749 yamls)    #   Network architecture configs
 │   │   ├── networks/             (281 yamls)    #     Complete networks (128 arch across general/acdc/synapse)
-│   │   ├── combinations/         (166 yamls)    #     Encoder+decoder free combinations
+│   │   ├── combinations/         (167 yamls)    #     Encoder+decoder free combinations
 │   │   ├── decoder_study/        (121 yamls)    #     Decoder ablation (3 enc × 40 dec)
 │   │   ├── skip_study/           (75 yamls)     #     Skip ablation (3 enc × 25 skip)
 │   │   ├── bottleneck_study/     (51 yamls)     #     Bottleneck ablation (3 enc × 17 bn)
-│   │   └── foundation/           (51 yamls)     #     Foundation models (9 modalities × 35 encoders)
+│   │   └── foundation/           (54 yamls)     #     Foundation models (9 modalities × 35 encoders)
 │   ├── training_paradigms/       (99 yamls)     #   Training paradigm configs
 │   │   ├── semi_supervision/     (21 yamls)     #     Semi-supervised (21 methods)
 │   │   ├── domain_adaptation/    (18 yamls)     #     Domain adaptation (18 methods)

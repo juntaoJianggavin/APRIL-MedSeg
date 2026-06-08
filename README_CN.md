@@ -14,7 +14,7 @@
   </p>
 </div>
 
-> **128** 完整网络 · **169** 编码器 · **40** 解码器 · **88** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **872** YAML 配置 · 一行 YAML 完成切换
+> **128** 完整网络 · **169** 编码器 · **40** 解码器 · **88** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **876** YAML 配置 · 一行 YAML 完成切换
 
 ---
 
@@ -22,6 +22,7 @@
 
 - [安装](#安装)
 - [快速开始](#快速开始)
+- [教程](#教程)
 - [项目结构](#项目结构)
 - [模型组件](#模型组件)
 - [训练范式](#训练范式)
@@ -154,6 +155,21 @@ print(f"可训练参数量: {trainable / 1e6:.2f}M")
 
 ---
 
+## 📚 教程
+
+从零开始的深度学习医学图像分割系列教程，覆盖从基础概念到高级主题：
+
+| 章节 | 标题 | 核心内容 |
+|------|------|----------|
+| [01](docs/tutorial/01_introduction_CN.md) | 医学图像分割概述 | 概念、临床意义、评价指标、方法演进 |
+| [02](docs/tutorial/02_unet_CN.md) | U-Net 详解 | 架构、跳跃连接、U-Net 家族变体 |
+| [03](docs/tutorial/03_data_CN.md) | 数据与预处理 | 格式、切分策略、增强管线 |
+| [04](docs/tutorial/04_training_CN.md) | 训练与评估 | 损失函数、优化器、AMP/DDP、评估 |
+
+[完整教程索引](docs/tutorial/README_CN.md)
+
+---
+
 ## 🏗️ 项目结构
 
 ```
@@ -243,14 +259,14 @@ segmentation_tool/
 │   └── logo.png                                 #   项目 logo
 ├── examples/                                    # 使用示例
 │   └── grounding_dino_example.py                #   GroundingDINO 检测示例
-├── configs/                      (872 yamls)    # YAML 配置
-│   ├── architectures/            (745 yamls)    #   网络结构配置
+├── configs/                      (876 yamls)    # YAML 配置
+│   ├── architectures/            (749 yamls)    #   网络结构配置
 │   │   ├── networks/             (281 yamls)    #     完整网络 (128 arch across general/acdc/synapse)
-│   │   ├── combinations/         (166 yamls)    #     encoder+decoder 自由组合
+│   │   ├── combinations/         (167 yamls)    #     encoder+decoder 自由组合
 │   │   ├── decoder_study/        (121 yamls)    #     Decoder 消融 (3 enc × 40 dec)
 │   │   ├── skip_study/           (75 yamls)     #     skip 消融 (3 enc × 25 skip)
 │   │   ├── bottleneck_study/     (51 yamls)     #     bottleneck 消融 (3 enc × 17 bn)
-│   │   └── foundation/           (51 yamls)     #     Foundation 模型 (9 模态 × 35 编码器)
+│   │   └── foundation/           (54 yamls)     #     Foundation 模型 (9 模态 × 35 编码器)
 │   ├── training_paradigms/       (99 yamls)     #   训练范式配置
 │   │   ├── semi_supervision/     (21 yamls)     #     半监督 (21 方法)
 │   │   ├── domain_adaptation/    (18 yamls)     #     域适应 (18 方法)
