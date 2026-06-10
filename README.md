@@ -19,17 +19,17 @@
 
 ## 📑 Table of Contents
 
-- [Installation](#installation)
-- [Quick Start](#quick-start)
-- [Tutorial](#tutorial)
-- [Project Structure](#project-structure)
-- [Model Components](#model-components)
-- [Training Paradigms](#training-paradigms)
-- [Deployment & Efficiency](#deployment--efficiency)
+- [Installation](##installation)
+- [Quick Start](##quick-start)
+- [Tutorial](##tutorial)
+- [Project Structure](##project-structure)
+- [Model Components](##model-components)
+- [Training Paradigms](##training-paradigms)
+- [Deployment & Efficiency](##deployment--efficiency)
 - [Datasets](#datasets)
-- [Config System](#config-system)
-- [Custom Extensions](#custom-extensions)
-- [Citation & License](#citation--license)
+- [Config System](##config-system)
+- [Custom Extensions](##custom-extensions)
+- [Citation & License](##citation--license)
 
 ---
 
@@ -44,7 +44,7 @@
 ### Basic Installation
 
 ```bash
-git clone <repo_url>
+git clone [<repo_url>](https://github.com/juntaoJianggavin/UltimateMedSeg.git)
 cd segmentation_tool
 
 # Install dependencies
