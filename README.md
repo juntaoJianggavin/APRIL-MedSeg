@@ -35,7 +35,7 @@
 ## 📦 Installation
 ### Requirements
 
-- Python >= 3.8
+- Python >= 3.10
 - PyTorch >= 2.0
 - CUDA (recommended) / CPU / Apple Silicon (MPS)
 

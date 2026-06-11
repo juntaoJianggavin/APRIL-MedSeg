@@ -38,7 +38,7 @@
 
 ### 环境要求
 
-- Python >= 3.8
+- Python >= 3.10
 - PyTorch >= 2.0
 - CUDA（推荐）/ CPU / Apple Silicon (MPS) 均可
 
