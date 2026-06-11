@@ -259,7 +259,7 @@ class PolypPVT(nn.Module):
     """
 
     def __init__(self, in_channels=3, num_classes=2, img_size=224,
-                 channel=32, **kwargs):
+                 channel=32, pretrained=True, **kwargs):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -270,7 +270,7 @@ class PolypPVT(nn.Module):
             timm.create_model,
             'pvt_v2_b2',
             features_only=True,
-            pretrained=True,
+            pretrained=bool(pretrained),
             in_chans=in_channels,
         )
 

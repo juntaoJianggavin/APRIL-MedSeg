@@ -1,20 +1,19 @@
 """Central Hugging Face Hub configuration and download helpers.
 
-All HF downloads in medseg should go through this module so mirror / endpoint
-settings apply consistently.
+All HF downloads in medseg should go through this module so endpoint
+selection and mirror fallback apply consistently.
 
-Environment variables (endpoint resolution order):
+Default behaviour (no env vars set):
+
+1. Try the official Hugging Face Hub (``huggingface.co``).
+2. On retryable network / connectivity errors, automatically retry via
+   ``https://hf-mirror.com``.
+
+Explicit overrides (skip auto-fallback — use only the configured endpoint):
 
 1. ``HF_ENDPOINT`` — standard ``huggingface_hub`` variable (highest priority)
-2. ``MEDSEG_HF_ENDPOINT`` — project alias, used when ``HF_ENDPOINT`` is unset
-3. ``MEDSEG_HF_MIRROR=1`` — opt-in shorthand for ``https://hf-mirror.com``
-
-The project does **not** force a mirror by default (international-friendly).
-For China-accessible mirrors, set one of the above before downloading or training::
-
-    export MEDSEG_HF_MIRROR=1
-    # or
-    export HF_ENDPOINT=https://hf-mirror.com
+2. ``MEDSEG_HF_ENDPOINT`` — project alias when ``HF_ENDPOINT`` is unset
+3. ``MEDSEG_HF_MIRROR=1`` — shorthand for ``https://hf-mirror.com``
 
 Optional auth for gated repos: ``HF_TOKEN`` or ``HUGGINGFACE_TOKEN``.
 """
@@ -23,17 +22,20 @@ from __future__ import annotations
 
 import logging
 import os
-from pathlib import Path
-from typing import Iterable, Optional, Sequence, Union
+from contextlib import contextmanager
+from typing import Callable, Iterable, Optional, Sequence, TypeVar, Union
 
 logger = logging.getLogger(__name__)
 
+HF_OFFICIAL = "https://huggingface.co"
 HF_MIRROR_DEFAULT = "https://hf-mirror.com"
 _CONFIGURED = False
 
+T = TypeVar("T")
+
 
 def resolve_hf_endpoint() -> Optional[str]:
-    """Return the HF API endpoint URL, or ``None`` for official huggingface.co."""
+    """Return an explicitly configured HF endpoint, or ``None`` for auto mode."""
     endpoint = os.environ.get("HF_ENDPOINT", "").strip()
     if endpoint:
         return endpoint.rstrip("/")
@@ -46,6 +48,11 @@ def resolve_hf_endpoint() -> Optional[str]:
     return None
 
 
+def user_pinned_hf_endpoint() -> bool:
+    """True when the user explicitly chose an endpoint (no auto-fallback)."""
+    return resolve_hf_endpoint() is not None
+
+
 def configure_hf_hub(*, log: bool = True) -> Optional[str]:
     """Apply resolved endpoint to ``HF_ENDPOINT`` once per process."""
     global _CONFIGURED
@@ -53,9 +60,99 @@ def configure_hf_hub(*, log: bool = True) -> Optional[str]:
     if endpoint and not os.environ.get("HF_ENDPOINT"):
         os.environ["HF_ENDPOINT"] = endpoint
     if log and endpoint and not _CONFIGURED:
-        logger.info("Hugging Face Hub endpoint: %s", endpoint)
+        logger.info("Hugging Face Hub endpoint (pinned): %s", endpoint)
     _CONFIGURED = True
     return endpoint or os.environ.get("HF_ENDPOINT")
+
+
+@contextmanager
+def hf_endpoint(endpoint: Optional[str]):
+    """Temporarily set ``HF_ENDPOINT`` for huggingface_hub / transformers."""
+    previous = os.environ.get("HF_ENDPOINT")
+    if endpoint:
+        os.environ["HF_ENDPOINT"] = endpoint.rstrip("/")
+    else:
+        os.environ.pop("HF_ENDPOINT", None)
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("HF_ENDPOINT", None)
+        else:
+            os.environ["HF_ENDPOINT"] = previous
+
+
+def is_retryable_hf_error(exc: BaseException) -> bool:
+    """Return True when a download failure may succeed on the mirror endpoint."""
+    if isinstance(exc, (TimeoutError, ConnectionError, OSError)):
+        if isinstance(exc, OSError) and getattr(exc, "errno", None) not in (
+            None, 101, 110, 111, 113, 104, 105,
+        ):
+            msg = str(exc).lower()
+            if "network" not in msg and "unreachable" not in msg and "timed out" not in msg:
+                return False
+        return True
+
+    name = type(exc).__name__
+    if name in {
+        "ConnectError",
+        "ConnectTimeout",
+        "ReadTimeout",
+        "NetworkError",
+        "RemoteProtocolError",
+        "LocalEntryNotFoundError",
+        "OfflineModeIsEnabled",
+        "HfHubHTTPError",
+        "RepositoryNotFoundError",
+    }:
+        return True
+
+    msg = str(exc).lower()
+    retry_markers = (
+        "network is unreachable",
+        "connection refused",
+        "connection reset",
+        "timed out",
+        "timeout",
+        "cannot send a request",
+        "client has been closed",
+        "failed to establish a new connection",
+        "name or service not known",
+        "temporary failure in name resolution",
+        "ssl:",
+        "connection error",
+        "connecterror",
+        "max retries exceeded",
+        "couldn't connect",
+        "unable to resolve",
+        "locate the files on the hub",
+    )
+    return any(marker in msg for marker in retry_markers)
+
+
+def call_with_hf_fallback(func: Callable[..., T], *args, **kwargs) -> T:
+    """Call ``func`` using official HF first, then mirror on network failure."""
+    pinned = resolve_hf_endpoint()
+    if pinned:
+        configure_hf_hub(log=False)
+        return func(*args, **kwargs)
+
+    with hf_endpoint(HF_OFFICIAL):
+        try:
+            return func(*args, **kwargs)
+        except Exception as exc:
+            if not is_retryable_hf_error(exc):
+                raise
+            logger.warning(
+                "Hugging Face download via %s failed (%s: %s); retrying via mirror %s",
+                HF_OFFICIAL,
+                type(exc).__name__,
+                exc,
+                HF_MIRROR_DEFAULT,
+            )
+
+    with hf_endpoint(HF_MIRROR_DEFAULT):
+        return func(*args, **kwargs)
 
 
 def hf_token() -> Optional[str]:
@@ -69,13 +166,12 @@ def hf_hub_download_file(
     *,
     repo_type: str = "model",
     revision: Optional[str] = None,
-    cache_dir: Optional[Union[str, Path]] = None,
-    local_dir: Optional[Union[str, Path]] = None,
+    cache_dir: Optional[Union[str, os.PathLike]] = None,
+    local_dir: Optional[Union[str, os.PathLike]] = None,
     local_dir_use_symlinks: Union[bool, str] = False,
     token: Optional[str] = None,
 ):
-    """Download a single file from Hugging Face Hub (respects mirror settings)."""
-    configure_hf_hub(log=False)
+    """Download a single file from Hugging Face Hub (official first, mirror fallback)."""
     try:
         from huggingface_hub import hf_hub_download
     except ImportError as exc:
@@ -97,7 +193,7 @@ def hf_hub_download_file(
         kwargs["local_dir"] = str(local_dir)
         kwargs["local_dir_use_symlinks"] = local_dir_use_symlinks
 
-    return hf_hub_download(**kwargs)
+    return call_with_hf_fallback(hf_hub_download, **kwargs)
 
 
 def hf_snapshot_download(
@@ -105,14 +201,13 @@ def hf_snapshot_download(
     *,
     repo_type: str = "model",
     revision: Optional[str] = None,
-    cache_dir: Optional[Union[str, Path]] = None,
-    local_dir: Optional[Union[str, Path]] = None,
+    cache_dir: Optional[Union[str, os.PathLike]] = None,
+    local_dir: Optional[Union[str, os.PathLike]] = None,
     allow_patterns: Optional[Union[str, Sequence[str]]] = None,
     ignore_patterns: Optional[Union[str, Sequence[str]]] = None,
     token: Optional[str] = None,
 ):
     """Download a repository snapshot from Hugging Face Hub."""
-    configure_hf_hub(log=False)
     try:
         from huggingface_hub import snapshot_download
     except ImportError as exc:
@@ -136,7 +231,7 @@ def hf_snapshot_download(
     if ignore_patterns is not None:
         kwargs["ignore_patterns"] = ignore_patterns
 
-    return snapshot_download(**kwargs)
+    return call_with_hf_fallback(snapshot_download, **kwargs)
 
 
 def download_repo_files(
@@ -144,13 +239,15 @@ def download_repo_files(
     filenames: Iterable[str],
     *,
     repo_type: str = "model",
-    local_dir: Union[str, Path],
+    local_dir: Union[str, os.PathLike],
     revision: Optional[str] = None,
-) -> list[Path]:
+) -> list:
     """Download specific files from a repo into ``local_dir``."""
+    from pathlib import Path
+
     local_dir = Path(local_dir)
     local_dir.mkdir(parents=True, exist_ok=True)
-    paths: list[Path] = []
+    paths = []
     for filename in filenames:
         path = hf_hub_download_file(
             repo_id,

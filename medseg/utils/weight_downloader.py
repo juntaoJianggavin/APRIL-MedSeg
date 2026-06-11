@@ -484,8 +484,9 @@ def hf_from_pretrained(
             f"  instructions:\n"
             f"    1. If the repo is gated (e.g. Llama / CogVLM), "
             f"`huggingface-cli login` with an account that has access.\n"
-            f"    2. If you are behind a firewall, set MEDSEG_HF_MIRROR=1 "
-            f"or HF_ENDPOINT=https://hf-mirror.com.\n"
+            f"    2. Downloads retry automatically via hf-mirror.com when the official "
+            f"Hub is unreachable. Pin an endpoint with MEDSEG_HF_MIRROR=1 or "
+            f"HF_ENDPOINT if needed.\n"
             f"    3. To use a local copy, pass the local directory path "
             f"instead of the repo id.\n"
         ) from e

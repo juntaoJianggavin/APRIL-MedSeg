@@ -17,6 +17,7 @@ Reference:
 # Source: https://github.com/SZUcsh/FAT-Net
 
 import torch
+import timm
 from torchvision import models as resnet_model
 from torch import nn
 import torch.nn.functional as F
@@ -113,15 +114,17 @@ class FAT_Net(nn.Module):
     ResNet34 CNN encoder + DeiT transformer encoder, SE attention at
     bottleneck, FAM blocks on skip connections, DecoderBottleneck decoder.
     """
-    def __init__(self, n_channels=3, n_classes=1):
+    def __init__(self, n_channels=3, n_classes=1, pretrained=True):
         super(FAT_Net, self).__init__()
 
-        # DeiT-tiny distilled transformer encoder.
+        # DeiT-tiny distilled transformer encoder (timm — avoids torch.hub
+        # polluting timm's VisionTransformer registry for other models).
         transformer = load_with_ssl_fallback(
-            torch.hub.load,
-            'facebookresearch/deit:main',
-            'deit_tiny_distilled_patch16_224',
-            pretrained=True)
+            timm.create_model,
+            "deit_tiny_distilled_patch16_224",
+            pretrained=bool(pretrained),
+            num_classes=0,
+        )
         self.patch_embed = transformer.patch_embed
         self.transformers = nn.ModuleList(
             [transformer.blocks[i] for i in range(12)]
@@ -129,7 +132,7 @@ class FAT_Net(nn.Module):
         self._use_deit = True
 
         resnet = load_with_ssl_fallback(
-            resnet_model.resnet34, pretrained=True)
+            resnet_model.resnet34, pretrained=bool(pretrained))
 
         self.firstconv = resnet.conv1
         self.firstbn = resnet.bn1
@@ -217,9 +220,14 @@ class FATNet(nn.Module):
         img_size: Input spatial size (default 224).
     """
 
-    def __init__(self, in_channels=3, num_classes=2, img_size=224, **kwargs):
+    def __init__(self, in_channels=3, num_classes=2, img_size=224,
+                 pretrained=True, **kwargs):
         super().__init__()
-        self.model = FAT_Net(n_channels=in_channels, n_classes=num_classes)
+        self.model = FAT_Net(
+            n_channels=in_channels,
+            n_classes=num_classes,
+            pretrained=pretrained,
+        )
 
     def forward(self, x):
         out = self.model(x)

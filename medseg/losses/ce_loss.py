@@ -2,6 +2,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from medseg.registry import LOSS_REGISTRY
 
 
@@ -18,3 +19,17 @@ class CELoss(nn.Module):
     def forward(self, pred, target):
         """pred: B,C,H,W  target: B,H,W (long)"""
         return self.ce(pred, target)
+
+
+@LOSS_REGISTRY.register("bce")
+class BCELoss(nn.Module):
+    """Binary cross-entropy for single-channel logits (common in LViT configs)."""
+
+    def __init__(self, **kwargs):
+        super().__init__()
+
+    def forward(self, pred, target):
+        if pred.ndim == 4 and pred.shape[1] == 1:
+            return F.binary_cross_entropy_with_logits(
+                pred.squeeze(1), target.float())
+        return CELoss()(pred, target)

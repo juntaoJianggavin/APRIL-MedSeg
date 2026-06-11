@@ -40,14 +40,23 @@ class _DeiTSmall(nn.Module):
         self.patch_size = 16
         self.img_size = img_size
 
-        self.vit = load_with_ssl_fallback(
-            timm.create_model,
-            'deit_small_patch16_224',
-            pretrained=bool(pretrained),
-            img_size=img_size,
-            in_chans=in_chans,
-            num_classes=0,
-        )
+        if pretrained:
+            self.vit = load_with_ssl_fallback(
+                timm.create_model,
+                'deit_small_patch16_224',
+                pretrained=True,
+                img_size=img_size,
+                in_chans=in_chans,
+                num_classes=0,
+            )
+        else:
+            self.vit = timm.create_model(
+                'deit_small_patch16_224',
+                pretrained=False,
+                img_size=img_size,
+                in_chans=in_chans,
+                num_classes=0,
+            )
 
     def forward(self, x):
         feat = self.vit.forward_features(x)  # (B, 1+N, C)

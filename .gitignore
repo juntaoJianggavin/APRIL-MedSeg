@@ -34,6 +34,9 @@ smoke_results.txt
 wandb/
 tensorboard/
 
+# Local-only smoke test tooling (fork dev; not submitted to upstream)
+scripts/smoke_test_all.py
+
 # ACM template & paper
 _ACM_MM__ul_m/
 _ACM_MM__ul_m.zip

@@ -95,14 +95,15 @@ class _SwinTEncoder(nn.Module):
 
 class Polyper(nn.Module):
     """Polyper for boundary-sensitive polyp segmentation (Swin-T backbone)."""
-    def __init__(self, in_channels=3, num_classes=2, img_size=352, **kwargs):
+    def __init__(self, in_channels=3, num_classes=2, img_size=352,
+                 pretrained=True, **kwargs):
         super().__init__()
         self.num_classes = num_classes
 
         # Swin-T encoder (timm, ImageNet pretrained)
         # Output channels: [96, 192, 384, 768]
         self.encoder = _SwinTEncoder(in_channels=in_channels, img_size=img_size,
-                                     pretrained=True)
+                                     pretrained=pretrained)
         enc_chs = self.encoder.out_channels  # [96, 192, 384, 768]
 
         # Polyp Region Branch (main decoder)

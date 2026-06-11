@@ -170,6 +170,14 @@ class MedNeXt(nn.Module):
         self.out_conv = nn.Conv2d(n_ch, num_classes, 1)
 
     @staticmethod
+    def _align_skip(up: torch.Tensor, skip: torch.Tensor) -> torch.Tensor:
+        if up.shape[-2:] != skip.shape[-2:]:
+            up = F.interpolate(
+                up, size=skip.shape[-2:], mode="bilinear", align_corners=True,
+            )
+        return up
+
+    @staticmethod
     def _make_stage(in_ch, out_ch, num_blocks, exp_r, ks, down=False):
         layers = []
         if down:
@@ -202,14 +210,18 @@ class MedNeXt(nn.Module):
         # Bottleneck
         b = self.bottleneck(e4)    # /8
 
-        # Decoder with additive skip connections (official: x_res + x_up)
+        # Decoder with additive skip connections (official: x_res + x_up).
+        # Upsample+pad can be off-by-one vs encoder skips; align before add.
         d = self.up3(b)                              # /4
+        d = self._align_skip(d, e3)
         d = self.dec3(d + e3)                        # /4, add skip
 
         d = self.up2(d)                              # /2
+        d = self._align_skip(d, e2)
         d = self.dec2(d + e2)                        # /2, add skip
 
         d = self.up1(d)                              # /1
+        d = self._align_skip(d, e1)
         d = self.dec1(d + e1)                        # /1, add skip
 
         out = self.out_conv(d)
