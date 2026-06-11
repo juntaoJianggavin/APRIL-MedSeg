@@ -4,6 +4,7 @@
     <strong>Juntao Jiang</strong>,
     <strong>Jinsheng Bai</strong>,
     <strong>Linxuan Fan</strong>,
+      <strong>Yali Bi</strong>,
     <strong>Jiangning Zhang</strong>,
     <strong>Yong Liu</strong>
   </p>
@@ -828,7 +829,7 @@ After registration and import in `__init__.py`, use via `name: my_encoder` in YA
 ```bibtex
 @software{ultimatemedseg_2026,
   title  = {UltimateMedSeg: A Modern Modular 2D Medical Image Segmentation Toolbox},
-  author = {Juntao Jiang and Jinsheng Bai and Linxuan Fan and Jiangning Zhang and Yong Liu},
+  author = {Juntao Jiang and Jinsheng Bai and Linxuan Fan and Yali Bi and Jiangning Zhang and Yong Liu},
   year   = {2026},
   url    = {https://github.com/juntaoJianggavin/UltimateMedSeg},
 }
