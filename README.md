@@ -38,7 +38,7 @@
 
 - Python >= 3.10
 - PyTorch >= 2.0
-- CUDA (recommended) / CPU / Apple Silicon (MPS)
+- NVIDIA GPU with CUDA 12.4+
 
 ### Basic Installation
 

@@ -1,4 +1,5 @@
-# Requires Python >= 3.10 (PEP 604 union types, e.g. int | None, are used in code)
+# Requires Python >= 3.10 and NVIDIA GPU with CUDA 12.4+
+# (PEP 604 union types, e.g. int | None, are used in code)
 
 torch>=2.0.0
 torchvision>=0.15.0
