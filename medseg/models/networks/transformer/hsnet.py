@@ -316,7 +316,8 @@ class HSNet(nn.Module):
         img_size: nominal input spatial size.
     """
 
-    def __init__(self, in_channels=3, num_classes=2, img_size=224, **kwargs):
+    def __init__(self, in_channels=3, num_classes=2, img_size=224,
+                 pretrained=True, **kwargs):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
@@ -325,7 +326,7 @@ class HSNet(nn.Module):
         # Backbone (PVTv2-B2)
         self.backbone = load_with_ssl_fallback(
             timm.create_model, 'pvt_v2_b2',
-            features_only=True, pretrained=True, in_chans=in_channels)
+            features_only=True, pretrained=bool(pretrained), in_chans=in_channels)
 
         enc_channels = self.backbone.feature_info.channels()
         if len(enc_channels) != 4:

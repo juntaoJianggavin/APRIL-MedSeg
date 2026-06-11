@@ -11,8 +11,9 @@ Optional backends (explicit opt-in only):
 - Local cache under ``$MEDSEG_WEIGHT_CACHE`` or ``~/.cache/medseg/weights/timm/``
   — used automatically when weights are already on disk (any download method).
 
-HF mirror (opt-in): ``MEDSEG_HF_MIRROR=1`` or ``HF_ENDPOINT=https://hf-mirror.com``.
-See :mod:`medseg.utils.hf_hub`.
+HF downloads default to the official Hub and automatically retry via
+``https://hf-mirror.com`` on network errors. Pin an endpoint with
+``HF_ENDPOINT`` / ``MEDSEG_HF_MIRROR=1`` if needed. See :mod:`medseg.utils.hf_hub`.
 """
 
 from __future__ import annotations

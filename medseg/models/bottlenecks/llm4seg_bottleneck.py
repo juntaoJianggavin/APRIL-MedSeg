@@ -14,16 +14,15 @@ Procedure:
     6. residual add to the original feature
     7. return (B, C, H, W)
 
-The LLM is loaded via ``transformers.AutoModel`` with HF mirror support
-(set HF_ENDPOINT=https://hf-mirror.com by default in
-``medseg/encoders/foundation/_base.py`` / ``medseg/networks/sam/sam_base.py``).
+The LLM is loaded via ``transformers.AutoModel`` with automatic HF endpoint
+fallback (official ``huggingface.co`` first, then ``hf-mirror.com`` on
+network errors). See :mod:`medseg.utils.hf_hub`.
 No silent fallback to a different model — if the requested LLM cannot be
 loaded, a clear RuntimeError is raised.
 """
 # Source: NOT VERIFIED — fabricated by this repo, no upstream confirmed.
 
 from __future__ import annotations
-import os as _os
 import warnings
 from typing import Optional
 
@@ -32,11 +31,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from medseg.registry import BOTTLENECK_REGISTRY
-
-
-# Default to HF mirror so downloads work in environments without direct
-# huggingface.co access. Users can override by setting HF_ENDPOINT first.
-_os.environ.setdefault("HF_ENDPOINT", "https://hf-mirror.com")
+from medseg.utils.hf_hub import call_with_hf_fallback
 
 
 def _load_llm_blocks(llm_model: str, num_layers: int, dtype):
@@ -54,22 +49,30 @@ def _load_llm_blocks(llm_model: str, num_layers: int, dtype):
         ) from e
 
     try:
-        config = AutoConfig.from_pretrained(llm_model, trust_remote_code=True)
+        config = call_with_hf_fallback(
+            AutoConfig.from_pretrained,
+            llm_model,
+            trust_remote_code=True,
+        )
     except Exception as e:
         raise RuntimeError(
             f"Failed to fetch config for LLM '{llm_model}'. "
-            f"Ensure HF_ENDPOINT is reachable (currently {_os.environ.get('HF_ENDPOINT', 'unset')}). "
+            f"Tried official Hugging Face Hub and mirror fallback. "
             f"Underlying error: {type(e).__name__}: {e}"
         ) from e
 
     # Load the model with the requested dtype to save memory; we only use the blocks
     try:
-        model = AutoModel.from_pretrained(llm_model, torch_dtype=dtype,
-                                          trust_remote_code=True)
+        model = call_with_hf_fallback(
+            AutoModel.from_pretrained,
+            llm_model,
+            torch_dtype=dtype,
+            trust_remote_code=True,
+        )
     except Exception as e:
         raise RuntimeError(
             f"Failed to load LLM weights '{llm_model}'. "
-            f"Either: (a) ensure network access to download from {_os.environ.get('HF_ENDPOINT')}, "
+            f"Either: (a) ensure network access to Hugging Face Hub (mirror fallback is automatic), "
             f"(b) pre-cache the weights into ~/.cache/huggingface/hub, "
             f"or (c) supply a local cache via HF_HOME env var. "
             f"Underlying error: {type(e).__name__}: {e}"

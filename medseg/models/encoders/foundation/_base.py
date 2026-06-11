@@ -22,46 +22,38 @@ import torch.nn as nn
 
 
 def load_with_ssl_fallback(load_fn, *args, **kwargs):
-    """Try the loader; on SSL failure retry once with unverified context.
-
-    Does NOT silently fall back to random init or a different model. If the
-    pretrained weights cannot be loaded, raises RuntimeError with a clear
-    message.
-
-    Args:
-        load_fn: callable that performs the load (e.g. a model factory).
-        *args, **kwargs: forwarded to load_fn. A non-False 'pretrained' kwarg
-            indicates pretrained weights are desired.
-    """
-    import ssl
-    # If the caller already disabled pretrained, just call through — no retry needed.
+    """Load pretrained weights: official HF, mirror fallback, then SSL retry."""
     if kwargs.get("pretrained", True) is False:
         return load_fn(*args, **kwargs)
 
-    try:
-        return load_fn(*args, **kwargs)
-    except Exception as e1:
-        # Retry with unverified SSL context (corporate / local cert miss).
-        prev = ssl._create_default_https_context
+    from medseg.utils.hf_hub import call_with_hf_fallback
+    import ssl
+
+    def _attempt():
         try:
-            ssl._create_default_https_context = ssl._create_unverified_context
             return load_fn(*args, **kwargs)
-        except Exception as e2:
-            # No silent fallback — raise a clear error.
-            model_name = ""
-            if args:
-                model_name = str(args[0])
-            elif "model_name" in kwargs:
-                model_name = str(kwargs["model_name"])
-            raise RuntimeError(
-                f"Failed to load pretrained weights for '{model_name}'. "
-                f"Initial error: {type(e1).__name__}: {e1}. "
-                f"SSL-bypass retry error: {type(e2).__name__}: {e2}. "
-                f"Provide a local checkpoint via 'pretrained_path' "
-                f"or ensure network access to download the official weights."
-            ) from e2
-        finally:
-            ssl._create_default_https_context = prev
+        except Exception as e1:
+            prev = ssl._create_default_https_context
+            try:
+                ssl._create_default_https_context = ssl._create_unverified_context
+                return load_fn(*args, **kwargs)
+            except Exception as e2:
+                model_name = ""
+                if args:
+                    model_name = str(args[0])
+                elif "model_name" in kwargs:
+                    model_name = str(kwargs["model_name"])
+                raise RuntimeError(
+                    f"Failed to load pretrained weights for '{model_name}'. "
+                    f"Initial error: {type(e1).__name__}: {e1}. "
+                    f"SSL-bypass retry error: {type(e2).__name__}: {e2}. "
+                    f"Provide a local checkpoint via 'pretrained_path' "
+                    f"or ensure network access (mirror fallback is automatic)."
+                ) from e2
+            finally:
+                ssl._create_default_https_context = prev
+
+    return call_with_hf_fallback(_attempt)
 
 
 def hf_hub_download_vision_weights(repo_id: str, filename: str = None,

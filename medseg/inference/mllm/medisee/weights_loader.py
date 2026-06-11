@@ -50,44 +50,44 @@ def _default_cache_root() -> str:
     return root
 
 
+_MEDISEE_HF_IMPORT_MSG = (
+    "huggingface_hub is required for MediSee weight auto-download. "
+    "Install it via `pip install huggingface_hub`."
+)
+
+
 def _try_hf_snapshot(repo_id: str, cache_dir: Optional[str] = None) -> str:
-    """调用 huggingface_hub.snapshot_download, 返回本地目录."""
+    """调用 huggingface_hub.snapshot_download, 返回本地目录 (official first, mirror fallback)."""
     try:
-        from huggingface_hub import snapshot_download
+        from medseg.utils.hf_hub import hf_snapshot_download
     except ImportError as e:  # pragma: no cover
-        raise ImportError(
-            "huggingface_hub is required for MediSee weight auto-download. "
-            "Install it via `pip install huggingface_hub`."
-        ) from e
+        raise ImportError(_MEDISEE_HF_IMPORT_MSG) from e
 
     kwargs = dict(repo_id=repo_id)
     if cache_dir is not None:
         kwargs["cache_dir"] = cache_dir
-    # 允许通过环境变量传 token（私有 repo / 限速场景）
-    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
-    if token:
-        kwargs["token"] = token
-    local_dir = snapshot_download(**kwargs)
-    return local_dir
+    # HF_TOKEN / HUGGINGFACE_TOKEN 由 hf_snapshot_download 内部读取
+    try:
+        return hf_snapshot_download(**kwargs)
+    except ImportError as e:  # pragma: no cover
+        raise ImportError(_MEDISEE_HF_IMPORT_MSG) from e
 
 
 def _try_hf_file(repo_id: str, filename: str, cache_dir: Optional[str] = None) -> str:
     """调用 huggingface_hub.hf_hub_download 下载单个文件, 返回本地绝对路径."""
     try:
-        from huggingface_hub import hf_hub_download
+        from medseg.utils.hf_hub import hf_hub_download_file
     except ImportError as e:  # pragma: no cover
-        raise ImportError(
-            "huggingface_hub is required for MediSee weight auto-download. "
-            "Install it via `pip install huggingface_hub`."
-        ) from e
+        raise ImportError(_MEDISEE_HF_IMPORT_MSG) from e
 
     kwargs = dict(repo_id=repo_id, filename=filename)
     if cache_dir is not None:
         kwargs["cache_dir"] = cache_dir
-    token = os.environ.get("HF_TOKEN") or os.environ.get("HUGGINGFACE_TOKEN")
-    if token:
-        kwargs["token"] = token
-    return hf_hub_download(**kwargs)
+    # HF_TOKEN / HUGGINGFACE_TOKEN 由 hf_hub_download_file 内部读取
+    try:
+        return hf_hub_download_file(**kwargs)
+    except ImportError as e:  # pragma: no cover
+        raise ImportError(_MEDISEE_HF_IMPORT_MSG) from e
 
 
 @dataclass
