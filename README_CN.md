@@ -19,7 +19,7 @@
   </p>
 </div>
 
-> **146** 完整网络 · **178** 编码器 · **45** 解码器 · **89** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **921** YAML 配置 · 一行 YAML 完成切换
+> **141** 完整网络 · **178** 编码器 · **45** 解码器 · **89** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **921** YAML 配置 · 一行 YAML 完成切换
 
 ---
 
@@ -367,14 +367,14 @@ segmentation_tool/
 │   │   │   ├── transformer/      (5 modules)    #     Transformer: CrossAttn, TransFusion, AggAttn, MISSFormer, UCTrans
 │   │   │   ├── mamba/            (1 module)     #     Mamba: SK-VM++
 │   │   │   └── fusion/           (6 modules)    #     CNN融合: BiFusion, Deformable, MultiScale, FeatureRefine, CCM, SDI
-│   │   ├── networks/                            #   146 个完整网络 (145 注册，合并尺寸变体)
+│   │   ├── networks/                            #   141 个完整网络 (合并变体)
 │   │   │   ├── cnn/              (37 registered)#     CNN: UNet3+, UNet++, AttUNet, nnUNet, MedNeXt, STUNet, MEW-UNet, HRNet, ...
 │   │   │   ├── transformer/      (42 registered)#     Transformer: SegFormer B0-B5, TransUNet, SwinUNet, DAEFormer, PolypPVT, CASCADE, SEPNet, ...
 │   │   │   ├── mamba/            (25 registered)#     Mamba: VMUNet, UMamba, SwinUMamba, SkinMamba, DermoMamba, SerpMamba, ...
 │   │   │   ├── sam/              (12 registered)#     SAM 家族: MedSAM, SAM-Med2D, SAM2, SAMUS, AutoSAM, MobileSAM, ...
 │   │   │   ├── rwkv/             (5 registered) #     RWKV: U-RWKV (MICCAI 2025), U-RWKV (TIP 2026), RWKV-UNet, MD-RWKV, RIR-Zigzag
-│   │   │   ├── kan_mlp/          (9 registered) #     KAN/MLP: RollingUNet (4 变体), UNeXt, UKAN, Wav-KAN, xLSTM-UNet (2 变体)
-│   │   │   └── linear_attn/      (2 registered) #     线性注意力: TTT-UNet, U-VixLSTM
+│   │   │   ├── kan_mlp/          (4 registered) #     KAN/MLP: RollingUNet, UNeXt, UKAN, Wav-KAN
+│   │   │   └── linear_attn/      (3 registered) #     线性注意力: TTT-UNet, U-VixLSTM, xLSTM-UNet
 │   │   └── text_unet/            (13 modules)   #   文本引导: CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
 │   ├── training/                                # 训练范式
 │   │   ├── semi/                 (23 modules)   #   21 个半监督方法 + 2 个工具 (base, utils)
@@ -420,11 +420,9 @@ segmentation_tool/
 │   └── test_dummy/                              #   虚拟测试数据
 ├── figs/                                        # 图片与 logo
 │   └── logo.png                                 #   项目 logo
-├── examples/                                    # 使用示例
-│   └── grounding_dino_example.py                #   GroundingDINO 检测示例
 ├── configs/                      (921 yamls)    # YAML 配置
 │   ├── architectures/            (791 yamls)    #   网络结构配置
-│   │   ├── networks/             (307 yamls)    #     完整网络 (146 arch across general/acdc/synapse)
+│   │   ├── networks/             (307 yamls)    #     完整网络 (141 arch across general/acdc/synapse)
 │   │   ├── combinations/         (171 yamls)    #     encoder+decoder 自由组合
 │   │   ├── decoder_study/        (133 yamls)    #     Decoder 消融 (3 enc × 45 dec)
 │   │   ├── skip_study/           (75 yamls)     #     skip 消融 (3 enc × 25 skip)
@@ -487,7 +485,7 @@ segmentation_tool/
 
 > 详细文档: [docs/models/](docs/models/README_CN.md)
 
-### 完整网络 — 146 个
+### 完整网络 — 141 个
 
 | 类别 | 数量 | 代表模型 |
 |---|---|---|
@@ -495,8 +493,8 @@ segmentation_tool/
 | Transformer | 42 | SegFormer B0-B5, TransUNet, Swin-UNet, DAEFormer, MISSFormer, HiFormer, PolypPVT, CASCADE |
 | Mamba / SSM | 25 | VM-UNet, U-Mamba, Swin-UMamba, LKM-UNet, LoG-VMamba, HC-Mamba |
 | SAM 家族 | 12 | MedSAM, SAM-Med2D, SAM2, SAMUS, AutoSAM, MobileSAM, LiteMedSAM, SAMMed2DWrapper |
-| KAN / MLP | 9 | RollingUNet (4 variants), UNeXt, U-KAN, Wav-KAN, xLSTM-UNet (2 variants) |
-| 线性注意力 | 2 | TTT-UNet, U-VixLSTM |
+| KAN / MLP | 4 | RollingUNet, UNeXt, U-KAN, Wav-KAN |
+| 线性注意力 | 3 | TTT-UNet, U-VixLSTM, xLSTM-UNet |
 | RWKV | 5 | U-RWKV (MICCAI 2025), U-RWKV (TIP 2026), RWKV-UNet, MD-RWKV-UNet, RIR-Zigzag |
 | 文本引导 | 13 | CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg |
 

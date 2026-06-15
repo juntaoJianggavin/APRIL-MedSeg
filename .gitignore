@@ -72,6 +72,10 @@ scripts/smoke_test_all.py
 # ACM template & paper
 _ACM_MM__ul_m/
 _ACM_MM__ul_m.zip
+
+# Paper & LaTeX (local only)
+APRIL_MedSeg/
+APRIL_MedSeg.zip
 *.tex
 
 # Test files (root level)
