@@ -333,7 +333,7 @@ def main():
     start_epoch = 0
     best_dice = 0.0
     if args.resume and os.path.exists(args.resume):
-        ckpt = torch.load(args.resume, map_location=args.device)
+        ckpt = torch.load(args.resume, map_location=args.device, weights_only=False)
         model.load_state_dict(ckpt['model_state_dict'])
         optimizer.load_state_dict(ckpt['optimizer_state_dict'])
         start_epoch = ckpt.get('epoch', 0) + 1

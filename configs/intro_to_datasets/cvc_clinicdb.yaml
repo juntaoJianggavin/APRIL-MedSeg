@@ -17,7 +17,8 @@
 #
 # 下载:
 #   官方: https://polyp.grand-challenge.org/CVCClinicDB/
-#   镜像: https://www.kaggle.com/datasets/balraj98/cvcclinicdb
+#   Kaggle: https://www.kaggle.com/datasets/balraj98/cvcclinicdb
+#   kagglehub: kagglehub.dataset_download("balraj98/cvcclinicdb")
 #   下载后目录结构:
 #     data/CVC-ClinicDB/
 #     ├── images/    (1.png, 2.png ... 612.png)

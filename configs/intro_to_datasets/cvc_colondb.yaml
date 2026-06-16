@@ -16,7 +16,9 @@
 #
 # 下载:
 #   官方: http://mv.cvc.uab.es/projects/colon-qa/cvccolondb
-#   镜像: https://www.kaggle.com/datasets/balraj98/cvccolondb
+#   Kaggle（当前可用）: https://www.kaggle.com/datasets/longvil/cvc-colondb
+#   kagglehub: kagglehub.dataset_download("longvil/cvc-colondb")
+#   注: Kaggle 用户 balraj98 仅有 CVC-ClinicDB，不含 ColonDB
 #   下载后目录结构:
 #     data/CVC-ColonDB/
 #     ├── images/    (1.png ... 380.png)

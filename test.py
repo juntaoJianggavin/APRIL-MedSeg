@@ -108,7 +108,7 @@ def build_test_dataset(data_cfg):
 
 # ---------------------------------------------------------------------------
 def _load_single_checkpoint(model: torch.nn.Module, ckpt_path: str, device: str):
-    state = torch.load(ckpt_path, map_location=device)
+    state = torch.load(ckpt_path, map_location=device, weights_only=False)
     if isinstance(state, dict):
         state = state.get("model_state_dict", state.get("state_dict", state))
     model.load_state_dict(state)

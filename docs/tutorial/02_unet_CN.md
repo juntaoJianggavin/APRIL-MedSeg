@@ -261,7 +261,7 @@ python train.py --config configs/architectures/combinations/general/unet_basic.y
 
 ```bash
 # Attention U-Net
-python train.py --config configs/architectures/networks/general/attention_unet_basic.yaml
+python train.py --config configs/architectures/combinations/general/attention_unet_basic.yaml
 
 # UNet++
 python train.py --config configs/architectures/networks/general/unetpp.yaml
