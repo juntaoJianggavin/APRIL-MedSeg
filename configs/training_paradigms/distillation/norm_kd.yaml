@@ -1,6 +1,6 @@
 # NORM: Normalized Knowledge Distillation (ICLR 2023)
 # Reference: https://github.com/xyliu7/NORM
-# Paper: https://arxiv.org/abs/2305.00367
+# Paper: https://arxiv.org/abs/2308.00520
 #
 # NORM：在 KL 之前对 logits 沿类维做 L2 normalization
 # L2-normalise per-pixel logit vectors along the class axis before

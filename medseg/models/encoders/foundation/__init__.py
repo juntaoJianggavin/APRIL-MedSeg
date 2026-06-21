@@ -6,6 +6,6 @@ from . import ultrasound
 from . import endoscopy
 from . import radiology
 from . import ophthalmology
-from . import multimodal_med
+from . import general_medical
 from . import mllm_vision
 from . import dermatology

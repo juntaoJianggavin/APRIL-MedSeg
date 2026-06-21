@@ -1,207 +1,53 @@
 """MUCM-Net: Mamba-powered UCM-Net for Skin Lesion Segmentation.
-    MUCM-Net: Mamba-powered UCM-Net for Skin 病灶 分割。
 
 Reference:
     Yuan et al., "MUCM-Net: A Mamba Powered UCM-Net for Skin Lesion
     Segmentation", Exploration of Engineering Materials 2024.
     https://github.com/chunyuyuan/MUCM-Net
 
-Architecture:
-    * 6-stage UNet with very small channel dims [8,16,24,32,48,64,3].
-    * Encoder: OverlapPatchEmbed downsample + UCMBlock (MLP + shifted-MLP)
-      at each stage.
-    * UCMBlock = MambaLayer (SSM) + shifted-window MLP for local context.
-    * Decoder: OverlapPatchEmbed upsample + UCMBlock.
-    * 1x1 conv final head.
+Rewritten to match the official source (archs/mucm_dev.py):
+    * MambaLayer wraps ``mamba_ssm.Mamba`` (1D SSM, d_state=4, d_conv=4, expand=2).
+    * UCMBlock = norm2 -> Mamba(residual) -> fc1 -> DWConv -> GELU -> drop ->
+      fc2 -> DWConv -> drop -> +mamba_residual -> +drop_path.
+    * DWConv: 3x3 depthwise conv with F.layer_norm over [H, W].
+    * OverlapPatchEmbed: 1x1 strided conv + LayerNorm (kernel_size=1, NOT 3).
+    * MUCM_Net: encoder1 -> maxpool -> 5 patch-embed stages (block+norm) ->
+      bottleneck -> 6-stage decoder with deep supervision, mlp_ratio=1.
 
 Constructor:
-    MUCMNet(in_channels=3, num_classes=2, img_size=256, **kwargs)
+    MUCMNet(in_channels=3, num_classes=2, img_size=256, deep_supervision=False, **kwargs)
 """
 # Source: https://github.com/chunyuyuan/MUCM-Net
 
 import math
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from timm.layers import trunc_normal_, DropPath
-from einops import rearrange
-
-from medseg.models.encoders.vmunet_encoder import SS2D
+from timm.models.layers import DropPath, to_2tuple, trunc_normal_
 
 
 # ---------------------------------------------------------------------------
-# Building blocks
+# MambaLayer (wraps mamba_ssm.Mamba; official hard-depends on mamba_ssm)
 # ---------------------------------------------------------------------------
 
-class _OverlapPatchEmbed(nn.Module):
-    """Overlapping 图块 嵌入 ( 3x3 conv 步长 + LayerNorm )。
-        Overlapping patch embedding (3x3 conv stride + LayerNorm)."""
-    def __init__(self, img_size=256, patch_size=3, stride=2,
-                 in_chans=3, embed_dim=8):
-        super().__init__()
-        self.proj = nn.Conv2d(in_chans, embed_dim, patch_size,
-                              stride=stride, padding=patch_size // 2)
-        self.norm = nn.LayerNorm(embed_dim)
-
-    def forward(self, x):
-        x = self.proj(x)
-        _, _, H, W = x.shape
-        x = rearrange(x, 'b c h w -> b (h w) c')
-        x = self.norm(x)
-        return x, H, W
-
-
-class _MambaBlock(nn.Module):
-    """Single-directional Mamba 块 using project SS2D。
-        Single-directional Mamba block using project SS2D."""
-    def __init__(self, dim, d_state=16, d_conv=3, expand=2):
-        super().__init__()
-        self.norm = nn.LayerNorm(dim)
-        self.ss2d = SS2D(d_model=dim, d_state=d_state,
-                         d_conv=d_conv, expand=expand)
-
-    def forward(self, x):
-        # x: (B, N, C)
-        B, N, C = x.shape
-        H = W = int(math.sqrt(N))
-        # SS2D expects (B, H, W, C)
-        x_hw = x.view(B, H, W, C)
-        out = self.ss2d(x_hw)
-        return out.view(B, N, C)
-
-
-class _ShiftedMLP(nn.Module):
-    """轻量级 shifted MLP for 局部的 context ( UCM-style )。
-        Lightweight shifted MLP for local context (UCM-style)."""
-    def __init__(self, dim, mlp_ratio=1):
-        super().__init__()
-        hidden = int(dim * mlp_ratio)
-        self.fc1 = nn.Linear(dim, hidden)
-        self.act = nn.GELU()
-        self.fc2 = nn.Linear(hidden, dim)
-
-    def forward(self, x):
-        return self.fc2(self.act(self.fc1(x)))
-
-
-class UCMBlock(nn.Module):
-    """UCM 块: Mamba + shifted MLP with 残差。
-        UCM Block: Mamba + shifted MLP with residual."""
-    def __init__(self, dim, num_heads=1, mlp_ratio=1,
-                 drop=0., attn_drop=0., drop_path=0.,
-                 norm_layer=nn.LayerNorm, sr_ratio=8,
-                 d_state=16, d_conv=3, expand=2):
-        super().__init__()
-        self.norm1 = norm_layer(dim)
-        self.mamba = _MambaBlock(dim, d_state=d_state,
-                                 d_conv=d_conv, expand=expand)
-        self.norm2 = norm_layer(dim)
-        self.mlp = _ShiftedMLP(dim, mlp_ratio=mlp_ratio)
-        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
-
-    def forward(self, x):
-        x = x + self.drop_path(self.mamba(self.norm1(x)))
-        x = x + self.drop_path(self.mlp(self.norm2(x)))
-        return x
-
-
-# ---------------------------------------------------------------------------
-# MUCM-Net
-# ---------------------------------------------------------------------------
-
-class MUCMNet(nn.Module):
-    """MUCM-Net for skin lesion segmentation.
-        MUCM-Net for skin 病灶 分割。
-
-    Default embed_dims=[8,16,24,32,48,64,3] matches the original paper.
-    """
-    def __init__(self, in_channels=3, num_classes=2, img_size=256,
-                 embed_dims=None, num_heads=None, mlp_ratios=None,
-                 qkv_bias=False, drop_rate=0., attn_drop_rate=0.,
-                 drop_path_rate=0., norm_layer=nn.LayerNorm,
-                 depths=None, sr_ratios=None, **kwargs):
-        super().__init__()
-        if embed_dims is None:
-            embed_dims = [8, 16, 24, 32, 48, 64, 3]
-        if depths is None:
-            depths = [1, 1, 1]
-        if sr_ratios is None:
-            sr_ratios = [8, 4, 2, 1]
-        if num_heads is None:
-            num_heads = [1]
-        if mlp_ratios is None:
-            mlp_ratios = [4, 4, 4, 4]
-
-        self.num_classes = num_classes
-        self.img_size = img_size
-
-        # -- 编码器 / -- Encoder conv --
-        self.encoder1 = nn.Conv2d(in_channels, embed_dims[0], 3, 1, 1)
-        self.ebn1 = nn.GroupNorm(4, embed_dims[0])
-
-        # -- Norms --
-        self.norm1 = norm_layer(embed_dims[1])
-        self.norm2 = norm_layer(embed_dims[2])
-        self.norm3 = norm_layer(embed_dims[3])
-        self.norm4 = norm_layer(embed_dims[4])
-        self.norm5 = norm_layer(embed_dims[5])
-
-        self.dnorm2 = norm_layer(embed_dims[4])
-        self.dnorm3 = norm_layer(embed_dims[3])
-        self.dnorm4 = norm_layer(embed_dims[2])
-        self.dnorm5 = norm_layer(embed_dims[1])
-        self.dnorm6 = norm_layer(embed_dims[0])
-
-        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, max(sum(depths), 1))]
-
-        # -- 编码器 / -- Encoder UCM blocks --
-        self.block_0_1 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[1], drop_path=dpr[0], sr_ratio=sr_ratios[0])])
-        self.block0 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[2], drop_path=dpr[0], sr_ratio=sr_ratios[0])])
-        self.block1 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[3], drop_path=dpr[0], sr_ratio=sr_ratios[0])])
-        self.block2 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[4], drop_path=dpr[min(1, len(dpr)-1)], sr_ratio=sr_ratios[0])])
-        self.block3 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[5], drop_path=dpr[min(1, len(dpr)-1)], sr_ratio=sr_ratios[0])])
-
-        # -- 解码器 / -- Decoder UCM blocks --
-        self.dblock0 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[4], drop_path=dpr[0], sr_ratio=sr_ratios[0])])
-        self.dblock1 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[3], drop_path=dpr[0], sr_ratio=sr_ratios[0])])
-        self.dblock2 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[2], drop_path=dpr[min(1, len(dpr)-1)], sr_ratio=sr_ratios[0])])
-        self.dblock3 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[1], drop_path=dpr[min(1, len(dpr)-1)], sr_ratio=sr_ratios[0])])
-        self.dblock4 = nn.ModuleList([UCMBlock(
-            dim=embed_dims[0], drop_path=dpr[min(1, len(dpr)-1)], sr_ratio=sr_ratios[0])])
-
-        # - - 图块 embed ( 下采样 ) - - / -- Patch embed (downsample) --
-        self.patch_embed1 = _OverlapPatchEmbed(img_size, 3, 2, embed_dims[0], embed_dims[1])
-        self.patch_embed2 = _OverlapPatchEmbed(img_size // 2, 3, 2, embed_dims[1], embed_dims[2])
-        self.patch_embed3 = _OverlapPatchEmbed(img_size // 4, 3, 2, embed_dims[2], embed_dims[3])
-        self.patch_embed4 = _OverlapPatchEmbed(img_size // 8, 3, 2, embed_dims[3], embed_dims[4])
-        self.patch_embed5 = _OverlapPatchEmbed(img_size // 16, 3, 2, embed_dims[4], embed_dims[5])
-
-        # -- 解码器 / -- Decoder 1x1 conv --
-        self.decoder0 = nn.Conv2d(embed_dims[5], embed_dims[4], 1)
-        self.decoder1 = nn.Conv2d(embed_dims[4], embed_dims[3], 1)
-        self.decoder2 = nn.Conv2d(embed_dims[3], embed_dims[2], 1)
-        self.decoder3 = nn.Conv2d(embed_dims[2], embed_dims[1], 1)
-        self.decoder4 = nn.Conv2d(embed_dims[1], embed_dims[0], 1)
-        self.decoder5 = nn.Conv2d(embed_dims[0], embed_dims[-1], 1)
-
-        # -- 解码器 / -- Decoder BN --
-        self.dbn0 = nn.GroupNorm(4, embed_dims[4])
-        self.dbn1 = nn.GroupNorm(4, embed_dims[3])
-        self.dbn2 = nn.GroupNorm(4, embed_dims[2])
-        self.dbn3 = nn.GroupNorm(4, embed_dims[1])
-        self.dbn4 = nn.GroupNorm(4, embed_dims[0])
-
-        # - - Final 头部 - - / -- Final head --
-        self.final = nn.Conv2d(embed_dims[-1], num_classes, 1)
+class _MambaLayer(nn.Module):
+    def __init__(self, d_model, d_state=4, d_conv=4, expand=2):
+        super(_MambaLayer, self).__init__()
+        try:
+            from mamba_ssm import Mamba  # type: ignore
+        except ImportError as e:
+            raise RuntimeError(
+                "MUCM-Net requires the `mamba_ssm` CUDA package. "
+                "Install from https://github.com/state-spaces/mamba. "
+                "The official MUCM-Net source hard-depends on mamba_ssm."
+            ) from e
+        self.mamba = Mamba(
+            d_model=d_model,
+            d_state=d_state,
+            d_conv=d_conv,
+            expand=expand,
+        )
         self.apply(self._init_weights)
 
     @staticmethod
@@ -220,88 +66,363 @@ class MUCMNet(nn.Module):
             if m.bias is not None:
                 m.bias.data.zero_()
 
-    def _run_blocks(self, blocks, x, H, W):
-        for blk in blocks:
-            x = blk(x)
+    def forward(self, x):
+        x = self.mamba(x)
         return x
 
-    def forward(self, x_in):
-        B = x_in.shape[0]
-        H, W = x_in.shape[2:]
 
-        # 编码器 / Encoder
-        e1 = F.relu(F.group_norm(self.encoder1(x_in), 4))
-        e1p, H1, W1 = self.patch_embed1(e1)
-        e1p = self._run_blocks(self.block_0_1, e1p, H1, W1)
+# ---------------------------------------------------------------------------
+# DWConv
+# ---------------------------------------------------------------------------
 
-        e2p, H2, W2 = self.patch_embed2(e1p.view(B, H1, W1, -1).permute(0,3,1,2))
-        e2p = self._run_blocks(self.block0, e2p, H2, W2)
+class DWConv(nn.Module):
+    def __init__(self, dim=768):
+        super(DWConv, self).__init__()
+        self.dwconv = nn.Conv2d(dim, dim, 3, 1, 1, bias=True, groups=dim)
+        self.weight = nn.Parameter(torch.ones(dim))
+        self.bias = nn.Parameter(torch.zeros(dim))
 
-        e3p, H3, W3 = self.patch_embed3(e2p.view(B, H2, W2, -1).permute(0,3,1,2))
-        e3p = self._run_blocks(self.block1, e3p, H3, W3)
+    def forward(self, x, H, W):
+        B, N, C = x.shape
+        x = x.transpose(1, 2).view(B, C, H, W)
+        x = F.layer_norm(x, [H, W])
+        x = self.dwconv(x)
+        x = x.flatten(2).transpose(1, 2)
+        return x
 
-        e4p, H4, W4 = self.patch_embed4(e3p.view(B, H3, W3, -1).permute(0,3,1,2))
-        e4p = self._run_blocks(self.block2, e4p, H4, W4)
 
-        e5p, H5, W5 = self.patch_embed5(e4p.view(B, H4, W4, -1).permute(0,3,1,2))
-        e5p = self._run_blocks(self.block3, e5p, H5, W5)
+# ---------------------------------------------------------------------------
+# OverlapPatchEmbed (1x1 strided conv)
+# ---------------------------------------------------------------------------
 
-        # 瓶颈层 / Bottleneck
-        d5 = e5p.view(B, H5, W5, -1).permute(0,3,1,2)  # BCHW
-        d5 = self.decoder0(d5)  # reduce channels
-        d5 = F.relu(F.group_norm(d5, 4))
-        d5 = F.interpolate(d5, scale_factor=2, mode='bilinear', align_corners=False)
+class OverlapPatchEmbed(nn.Module):
+    """Image to Patch Embedding"""
 
-        # 解码 阶段 4 / Decoder stage 4
-        skip4 = e4p.view(B, H4, W4, -1).permute(0,3,1,2)
-        d4 = d5 + skip4
-        d4_flat = rearrange(d4, 'b c h w -> b (h w) c')
-        d4_flat = self._run_blocks(self.dblock0, d4_flat, H4, W4)
-        d4 = d4_flat.view(B, H4, W4, -1).permute(0,3,1,2)
-        d4 = F.relu(self.dbn0(d4))
-        d4 = self.decoder1(d4)
-        d4 = F.interpolate(d4, scale_factor=2, mode='bilinear', align_corners=False)
+    def __init__(self, img_size=224, patch_size=3, stride=2, in_chans=3, embed_dim=768):
+        super().__init__()
+        img_size = to_2tuple(img_size)
+        patch_size = to_2tuple(patch_size)
+        self.img_size = img_size
+        self.patch_size = patch_size
+        self.H, self.W = img_size[0] // patch_size[0], img_size[1] // patch_size[1]
+        self.num_patches = self.H * self.W
+        self.proj = nn.Conv2d(in_chans, embed_dim, kernel_size=1, stride=stride)
+        self.norm = nn.LayerNorm(embed_dim)
 
-        # 解码 阶段 3 / Decoder stage 3
-        skip3 = e3p.view(B, H3, W3, -1).permute(0,3,1,2)
-        d3 = d4 + skip3
-        d3_flat = rearrange(d3, 'b c h w -> b (h w) c')
-        d3_flat = self._run_blocks(self.dblock1, d3_flat, H3, W3)
-        d3 = d3_flat.view(B, H3, W3, -1).permute(0,3,1,2)
-        d3 = F.relu(self.dbn1(d3))
-        d3 = self.decoder2(d3)
-        d3 = F.interpolate(d3, scale_factor=2, mode='bilinear', align_corners=False)
+    def forward(self, x):
+        x = self.proj(x)
+        _, _, H, W = x.shape
+        x = x.flatten(2).transpose(1, 2)
+        x = self.norm(x)
+        return x, H, W
 
-        # 解码 阶段 2 / Decoder stage 2
-        skip2 = e2p.view(B, H2, W2, -1).permute(0,3,1,2)
-        d2 = d3 + skip2
-        d2_flat = rearrange(d2, 'b c h w -> b (h w) c')
-        d2_flat = self._run_blocks(self.dblock2, d2_flat, H2, W2)
-        d2 = d2_flat.view(B, H2, W2, -1).permute(0,3,1,2)
-        d2 = F.relu(self.dbn2(d2))
-        d2 = self.decoder3(d2)
-        d2 = F.interpolate(d2, scale_factor=2, mode='bilinear', align_corners=False)
 
-        # 解码 阶段 1 / Decoder stage 1
-        skip1 = e1p.view(B, H1, W1, -1).permute(0,3,1,2)
-        d1 = d2 + skip1
-        d1_flat = rearrange(d1, 'b c h w -> b (h w) c')
-        d1_flat = self._run_blocks(self.dblock3, d1_flat, H1, W1)
-        d1 = d1_flat.view(B, H1, W1, -1).permute(0,3,1,2)
-        d1 = F.relu(self.dbn3(d1))
-        d1 = self.decoder4(d1)
-        d1 = F.interpolate(d1, scale_factor=2, mode='bilinear', align_corners=False)
+# ---------------------------------------------------------------------------
+# UCMBlock
+# ---------------------------------------------------------------------------
 
-        # Final 解码器 / Final decoder
-        d0 = d1 + e1
-        d0_flat = rearrange(d0, 'b c h w -> b (h w) c')
-        d0_flat = self._run_blocks(self.dblock4, d0_flat, H, W)
-        d0 = d0_flat.view(B, H, W, -1).permute(0,3,1,2)
-        d0 = F.relu(self.dbn4(d0))
-        d0 = self.decoder5(d0)
+class UCMBlock(nn.Module):
+    def __init__(self, dim, num_heads=1, mlp_ratio=4., qkv_bias=False, qk_scale=None,
+                 drop=0., attn_drop=0., drop_path=0., act_layer=nn.GELU,
+                 norm_layer=nn.LayerNorm, sr_ratio=1, shift_size=5):
+        super().__init__()
+        self.drop_path = DropPath(drop_path) if drop_path > 0. else nn.Identity()
+        self.norm2 = norm_layer(dim)
+        self.dim = dim
+        mlp_hidden_dim = int(dim * mlp_ratio)
+        self.fc1 = nn.Linear(dim, mlp_hidden_dim)
+        self.dwconv = DWConv(mlp_hidden_dim)
+        self.dwconv1 = DWConv(mlp_hidden_dim)
+        self.act = nn.GELU()
+        self.act1 = nn.GELU()
+        self.fc2 = nn.Linear(mlp_hidden_dim, dim)
+        self.drop = nn.Dropout(drop)
+        self.fc21 = _MambaLayer(
+            d_model=mlp_hidden_dim,
+            d_state=4,
+            d_conv=4,
+            expand=2,
+        )
+        self.norm3 = norm_layer(dim)
+        self.norm4 = norm_layer(dim)
+        self.apply(self._init_weights)
 
-        out = self.final(d0)
-        if out.shape[2:] != x_in.shape[2:]:
-            out = F.interpolate(out, size=x_in.shape[2:],
-                                mode='bilinear', align_corners=False)
+    @staticmethod
+    def _init_weights(m):
+        if isinstance(m, nn.Linear):
+            trunc_normal_(m.weight, std=.02)
+            if m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+        elif isinstance(m, nn.LayerNorm):
+            nn.init.constant_(m.bias, 0)
+            nn.init.constant_(m.weight, 1.0)
+        elif isinstance(m, nn.Conv2d):
+            fan_out = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
+            fan_out //= m.groups
+            m.weight.data.normal_(0, math.sqrt(2.0 / fan_out))
+            if m.bias is not None:
+                m.bias.data.zero_()
+
+    def forward(self, x, H, W):
+        x = self.norm2(x)
+        B, N, C = x.shape
+        x1 = x.clone().detach()
+        x2 = self.fc21(x1)
+        x1 = x2 + x1
+        x = self.fc1(x)
+        x = self.dwconv(x, H, W)
+        xn = x.transpose(1, 2).view(B, C, H, W).contiguous()
+        xn = self.act1(xn)
+        x = self.drop(xn)
+        x_s = x.reshape(B, C, H * W).contiguous()
+        x = x_s.transpose(1, 2)
+        x = self.drop(x)
+        x = self.fc2(x)
+        x = self.dwconv1(x, H, W)
+        x = self.drop(x)
+        x += x1
+        x = x + self.drop_path(x)
+        return x
+
+
+# ---------------------------------------------------------------------------
+# MUCM-Net
+# ---------------------------------------------------------------------------
+
+class MUCMNet(nn.Module):
+    """MUCM-Net for skin lesion segmentation.
+
+    Default embed_dims=[8,16,24,32,48,64,3] matches the original paper.
+    mlp_ratio=1 for all UCMBlocks.
+    """
+
+    def __init__(self, in_channels=3, num_classes=2, img_size=256,
+                 embed_dims=None, num_heads=None, mlp_ratios=None,
+                 qkv_bias=False, qk_scale=None, drop_rate=0., attn_drop_rate=0.,
+                 drop_path_rate=0., norm_layer=nn.LayerNorm,
+                 depths=None, sr_ratios=None, deep_supervision=False, **kwargs):
+        super().__init__()
+        if embed_dims is None:
+            embed_dims = [8, 16, 24, 32, 48, 64, 3]
+        if depths is None:
+            depths = [1, 1, 1]
+        if sr_ratios is None:
+            sr_ratios = [8, 4, 2, 1]
+        if num_heads is None:
+            num_heads = [1]
+        if mlp_ratios is None:
+            mlp_ratios = [4, 4, 4, 4]
+
+        self.num_classes = num_classes
+        self.img_size = img_size
+        self.deep_supervision = deep_supervision
+
+        self.encoder1 = nn.Conv2d(in_channels, embed_dims[0], 3, stride=1, padding=1)
+        self.ebn1 = nn.GroupNorm(4, embed_dims[0])
+
+        self.norm1 = norm_layer(embed_dims[1])
+        self.norm2 = norm_layer(embed_dims[2])
+        self.norm3 = norm_layer(embed_dims[3])
+        self.norm4 = norm_layer(embed_dims[4])
+        self.norm5 = norm_layer(embed_dims[5])
+
+        self.dnorm2 = norm_layer(embed_dims[4])
+        self.dnorm3 = norm_layer(embed_dims[3])
+        self.dnorm4 = norm_layer(embed_dims[2])
+        self.dnorm5 = norm_layer(embed_dims[1])
+        self.dnorm6 = norm_layer(embed_dims[0])
+
+        dpr = [x.item() for x in torch.linspace(0, drop_path_rate, sum(depths))]
+
+        self.block_0_1 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[1], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.block0 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[2], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.block1 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[3], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.block2 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[4], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[1],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.block3 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[5], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[1],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+
+        self.dblock0 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[4], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.dblock1 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[3], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[0],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.dblock2 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[2], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[1],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.dblock3 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[1], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[1],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+        self.dblock4 = nn.ModuleList([UCMBlock(
+            dim=embed_dims[0], num_heads=num_heads[0], mlp_ratio=1, qkv_bias=qkv_bias,
+            qk_scale=qk_scale, drop=drop_rate, attn_drop=attn_drop_rate, drop_path=dpr[1],
+            norm_layer=norm_layer, sr_ratio=sr_ratios[0])])
+
+        self.patch_embed1 = OverlapPatchEmbed(img_size=img_size, patch_size=3, stride=2,
+                                              in_chans=embed_dims[0], embed_dim=embed_dims[1])
+        self.patch_embed2 = OverlapPatchEmbed(img_size=img_size // 2, patch_size=3, stride=2,
+                                              in_chans=embed_dims[1], embed_dim=embed_dims[2])
+        self.patch_embed3 = OverlapPatchEmbed(img_size=img_size // 4, patch_size=3, stride=2,
+                                              in_chans=embed_dims[2], embed_dim=embed_dims[3])
+        self.patch_embed4 = OverlapPatchEmbed(img_size=img_size // 8, patch_size=3, stride=2,
+                                              in_chans=embed_dims[3], embed_dim=embed_dims[4])
+        self.patch_embed5 = OverlapPatchEmbed(img_size=img_size // 16, patch_size=3, stride=2,
+                                              in_chans=embed_dims[4], embed_dim=embed_dims[5])
+
+        self.decoder0 = nn.Conv2d(embed_dims[5], embed_dims[4], 1, stride=1, padding=0)
+        self.decoder1 = nn.Conv2d(embed_dims[4], embed_dims[3], 1, stride=1, padding=0)
+        self.decoder2 = nn.Conv2d(embed_dims[3], embed_dims[2], 1, stride=1, padding=0)
+        self.decoder3 = nn.Conv2d(embed_dims[2], embed_dims[1], 1, stride=1, padding=0)
+        self.decoder4 = nn.Conv2d(embed_dims[1], embed_dims[0], 1, stride=1, padding=0)
+        self.decoder5 = nn.Conv2d(embed_dims[0], embed_dims[-1], 1, stride=1, padding=0)
+
+        self.dbn0 = nn.GroupNorm(4, embed_dims[4])
+        self.dbn1 = nn.GroupNorm(4, embed_dims[3])
+        self.dbn2 = nn.GroupNorm(4, embed_dims[2])
+        self.dbn3 = nn.GroupNorm(4, embed_dims[1])
+        self.dbn4 = nn.GroupNorm(4, embed_dims[0])
+
+        self.finalpre0 = nn.Conv2d(embed_dims[4], num_classes, kernel_size=1)
+        self.finalpre1 = nn.Conv2d(embed_dims[3], num_classes, kernel_size=1)
+        self.finalpre2 = nn.Conv2d(embed_dims[2], num_classes, kernel_size=1)
+        self.finalpre3 = nn.Conv2d(embed_dims[1], num_classes, kernel_size=1)
+        self.finalpre4 = nn.Conv2d(embed_dims[0], num_classes, kernel_size=1)
+
+        self.final = nn.Conv2d(embed_dims[-1], num_classes, kernel_size=1)
+
+    def forward(self, x, inference_mode=False):
+        B = x.shape[0]
+        H0, W0 = x.shape[2:]
+        # maxpool (/2) + 5 patch-embed strides (/32) => /64; pad to a multiple of 64.
+        pH = (64 - H0 % 64) % 64
+        pW = (64 - W0 % 64) % 64
+        if pH > 0 or pW > 0:
+            x = F.pad(x, [0, pW, 0, pH], mode='reflect')
+
+        ### Encoder
+        ### Conv Stage
+        out = self.encoder1(x)
+        out = F.relu(F.max_pool2d(self.ebn1(out), 2, 2))
+        t1 = out
+
+        ### Stage 2
+        out, H, W = self.patch_embed1(out)
+        for i, blk in enumerate(self.block_0_1):
+            out = blk(out, H, W)
+        out = self.norm1(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        t2 = out
+
+        ### Stage 3
+        out, H, W = self.patch_embed2(out)
+        for i, blk in enumerate(self.block0):
+            out = blk(out, H, W)
+        out = self.norm2(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        t3 = out
+
+        ### Stage 4
+        out, H, W = self.patch_embed3(out)
+        for i, blk in enumerate(self.block1):
+            out = blk(out, H, W)
+        out = self.norm3(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        t4 = out
+
+        ### Bottleneck
+        out, H, W = self.patch_embed4(out)
+        for i, blk in enumerate(self.block2):
+            out = blk(out, H, W)
+        out = self.norm4(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        t5 = out
+
+        out, H, W = self.patch_embed5(out)
+        for i, blk in enumerate(self.block3):
+            out = blk(out, H, W)
+        out = self.norm5(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+
+        ### Decoder
+        out = F.relu(F.interpolate(self.dbn0(self.decoder0(out)), scale_factor=2, mode='bilinear'))
+        out = torch.add(out, t5)
+        if self.deep_supervision and not inference_mode:
+            outtpre0 = self.finalpre0(F.interpolate(out, scale_factor=32, mode='bilinear', align_corners=True))
+
+        _, _, H, W = out.shape
+        out = out.flatten(2).transpose(1, 2)
+        for i, blk in enumerate(self.dblock0):
+            out = blk(out, H, W)
+        out = self.dnorm2(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        out = F.relu(F.interpolate(self.dbn1(self.decoder1(out)), scale_factor=2, mode='bilinear'))
+        out = torch.add(out, t4)
+        if self.deep_supervision and not inference_mode:
+            outtpre1 = self.finalpre1(F.interpolate(out, scale_factor=16, mode='bilinear', align_corners=True))
+
+        _, _, H, W = out.shape
+        out = out.flatten(2).transpose(1, 2)
+        for i, blk in enumerate(self.dblock1):
+            out = blk(out, H, W)
+        out = self.dnorm3(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        out = F.relu(F.interpolate(self.dbn2(self.decoder2(out)), scale_factor=2, mode='bilinear'))
+        out = torch.add(out, t3)
+        if self.deep_supervision and not inference_mode:
+            outtpre2 = self.finalpre2(F.interpolate(out, scale_factor=8, mode='bilinear', align_corners=True))
+
+        _, _, H, W = out.shape
+        out = out.flatten(2).transpose(1, 2)
+        for i, blk in enumerate(self.dblock2):
+            out = blk(out, H, W)
+        out = self.dnorm4(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        out = F.relu(F.interpolate(self.dbn3(self.decoder3(out)), scale_factor=2, mode='bilinear'))
+        out = torch.add(out, t2)
+        if self.deep_supervision and not inference_mode:
+            outtpre3 = self.finalpre3(F.interpolate(out, scale_factor=4, mode='bilinear', align_corners=True))
+
+        _, _, H, W = out.shape
+        out = out.flatten(2).transpose(1, 2)
+        for i, blk in enumerate(self.dblock3):
+            out = blk(out, H, W)
+        out = self.dnorm5(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        out = F.relu(F.interpolate(self.dbn4(self.decoder4(out)), scale_factor=2, mode='bilinear'))
+        out = torch.add(out, t1)
+        if self.deep_supervision and not inference_mode:
+            outtpre4 = self.finalpre4(F.interpolate(out, scale_factor=2, mode='bilinear', align_corners=True))
+
+        _, _, H, W = out.shape
+        out = out.flatten(2).transpose(1, 2)
+        for i, blk in enumerate(self.dblock4):
+            out = blk(out, H, W)
+        out = self.dnorm6(out)
+        out = out.reshape(B, H, W, -1).permute(0, 3, 1, 2).contiguous()
+        out = F.relu(F.interpolate(self.decoder5(out), scale_factor=2, mode='bilinear'))
+        out = self.final(out)
+
+        if out.shape[2:] != (H0, W0):
+            out = F.interpolate(out, size=(H0, W0), mode='bilinear', align_corners=False)
+
+        if self.deep_supervision and not inference_mode:
+            return (outtpre0, outtpre1, outtpre2, outtpre3, outtpre4), out
         return out

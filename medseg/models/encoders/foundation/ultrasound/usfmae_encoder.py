@@ -8,13 +8,13 @@ Reference:
 
 USF-MAE is a masked-autoencoder (MAE) ViT-Base/16 (``embed_dim=768``,
 ``patch_size=16``) pre-trained on 370K ultrasound images from 46 open-source
-datasets (OpenUS-46).  Weights are released on GitHub at
-``Yusufii9/USF-MAE`` (Facebook MAE checkpoint format).
+datasets (OpenUS-46).  Weights are released on Google Drive (see the
+``Yusufii9/USF-MAE`` GitHub README Checkpoints table).
 
-``pretrained=True`` attempts to auto-download the checkpoint via
-``torch.hub.load_state_dict_from_url``.  If the download fails (e.g. no
-network), provide a local checkpoint path via ``pretrained_path``.
-``pretrained=False`` raises ``RuntimeError``.
+``pretrained=True`` auto-downloads the checkpoint via the WEIGHT_REGISTRY
+(uses ``gdown`` for Google Drive).  If the download fails, provide a local
+checkpoint path via ``pretrained_path``.  ``pretrained=False`` raises
+``RuntimeError``.
 
 The ViT encoder token grid is projected into a 4-stage DPT-style multi-block
 pyramid (deepest LAST), matching the ``BaseFoundationEncoder`` contract.
@@ -36,11 +36,8 @@ from medseg.registry import ENCODER_REGISTRY
 from medseg.models.encoders.foundation._base import DPTHead, BaseFoundationEncoder, load_hf_vit
 
 
-# Auto-download URL (GitHub release asset).
-_DOWNLOAD_URL = (
-    "https://github.com/Yusufii9/USF-MAE/raw/main/"
-    "checkpoints/usf_mae_vitb16_100ep.pth"
-)
+# Download is handled by WEIGHT_REGISTRY key "usfmae" (Google Drive via gdown).
+# See medseg/utils/weight_downloader.py for the registered WeightSource.
 
 _EMBED_DIM = 768
 _PATCH_SIZE = 16
@@ -87,28 +84,18 @@ def _load_mae_vit_b16(pretrained_path: Optional[str] = None) -> nn.Module:
         state = ckpt if isinstance(ckpt, dict) else None
 
     if state is None:
-        # Auto-download from GitHub.
-        try:
-            ckpt = torch.hub.load_state_dict_from_url(
-                _DOWNLOAD_URL, map_location="cpu", check_hash=False
-            )
-            if isinstance(ckpt, dict):
-                for key in ("state_dict", "model", "model_state_dict"):
-                    if key in ckpt and isinstance(ckpt[key], dict):
-                        ckpt = ckpt[key]
-                        break
-            state = ckpt if isinstance(ckpt, dict) else None
-        except Exception as e:
-            warnings.warn(
-                f"USF-MAE auto-download failed: {type(e).__name__}: {e}. "
-                "Provide a local checkpoint via pretrained_path. "
-                "Download from: https://github.com/Yusufii9/USF-MAE"
-            )
-            raise RuntimeError(
-                "USF-MAE pretrained weights could not be loaded. "
-                "Download the checkpoint from https://github.com/Yusufii9/USF-MAE "
-                "and provide the local path via pretrained_path."
-            ) from e
+        # Auto-download via WEIGHT_REGISTRY (uses gdown for Google Drive).
+        # ensure_weight() raises WeightDownloadError with the manual
+        # download URL and target path if all automated sources fail.
+        from medseg.utils.weight_downloader import ensure_weight
+        ckpt_path = ensure_weight("usfmae")
+        ckpt = torch.load(str(ckpt_path), map_location="cpu", weights_only=False)
+        if isinstance(ckpt, dict):
+            for key in ("state_dict", "model", "model_state_dict"):
+                if key in ckpt and isinstance(ckpt[key], dict):
+                    ckpt = ckpt[key]
+                    break
+        state = ckpt if isinstance(ckpt, dict) else None
 
     # Strip known MAE prefixes.
     if isinstance(state, dict):

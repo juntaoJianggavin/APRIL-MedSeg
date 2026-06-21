@@ -397,7 +397,7 @@ Vary the CRF refinement iterations:
 
 ### Related Documentation
 
-- [All Weakly Supervised Methods](../paradigms/weakly_supervised.md) — Complete method catalog (28 methods)
+- [All Weakly Supervised Methods](../paradigms/weakly_supervised.md) — Complete method catalog (20 methods)
 
 ---
 

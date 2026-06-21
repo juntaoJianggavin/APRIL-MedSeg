@@ -9,7 +9,12 @@ model:
   encoder:
     in_channels: 3
   arch_params:
-    embed_dim: 96
+    feat_size:
+    - 48
+    - 96
+    - 192
+    - 384
+    - 768
     depths:
     - 2
     - 2

@@ -1,11 +1,13 @@
-# Source: https://github.com/zavareh1/Wav-KAN
-# Network: wav_kan_unet (complete architecture)
-# 完整网络：wav_kan_unet（完整架构）
+# Reference: Liu & Wang, "WA-UKAN: Wavelet-Enhanced Attention Kolmogorov-Arnold
+#   Networks for medical image segmentation", Signal Processing: Image
+#   Communication, 2026. DOI: 10.1016/j.image.2026.117534
+# Network: wa_ukan (complete architecture)
+# 完整网络：wa_ukan（完整架构）
 
 model:
   num_classes: 4
   img_size: 224
-  architecture: wav_kan_unet
+  architecture: wa_ukan
   encoder:
     in_channels: 3
   arch_params: {}

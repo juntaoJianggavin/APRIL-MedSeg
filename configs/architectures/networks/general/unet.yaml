@@ -1,24 +1,17 @@
-# UNet (Ronneberger et al., 2015)
+# UNet (Ronneberger et al., MICCAI 2015)
 # UNet 分割网络
-# Standard UNet with basic encoder + unet decoder
+# The original U-Net: 4-level encoder-decoder with skip concatenation
+# 原始 U-Net：4 层编码-解码 + 跳跃拼接
 # Standalone architecture: unet
 # 独立架构: unet
 
 model:
   num_classes: 2
   img_size: 256
+  architecture: unet
   encoder:
-    name: basic
-    pretrained: false
     in_channels: 3
-    params: {}
-  decoder:
-    name: unet
-    params: {}
-  skip_connection:
-    name: concat
-  bottleneck:
-    name: none
+  arch_params: {}
 
 data:
   type: generic

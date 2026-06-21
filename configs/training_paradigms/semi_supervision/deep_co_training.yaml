@@ -5,8 +5,8 @@
 # DeepCoTraining — Deep Co-Training with Dual Networks + VAT
 # ============================================================================
 # 论文 / Paper:
-#   Qiao et al., "DeepCoTraining: Semi-Supervised Image Recognition
-#   with CNNs", ECCV 2018  https://arxiv.org/abs/1802.05321
+#   Qiao et al., "Deep Co-Training for Semi-Supervised Image
+#   Recognition", ECCV 2018  https://arxiv.org/abs/1803.05984
 #
 # 算法概述 / Algorithm:
 #   - 两个独立网络 (不同初始化) 同时训练
@@ -27,7 +27,7 @@
 #   rampup_epochs        — 权重渐增周期数 / Epochs to ramp consistency from 0
 #
 # 适用场景 / Best for: 异构双网络协同 / Heterogeneous dual-network co-training
-# 源码参考 / Reference code: https://github.com/qiaoyu1002/DeepCoTraining
+# 源码参考 / Reference code: https://arxiv.org/abs/1803.05984
 #
 # 用法 / Usage: python semi_train.py --config configs/training_paradigms/semi_supervision/deep_co_training.yaml
 # ============================================================================

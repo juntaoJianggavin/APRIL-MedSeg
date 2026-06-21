@@ -10,7 +10,7 @@ Active methods:
                            https://github.com/CuriousAI/mean-teacher
     - cps                  Chen et al., CVPR 2021
                            https://github.com/charlesCXK/TorchSemiSeg
-    - cct                  Ouali et al., BMVC 2020
+    - cct                  Ouali et al., CVPR 2020
                            https://github.com/yassouali/CCT
     - unimatch             Yang et al., CVPR 2023
                            https://github.com/LiheYoung/UniMatch

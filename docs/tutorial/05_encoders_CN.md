@@ -291,9 +291,9 @@ model:
 
 ### 相关文档
 
-- [编码器指南](../models/encoders.md) — 所有 178 个编码器及模型路径
+- [编码器指南](../models/encoders.md) — 所有 176 个编码器及模型路径
 - [timm 封装器](../models/encoders.md#timm-wrapper) — 动态编码器封装器用法
-- [Foundation 模型](../models/encoders.md#foundation-models) — 9 个模态的 35 个 Foundation 编码器
+- [Foundation 模型](../models/encoders.md#foundation-models) — 9 个模态的 38 个 Foundation 编码器
 
 ---
 

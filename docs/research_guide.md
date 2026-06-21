@@ -35,7 +35,7 @@ Fair comparison of architectures across multiple medical segmentation benchmarks
 | RIR-Zigzag | RWKV | TMI 2025 | `rir_zigzag` |
 | Rolling-UNet | MLP | AAAI 2024 | `rolling_unet` |
 | U-KAN | KAN | AAAI 2025 | `ukan` |
-| Mobile-U-ViT | Lightweight Transformer | — | `mobile_u_vit` |
+| Mobile-U-ViT | Lightweight Transformer | ACM MM 2025 | `mobile_u_vit` |
 | UNet (basic) | CNN baseline | Ronneberger 2015 | encoder `basic` + decoder `unet` |
 | UNet++ | CNN Dense | Zhou 2018 | `unetpp` |
 | Attention UNet | CNN Attention | Oktay 2018 | `attention_unet` |
@@ -63,7 +63,7 @@ Fix encoder, compare decoders to find the best encoder-decoder pairing.
 
 ### Experiment Design
 
-**3 representative encoders** × **all 45 decoders**:
+**3 representative encoders** × **all 44 decoders**:
 
 | Encoder | Type | Rationale |
 |---------|------|-----------|
@@ -106,7 +106,7 @@ python train.py --config configs/architectures/decoder_study/general/resnet50_em
 
 ### Available YAMLs
 
-`configs/architectures/decoder_study/general/` contains 133 YAMLs (3 encoders × 45 decoders).
+`configs/architectures/decoder_study/general/` contains 133 YAMLs (3 encoders × 44 decoders + 1 augmented variant).
 
 ---
 
@@ -268,7 +268,7 @@ bash scripts/experiments/run_lightweight_skin.sh
 ### Weakly Supervised
 
 **Dataset**: BUSI (box annotation) / Kvasir-SEG (point annotation)
-**Methods**: BoxSup / PointSup / CAM / GatedCRF / TreeEnergy
+**Methods**: BoxSup / PointSup / CAM / SEAM / TreeEnergy
 
 ```bash
 bash scripts/experiments/run_semi_study.sh
@@ -285,7 +285,7 @@ bash scripts/experiments/run_weak_study.sh
 
 ### Trainable Model Comparison
 
-Compare LanGuideMedSeg / LViT / MediSee etc. on QaTa-COV19 and MosMedData+ (methods requiring per-image text).
+Compare LanGuideMedSeg / LViT / TGANet etc. on QaTa-COV19 and MosMedData+ (methods requiring per-image text).
 
 ### Inference Pipeline Comparison
 
@@ -401,16 +401,16 @@ UNet / Attention-UNet / UNet++ / ResNet50+UNet. SAM-family models are excluded
 | UNet++ | Dense nested skip | `unetpp` | Zhou 2018 |
 | ResNet50+UNet | ImageNet pretrained | `encoder: timm_resnet50` + `decoder: unet` | — |
 | **Domain-Specific** | | | |
-| SEPNet | MAP(RFB) + CRC progressive refinement | `sepnet` | — |
-| CTNet | SMIM multi-scale + CIM cross-layer fusion | `ctnet` | — |
+| SEPNet | MAP(RFB) + CRC progressive refinement | `sepnet` | IEEE TCSVT 2024 |
+| CTNet | SMIM multi-scale + CIM cross-layer fusion | `ctnet` | IEEE TCYB 2024 |
 | Polyper | Swin-T dual-branch (region+boundary) + BGM | `polyper` | — |
-| PolypPVT | PVTv2 + CFM + cascade attention | `polyp_pvt` | AAAI 2023 |
+| PolypPVT | PVTv2 + CFM + cascade attention | `polyp_pvt` | CAAI AIR 2023 |
 | CASCADE | Cascaded attention decoder | `cascade` | MICCAI 2023 |
 | HSNet | PVTv2 + cascaded CSA | `hsnet` | 2023 |
 | SSFormer | MiT-B2 + PLD decoder | `ssformer` | 2023 |
 | LDNet | Lesion-aware dynamic kernel | `ldnet` | 2022 |
 | ESFPNet | Efficient sparse FPN | `esfpnet` | 2023 |
-| MIST | Multi-task seg transformer | `mist` | 2023 |
+| MIST | Medical Image Seg Transformer (CAM decoder) | `mist` | 2024 |
 | FCBFormer | FCN + Transformer fusion | `fcbformer` | 2022 |
 | TransNetR | Transformer + residual | `transnetr` | 2022 |
 

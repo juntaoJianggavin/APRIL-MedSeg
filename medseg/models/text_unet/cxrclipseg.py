@@ -1,12 +1,12 @@
-# CXR-CLIP-Seg (TMI 2025)
-# 参考: https: / / github. com / kakaobrain / cxr-clip / Reference: https://github.com/kakaobrain/cxr-clip
+# CXR-CLIP-Seg (MICCAI 2023)
+# 参考: https: / / github. com / Soombit-ai / cxr-clip / Reference: https://github.com/Soombit-ai/cxr-clip (transferred from kakaobrain)
 # Paper: https://arxiv.org/abs/2310.13292
 # Implemented from paper formulas; not a copy of the official repo.
 """CXR-CLIP-Seg: Chest X-Ray CLIP for Zero/Few-Shot Segmentation.
     CXR-CLIP-Seg: Chest X-Ray CLIP for Zero / Few-Shot 分割。
 
-You et al., "CXR-CLIP: Chest X-Ray Contrastive Language-Image Pre-training
-for downstream segmentation", IEEE TMI 2025.
+You et al., "CXR-CLIP: Toward Large Scale Chest X-ray Language-Image Pre-training",
+MICCAI 2023. DOI: 10.1007/978-3-031-43895-0_10
 
 Architecture (from paper Sec. III-C):
     1. A CLIP-style dual encoder pre-trained on CXR-report pairs:

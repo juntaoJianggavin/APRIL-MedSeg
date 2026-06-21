@@ -26,7 +26,7 @@
 | `cwd` | Shu et al. | ICCV 2021 | [irfanICMLL/TorchDistiller](https://github.com/irfanICMLL/TorchDistiller) | Channel-wise distillation | [cwd.yaml](../../configs/training_paradigms/distillation/cwd.yaml) |
 | `review_kd` | Chen et al. | CVPR 2021 | [dvlab-research/ReviewKD](https://github.com/dvlab-research/ReviewKD) | Knowledge review | [review_kd.yaml](../../configs/training_paradigms/distillation/review_kd.yaml) |
 | `simkd` | Chen et al. | CVPR 2022 | [DefangChen/SimKD](https://github.com/DefangChen/SimKD) | Simple KD with projector | - |
-| `norm_kd` | Liu et al. (NORM) | ICLR 2023 | [xyliu7/NORM](https://github.com/xyliu7/NORM) | Normalized logits KD | [norm_kd.yaml](../../configs/training_paradigms/distillation/norm_kd.yaml) |
+| `norm_kd` | Liu et al. (NormKD) | ICLR 2023 | [xyliu7/NORM](https://github.com/xyliu7/NORM) *(no longer available)* | Normalized logits KD | [norm_kd.yaml](../../configs/training_paradigms/distillation/norm_kd.yaml) |
 | `sdd` | Wei et al. | CVPR 2024 | [shicaiwei123/SDD-CVPR2024](https://github.com/shicaiwei123/SDD-CVPR2024) | Scale decoupled distillation | [sdd.yaml](../../configs/training_paradigms/distillation/sdd.yaml) |
 | `aicsd` | Mansurian et al. | TNNLS 2024 | [AmirMansurian/AICSD](https://github.com/AmirMansurian/AICSD) | Adaptive inter-class similarity | [aicsd.yaml](../../configs/training_paradigms/distillation/aicsd.yaml) |
 | `logit_std_kd` | Sun et al. | CVPR 2024 | [sunshangquan/logit-standardization-KD](https://github.com/sunshangquan/logit-standardization-KD) | Logit standardization | [logit_std_kd.yaml](../../configs/training_paradigms/distillation/logit_std_kd.yaml) |

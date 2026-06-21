@@ -299,9 +299,9 @@ model:
 
 ### 相关文档
 
-- [解码器参考](../models/decoders.md) — 所有 45 个解码器的架构细节
-- [跳跃连接](../models/skips.md) — 所有 25 个跳跃连接方法
-- [架构指南](../models/architectures.md) — 完整网络组装指南
+- [解码器参考](../models/decoders.md) — 所有 47 个解码器的架构细节
+- [跳跃连接](../models/skip_connections.md) — 所有 25 个跳跃连接方法
+- [架构指南](../models/networks.md) — 完整网络组装指南
 
 ---
 

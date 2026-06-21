@@ -2,7 +2,7 @@
 
 [English](decoders.md)
 
-本项目提供 45 个解码器模块，按类别分组如下。
+本项目提供 47 个解码器模块，按类别分组如下。
 
 ## 基础 (4)
 
@@ -10,9 +10,9 @@
 
 | 名称 | 说明 | YAML |
 |---|---|---|
-| `unet` | 标准 UNet 反卷积解码器 | [unet_basic.yaml](../../configs/architectures/combinations/general/unet_basic.yaml) |
+| `unet` / `deconv_upcat` | 标准 UNet 解码器：ConvTranspose → 拼接skip → DoubleConv（别名 `deconv_upcat` = 先上采样后拼接） | [unet_basic.yaml](../../configs/architectures/combinations/general/unet_basic.yaml) |
 | `bilinear` | 双线性插值上采样 | [basic_bilinear.yaml](../../configs/architectures/decoder_study/general/basic_bilinear.yaml) |
-| `deconv` | 转置卷积上采样 | [deconv_resnet34.yaml](../../configs/architectures/combinations/general/deconv_resnet34.yaml) |
+| `deconv` / `deconv_catup` | 转置卷积解码器：拼接skip → 上采样 → 卷积（别名 `deconv_catup` = 先拼接后上采样） | [deconv_resnet34.yaml](../../configs/architectures/combinations/general/deconv_resnet34.yaml) |
 | `dw_sep` | 深度可分离卷积解码器 | [dwsep_resnet34.yaml](../../configs/architectures/combinations/general/dwsep_resnet34.yaml) |
 
 ## 密集连接 (2)
@@ -41,13 +41,14 @@
 | `merit_add` | MERIT 解码器（add 融合） | [basic_merit_add.yaml](../../configs/architectures/decoder_study/general/basic_merit_add.yaml) |
 | `merit_cat` | MERIT 解码器（concat 融合） | [basic_merit_cat.yaml](../../configs/architectures/decoder_study/general/basic_merit_cat.yaml) |
 
-## 金字塔 (1)
+## 金字塔 (2)
 
 金字塔聚合解码器。
 
 | 名称 | 说明 | YAML |
 |---|---|---|
 | `upernet` | UPerNet 统一感知金字塔 | [basic_upernet.yaml](../../configs/architectures/decoder_study/general/basic_upernet.yaml) |
+| `deeplabv3` | DeepLabV3（ASPP 解码器） | [resnet50_deeplabv3.yaml](../../configs/architectures/combinations/general/resnet50_deeplabv3.yaml) |
 
 ## MLP (2)
 
@@ -58,7 +59,7 @@ MLP 解码器。
 | `mlp` | 通用 MLP 解码器 | [mlp_resnet34.yaml](../../configs/architectures/combinations/general/mlp_resnet34.yaml) |
 | `segformer` | SegFormer 风格 MLP 解码器 | [swinunet_segformer.yaml](../../configs/architectures/combinations/general/swinunet_segformer.yaml) |
 
-## 特定网络专属 (15)
+## 特定网络专属 (13)
 
 特定网络专属解码器。
 
@@ -72,12 +73,10 @@ MLP 解码器。
 | `fatnet` | FAT-Net | [basic_fatnet.yaml](../../configs/architectures/decoder_study/general/basic_fatnet.yaml) |
 | `h2former` | H2Former | [basic_h2former.yaml](../../configs/architectures/decoder_study/general/basic_h2former.yaml) |
 | `hiformer` | HiFormer | [hiformer_cascade.yaml](../../configs/architectures/combinations/general/hiformer_cascade.yaml) |
-| `missformer` | MISSFormer | [basic_missformer.yaml](../../configs/architectures/decoder_study/general/basic_missformer.yaml) |
+| `ham` | HAM（NMF 全局上下文建模） | [ham_resnet34.yaml](../../configs/architectures/combinations/general/ham_resnet34.yaml) |
 | `scaleformer` | ScaleFormer | [scaleformer_cascade_full.yaml](../../configs/architectures/combinations/general/scaleformer_cascade_full.yaml) |
 | `malunet` | MALUNet | [basic_malunet.yaml](../../configs/architectures/decoder_study/general/basic_malunet.yaml) |
 | `ege_unet` | EGE-UNet | [basic_ege_unet.yaml](../../configs/architectures/decoder_study/general/basic_ege_unet.yaml) |
-| `deeplabv3` | DeepLabV3（ASPP 解码器） | [resnet50_deeplabv3.yaml](../../configs/architectures/combinations/general/resnet50_deeplabv3.yaml) |
-| `banet` | BANet 边界感知网络 | [basic_banet.yaml](../../configs/architectures/decoder_study/general/basic_banet.yaml) |
 | `ffparser` | FF-Parser 频率滤波器 | [basic_ffparser.yaml](../../configs/architectures/decoder_study/general/basic_ffparser.yaml) |
 
 ## Transformer (5)
@@ -87,22 +86,23 @@ Transformer 解码器。
 | 名称 | 说明 | YAML |
 |---|---|---|
 | `daeformer` | DAEFormer 解码器 | [daeformer_emcad.yaml](../../configs/architectures/combinations/general/daeformer_emcad.yaml) |
+| `missformer` | MISSFormer 解码器 | [basic_missformer.yaml](../../configs/architectures/decoder_study/general/basic_missformer.yaml) |
 | `mtunet` | MT-UNet 解码器 | [basic_mtunet.yaml](../../configs/architectures/decoder_study/general/basic_mtunet.yaml) |
 | `nnformer` | nnFormer 解码器 | [mednext_nnformer.yaml](../../configs/architectures/combinations/general/mednext_nnformer.yaml) |
 | `swinunet` | Swin-UNet 解码器 | [swinunet_segformer.yaml](../../configs/architectures/combinations/general/swinunet_segformer.yaml) |
-| `uctransnet` | UCTransNet 解码器 | [uctransnet.yaml](../../configs/architectures/combinations/general/uctransnet.yaml) |
 
-## 注意力 (5)
+## 注意力 (6)
 
 注意力机制解码器。
 
 | 名称 | 说明 | YAML |
 |---|---|---|
 | `attention` | 注意力门控解码器 | [attention_unet_basic.yaml](../../configs/architectures/combinations/general/attention_unet_basic.yaml) |
-| `ham` | HAM 混合注意力 | [ham_resnet34.yaml](../../configs/architectures/combinations/general/ham_resnet34.yaml) |
+| `banet` | BANet 边界感知注意力解码器 | [basic_banet.yaml](../../configs/architectures/decoder_study/general/basic_banet.yaml) |
+| `ccnet` | CCNet 十字交叉注意力（ICCV 2019） | [basic_ccnet.yaml](../../configs/architectures/decoder_study/general/basic_ccnet.yaml) |
 | `lawin` | Lawin 大窗口注意力 | [lawin_resnet50.yaml](../../configs/architectures/combinations/general/lawin_resnet50.yaml) |
 | `ocrnet` | OCRNet 空间 OCR（ECCV 2020） | [basic_ocrnet.yaml](../../configs/architectures/decoder_study/general/basic_ocrnet.yaml) |
-| `ccnet` | CCNet 十字交叉注意力（ICCV 2019） | [basic_ccnet.yaml](../../configs/architectures/decoder_study/general/basic_ccnet.yaml) |
+| `uctransnet` | UCTransNet 通道交叉注意力（CCA）解码器 | [uctransnet.yaml](../../configs/architectures/combinations/general/uctransnet.yaml) |
 
 ## Mamba (1)
 

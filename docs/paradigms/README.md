@@ -4,13 +4,14 @@
 
 ## Loss Functions
 
-The framework registers **88** losses via `LOSS_REGISTRY`, grouped by usage:
+The framework registers **81** losses via `LOSS_REGISTRY` (supervised + distillation + domain adaptation + weakly supervised). An additional **21** semi-supervised loss terms are integrated directly in the training loop (not via `LOSS_REGISTRY`):
 
-### Supervised Losses (15)
+### Supervised Losses (16)
 
 | Name | Description | Source |
 |------|-------------|--------|
 | `ce` | Cross-Entropy | [ce_loss.py](../../medseg/losses/ce_loss.py) |
+| `bce` | Binary Cross-Entropy | [ce_loss.py](../../medseg/losses/ce_loss.py) |
 | `dice` | Dice Loss | [dice_loss.py](../../medseg/losses/dice_loss.py) |
 | `focal` | Focal Loss (Lin et al.) | [focal_loss.py](../../medseg/losses/focal_loss.py) |
 | `tversky` | Tversky Loss | [tversky_loss.py](../../medseg/losses/tversky_loss.py) |
@@ -38,7 +39,7 @@ See [domain_adaptation.md](domain_adaptation.md).
 
 See [distillation.md](distillation.md).
 
-### Weakly Supervised Losses (28)
+### Weakly Supervised Losses (20)
 
 See [weakly_supervised.md](weakly_supervised.md).
 

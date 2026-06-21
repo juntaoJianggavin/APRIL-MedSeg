@@ -31,8 +31,8 @@ Active methods:
                      https://github.com/lhoyer/HRDA
     - pipa         : Chen et al., ACM MM 2023 (pixel + patch InfoNCE)
                      https://github.com/chen742/PiPa
-    - ddb          : Du et al., CVPR 2023 (dual-domain decoupled bridging)
-                     https://github.com/xinyuelll/DDB
+    - ddb          : Du et al., NeurIPS 2022 (deliberated domain bridging)
+                     https://github.com/xiaoachen98/DDB
     - sepico       : Xie et al., TPAMI 2023 (semantic-guided pixel contrast
                      with persistent class prototypes + distributional KL)
                      https://github.com/BIT-DA/SePiCo
@@ -41,7 +41,7 @@ Active methods:
                      https://github.com/BIT-DA/DiGA
     - micdrop      : Hoyer et al., ECCV 2024 (Masked Image Consistency +
                      complementary feature dropout)
-                     https://github.com/lhoyer/MICDrop
+                     https://github.com/lhoyer/HRDA
     - semivl_da    : Karazija et al., ECCV 2024 (vision-language guided
                      self-training; class-text prototype InfoNCE adapted
                      to UDA, no-CLIP "trainable prototype" variant)

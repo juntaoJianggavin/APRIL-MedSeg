@@ -21,10 +21,10 @@
 | `daformer_fd` | Hoyer et al. | CVPR 2022 | [lhoyer/DAFormer](https://github.com/lhoyer/DAFormer) | 特征距离 + 稀有类采样 | [daformer_fd.yaml](../../configs/training_paradigms/domain_adaptation/daformer_fd.yaml) |
 | `hrda` | Hoyer et al. | ECCV 2022 | [lhoyer/HRDA](https://github.com/lhoyer/HRDA) | 多分辨率尺度注意力 | [hrda.yaml](../../configs/training_paradigms/domain_adaptation/hrda.yaml) |
 | `pipa` | Chen et al. | ACM MM 2023 | [chen742/PiPa](https://github.com/chen742/PiPa) | 像素 + patch InfoNCE | [pipa.yaml](../../configs/training_paradigms/domain_adaptation/pipa.yaml) |
-| `ddb` | Du et al. | CVPR 2023 | [xinyuelll/DDB](https://github.com/xinyuelll/DDB) | 双域解耦桥接 | [ddb.yaml](../../configs/training_paradigms/domain_adaptation/ddb.yaml) |
+| `ddb` | Du et al. | NeurIPS 2022 | [xiaoachen98/DDB](https://github.com/xiaoachen98/DDB) | 审慎域桥接 | [ddb.yaml](../../configs/training_paradigms/domain_adaptation/ddb.yaml) |
 | `sepico` | Xie et al. | TPAMI 2023 | [BIT-DA/SePiCo](https://github.com/BIT-DA/SePiCo) | 语义像素对比 + KL | [sepico.yaml](../../configs/training_paradigms/domain_adaptation/sepico.yaml) |
 | `diga` | Shen et al. | CVPR 2023 | [BIT-DA/DiGA](https://github.com/BIT-DA/DiGA) | 蒸馏引导适应 | [diga.yaml](../../configs/training_paradigms/domain_adaptation/diga.yaml) |
-| `micdrop` | Hoyer et al. | ECCV 2024 | [lhoyer/MICDrop](https://github.com/lhoyer/MICDrop) | MIC + 互补特征丢弃 | [micdrop.yaml](../../configs/training_paradigms/domain_adaptation/micdrop.yaml) |
+| `micdrop` | Hoyer et al. | ECCV 2024 | [lhoyer/HRDA](https://github.com/lhoyer/HRDA) | MIC + 互补特征丢弃 | [micdrop.yaml](../../configs/training_paradigms/domain_adaptation/micdrop.yaml) |
 | `semivl_da` | Karazija et al. | ECCV 2024 | [google-research/semivl](https://github.com/google-research/semivl) | 视觉-语言引导自训练 | [semivl.yaml](../../configs/training_paradigms/domain_adaptation/semivl.yaml) |
 
 ## 配置示例

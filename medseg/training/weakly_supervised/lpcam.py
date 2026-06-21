@@ -1,12 +1,12 @@
 # LPCAM (CVPR 2023)
 # Reference: https://github.com/zhaozhengChen/LPCAM
-# Paper: https://arxiv.org/abs/2304.09244
+# Paper: https://arxiv.org/abs/2303.10334
 # Implemented from paper formulas; not a copy of the official repo.
 """LPCAM — Local Prototype CAM for Weakly Supervised Semantic Segmentation.
 
 Chen et al., "Extracting Class Activation Maps from Non-Discriminative
 Features as well", CVPR 2023.
-Paper: https://arxiv.org/abs/2304.09244
+Paper: https://arxiv.org/abs/2303.10334
 Official repository: https://github.com/zhaozhengChen/LPCAM
 
 Why it exists.

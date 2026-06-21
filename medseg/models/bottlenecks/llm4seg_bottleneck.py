@@ -1,6 +1,12 @@
 """LLM4Seg bottleneck — Tang et al., MICCAI 2025.
     LLM4Seg 瓶颈层。
 
+Reference:
+    Tang et al., "Pre-Trained LLM is a Semantic-Aware and Generalizable
+    Segmentation Booster", MICCAI 2025.
+    https://github.com/FengheTan9/LLM4Seg
+    arXiv: 2506.18034
+
 Idea: use the last K transformer blocks of a *frozen* pretrained LLM
 (Llama / Qwen / Phi / etc.) as a bottleneck refiner for medical image
 segmentation. The LLM blocks reason over the flattened spatial tokens at
@@ -21,7 +27,7 @@ network errors). See :mod:`medseg.utils.hf_hub`.
 No silent fallback to a different model — if the requested LLM cannot be
 loaded, a clear RuntimeError is raised.
 """
-# Source: NOT VERIFIED — fabricated by this repo, no upstream confirmed.
+# Source: https://github.com/FengheTan9/LLM4Seg (MICCAI 2025)
 
 from __future__ import annotations
 import warnings

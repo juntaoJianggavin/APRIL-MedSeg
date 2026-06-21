@@ -1,5 +1,5 @@
 # SemPLeS (WACV 2025)
-# Reference: https://github.com/CIAI-NCKU/SemPLeS
+# Reference: https://github.com/NVlabs/SemPLeS
 # Paper: https://arxiv.org/abs/2401.11791
 # Implemented from paper formulas; not a copy of the official repo.
 """SemPLeS — Semantic Prompt Learning for Weakly-Supervised Semantic
@@ -8,7 +8,7 @@ Segmentation.
 Lin et al., "SemPLeS: Semantic Prompt Learning for Weakly-Supervised
 Semantic Segmentation", WACV 2025.
 Paper: https://arxiv.org/abs/2401.11791
-Reference repository: https://github.com/CIAI-NCKU/SemPLeS
+Reference repository: https://github.com/NVlabs/SemPLeS
 
 Why it exists.
     CLIP-driven WSSS systems (CLIP-ES, CLIMS, WeCLIP) use a hand-crafted

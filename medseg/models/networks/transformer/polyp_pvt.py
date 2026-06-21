@@ -4,7 +4,8 @@
 Reference:
     Bo Dong, Wenhai Wang, Deng-Ping Fan, Jinpeng Li, Huazhu Fu, Ling Shao.
     "Polyp-PVT: Polyp Segmentation with Pyramid Vision Transformers."
-    Machine Intelligence Research (MIR), 2023.
+    CAAI Artificial Intelligence Research, 2023.
+    arXiv: 2108.06932. DOI: 10.26599/AIR.2023.9150015.
     Upstream code: https://github.com/DengPingFan/Polyp-PVT
 
 Architecture overview:

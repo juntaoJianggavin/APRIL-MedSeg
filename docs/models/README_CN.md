@@ -9,8 +9,8 @@
 | 模块 | 数量 |
 |---|---|
 | 完整网络 | 132 |
-| 编码器 | 178 |
-| 解码器 | 45 |
+| 编码器 | 176 |
+| 解码器 | 47 |
 | 跳跃连接 | 25 |
 | 瓶颈层 | 17 |
 
@@ -29,8 +29,8 @@
 | 文档 | 内容 |
 |---|---|
 | [networks.md](networks.md) | 132 个完整网络架构 |
-| [encoders.md](encoders.md) | 178 个编码器（含 Foundation 模型） |
-| [decoders.md](decoders.md) | 45 个解码器 |
+| [encoders.md](encoders.md) | 176 个编码器（含 Foundation 模型） |
+| [decoders.md](decoders.md) | 47 个解码器 |
 | [skip_connections.md](skip_connections.md) | 25 个跳跃连接 |
 | [bottlenecks.md](bottlenecks.md) | 17 个瓶颈层 |
 

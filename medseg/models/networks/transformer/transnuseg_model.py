@@ -544,6 +544,16 @@ class TransNuSeg(nn.Module):
         pr = self.patch_embed.patches_resolution
         self.patches_resolution = pr
 
+        # Adjust window_size to divide all stage resolutions (required by
+        # window partition).  For img_size=512 the GCD is 16 so ws=8 is
+        # unchanged; for img_size=224 the GCD is 7 so ws is reduced to 7.
+        from math import gcd
+        from functools import reduce
+        _stage_res = [pr[0] // (2 ** i) for i in range(self.num_layers)]
+        _gcd = reduce(gcd, _stage_res)
+        if window_size > _gcd:
+            window_size = _gcd
+
         if ape:
             self.absolute_pos_embed = nn.Parameter(
                 torch.zeros(1, self.patch_embed.num_patches, embed_dim))

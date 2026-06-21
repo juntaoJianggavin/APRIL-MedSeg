@@ -18,7 +18,7 @@
   </p>
 </div>
 
-> **132** networks · **178** encoders · **45** decoders · **89** losses · **25** skip connections · **17** bottlenecks · **6** training paradigms · **24** augmentations · **921** YAML configs · switch anything with one line of YAML
+> **132** networks · **176** encoders · **47** decoders · **81** losses · **25** skip connections · **17** bottlenecks · **6** training paradigms · **24** augmentations · **918** YAML configs · switch anything with one line of YAML
 
 ---
 <a id="updates"></a>
@@ -316,7 +316,12 @@ A step-by-step tutorial series covering deep learning medical image segmentation
 | [05](docs/tutorial/05_encoders.md) | Encoder Deep Dive | CNN / Transformer / Mamba / RWKV comparison, timm wrapper |
 | [06](docs/tutorial/06_decoders.md) | Decoders and Skip Connections | CASCADE / EMCAD / Attention Gate, skip taxonomy |
 | [07](docs/tutorial/07_foundation.md) | Foundation Models | DPT head, 9 medical modalities, fine-tuning strategies |
-| [08](docs/tutorial/08_paradigms.md) | Advanced Training Paradigms | Semi-supervised, domain adaptation, distillation, weakly supervised |
+| [08](docs/tutorial/08_paradigms.md) | Advanced Training Paradigms | Overview: semi-supervised, domain adaptation, distillation, weakly supervised |
+| [08a](docs/tutorial/08a_semi_supervised.md) | Semi-Supervised Segmentation | Mean Teacher, CPS, UniMatch, FixMatch, consistency regularization |
+| [08b](docs/tutorial/08b_domain_adaptation.md) | Domain Adaptation | AdvEnt, DANN, TENT, FDA, MIC, HRDA, SePiCo |
+| [08c](docs/tutorial/08c_distillation.md) | Knowledge Distillation | VanillaKD, DKD, CWD, MGD, DIST, ReviewKD, SimKD |
+| [08d](docs/tutorial/08d_weakly_supervised.md) | Weakly Supervised Segmentation | CAM, SEAM, PuzzleCAM, Box, Point, Scribble supervision |
+| [08e](docs/tutorial/08e_text_guided.md) | Text-Guided Segmentation | CRIS, BiomedParse, LViT, CLIP-based, MLLM pipeline |
 | [09](docs/tutorial/09_deployment.md) | Deployment and Inference | ONNX export, TTA, ensemble, MLLM pipeline |
 
 [Full tutorial index](docs/tutorial/README.md)
@@ -328,33 +333,33 @@ A step-by-step tutorial series covering deep learning medical image segmentation
 segmentation_tool/
 ├── medseg/                                      # Core framework
 │   ├── models/                                  # Model components
-│   │   ├── encoders/                            #   178 encoders (93 native + 85 timm presets + 1000+ via timm_ prefix)
-│   │   │   ├── cnn/              (11 modules)   #     CNN: basic, DCSAU, CFA, MedNeXt, MEW, R2U, AttUNet, LV, MALU, EGE, HRNet
-│   │   │   ├── transformer/      (17 modules)   #     Transformer: TransUNet, SwinUNet, MISSFormer, DAEFormer, HiFormer, PVTv2, MaxViT, ...
+│   │   ├── encoders/                            #   176 encoders (91 native + 85 timm presets + 1000+ via timm_ prefix)
+│   │   │   ├── cnn/              (13 modules)   #     CNN: basic, DCSAU, CFA, MedNeXt, MEW, R2U, AttUNet, LV, MALU, EGE, ConvNeXt, EfficientNetV2, HRNet
+│   │   │   ├── transformer/      (18 modules)   #     Transformer: TransUNet, SwinUNet, MISSFormer, DAEFormer, HiFormer, PVTv2, MaxViT, ViT-Pyramid, ...
 │   │   │   ├── mamba/            (10 modules)   #     Mamba/SSM: VMUNet, UMamba, LKM, LoG-VMamba, UltraLight-VM, VMKLA, ...
 │   │   │   ├── rwkv/             (5 modules)    #     RWKV: RWKV-UNet, U-RWKV (MICCAI), U-RWKV (TIP), MD-RWKV, RIR-Zigzag
 │   │   │   ├── linear_attn/      (5 modules)    #     Linear attention: RetNet, Linformer, Performer, TTT, xLSTM
-│   │   │   ├── kan_mlp/          (4 modules)    #     KAN/MLP: UKAN, Rolling-UNet, UNeXt, Wav-KAN
-│   │   │   ├── foundation/       (35 modules)   #     Foundation models (DPT head)
+│   │   │   ├── kan_mlp/          (4 modules)    #     KAN/MLP: UKAN, Rolling-UNet, UNeXt, WA-UKAN
+│   │   │   ├── foundation/       (38 modules)   #     Foundation models (DPT head)
 │   │   │   │   ├── general/      (5)            #       DINOv2, DINOv3, DINO, CLIP-ViT, SAM-ViT
-│   │   │   │   ├── pathology/    (5)            #       Phikon, UNI, PLIP, MUSK, Phikon-v2
-│   │   │   │   ├── radiology/    (3)            #       Rad-DINO, OmniRad, MedSigLIP
+│   │   │   │   ├── pathology/    (6)            #       Phikon, Phikon-v2, UNI, PLIP, MUSK, KEEP
+│   │   │   │   ├── radiology/    (4)            #       Rad-DINO, OmniRad, BioViL, CheXZero
 │   │   │   │   ├── ophthalmology/(4)            #       RETFound-DINOv2, FLAIR, OphMAE, RETFound
 │   │   │   │   ├── dermatology/  (3)            #       PanDerm, DermCLIP, MonetDerm
-│   │   │   │   ├── multimodal_med/(3)           #       BiomedCLIP, MedCLIP, KEEP
+│   │   │   │   ├── general_medical/(3)          #       BiomedCLIP, MedCLIP, MedSigLIP
 │   │   │   │   ├── mllm_vision/  (8)            #       Qwen3-VL, MedGemma, LLaVA-Med, HuatuoGPT, ...
-│   │   │   │   ├── endoscopy/    (1)            #       EndoViT
-│   │   │   │   └── ultrasound/   (3)            #       UltraDINO, UltraFedFM, USF-MAE
+│   │   │   │   ├── endoscopy/    (3)            #       EndoViT, Endo-FM, Surgical-SAM
+│   │   │   │   └── ultrasound/   (2)            #       UltraFedFM, USF-MAE
 │   │   │   └── wrapper/          (1 module)     #     timm dynamic wrapper (85 pre-registered + 1000+ via timm_ prefix)
-│   │   ├── decoders/                            #   45 decoders
-│   │   │   ├── basic/            (4 registered) #     Basic upsampling: UNet, Bilinear, Deconv, DepthwiseSep
+│   │   ├── decoders/                            #   47 decoders
+│   │   │   ├── basic/            (6 registered) #     Basic upsampling: deconv_upcat (unet), Bilinear, deconv_catup (deconv), DepthwiseSep + 2 aliases
 │   │   │   ├── dense/            (2 registered) #     Dense connections: UNet++, UNet3+
 │   │   │   ├── cascade/          (10 registered)#     CASCADE, EMCAD (2 variants), G-CASCADE (2 variants), CFM, MERIT (2 variants), EDLDNet
-│   │   │   ├── attention/        (5 registered) #     Attention Gate, HAM, Lawin, OCRNet, CCNet
-│   │   │   ├── transformer/      (5 registered) #     DAEFormer, MTUNet, nnFormer, SwinUNet, UCTransNet
+│   │   │   ├── attention/        (6 registered) #     Attention Gate, BANet, CCNet, Lawin, OCRNet, UCTransNet
+│   │   │   ├── transformer/      (5 registered) #     DAEFormer, MISSFormer, MTUNet, nnFormer, SwinUNet
 │   │   │   ├── mlp/              (2 registered) #     SegFormer MLP, MLP Decoder
-│   │   │   ├── specific/         (14 registered)#     TransUNet CUP, HiFormer, H2Former, MISSFormer, ScaleFormer, FAT-Net, MALUNet, EGE-UNet, BANet, FF-Parser, ...
-│   │   │   ├── pyramid/          (1 registered) #     UPerNet
+│   │   │   ├── specific/         (13 registered)#     CFA-Net, DCSA-UNet, EGNet, FAT-Net, FF-Parser, H2Former, HAM, HiFormer, KI-UNet, MALUNet, RWKV-UNet, ScaleFormer, TransUNet
+│   │   │   ├── pyramid/          (2 registered) #     UPerNet, DeepLabV3 (ASPP)
 │   │   │   └── mamba/            (1 registered) #     VM-UNet
 │   │   ├── bottlenecks/          (17 modules)   #   17 bottlenecks: none, basic, ASPP, DenseASPP, PPM, Transformer, SE, CBAM, ...
 │   │   ├── skip_connections/                    #   25 skip connections
@@ -364,20 +369,20 @@ segmentation_tool/
 │   │   │   ├── mamba/            (1 module)     #     Mamba: SK-VM++
 │   │   │   └── fusion/           (6 modules)    #     CNN fusion: BiFusion, Deformable, MultiScale, FeatureRefine, CCM, SDI
 │   │   ├── networks/                            #   132 complete architectures (variants merged)
-│   │   │   ├── cnn/              (36 registered)#     CNN: UNet3+, UNet++, AttUNet, nnUNet, MedNeXt, STUNet, MEW-UNet, HRNet, ...
+│   │   │   ├── cnn/              (36 registered)#     CNN: UNet, UNet3+, UNet++, AttUNet, nnUNet, MedNeXt, MEW-UNet, ...
 │   │   │   ├── transformer/      (37 registered)#     Transformer: SegFormer, TransUNet, SwinUNet, DAEFormer, PolypPVT, CASCADE, ...
 │   │   │   ├── mamba/            (24 registered)#     Mamba: VMUNet, U-Mamba, SwinUMamba, SkinMamba, DermoMamba, SerpMamba, ...
 │   │   │   ├── sam/              (10 registered)#     SAM family: MedSAM, SAM-Med2D, SAM2, SAMUS, AutoSAM, MobileSAM, ...
 │   │   │   ├── rwkv/             (5 registered) #     RWKV: U-RWKV (MICCAI 2025), U-RWKV (TIP 2026), RWKV-UNet, MD-RWKV, RIR-Zigzag
-│   │   │   ├── kan_mlp/          (4 registered) #     KAN/MLP: RollingUNet, UNeXt, UKAN, Wav-KAN
+│   │   │   ├── kan_mlp/          (4 registered) #     KAN/MLP: RollingUNet, UNeXt, UKAN, WA-UKAN
 │   │   │   └── linear_attn/      (3 registered) #     Linear attention: TTT-UNet, U-VixLSTM, xLSTM-UNet
-│   │   └── text_unet/            (13 modules)   #   Text-guided: CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
+│   │   └── text_unet/            (13 modules)   #   Text-guided (12 models): CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
 │   ├── training/                                # Training paradigms
 │   │   ├── semi/                 (23 modules)   #   21 semi-supervised methods + 2 utils (base, utils)
 │   │   │                                        #     MeanTeacher, CPS, UniMatch, FixMatch, SSL4MIS-U, CorrMatch, AllSpark, ...
 │   │   ├── domain_adaptation/    (18 modules)   #   18 domain adaptation: AdvEnt, DANN, TENT, FDA, MIC, HRDA, SePiCo, ...
 │   │   ├── distillation/         (28 modules)   #   27 distillation: VanillaKD, DKD, MGD, DIST, CWD, ReviewKD, SimKD, NORM, ...
-│   │   └── weakly_supervised/    (28 modules)   #   28 weakly supervised methods (CAM, SEAM, PuzzleCAM, GatedCRF, TreeEnergy, ...)
+│   │   └── weakly_supervised/    (21 modules)   #   20 weakly supervised methods (CAM, SEAM, PuzzleCAM, TreeEnergy, ...)
 │   ├── inference/                               # Inference
 │   │   ├── ensemble.py                          #   Ensemble inference (multi-model voting)
 │   │   ├── tta.py                               #   Test-time augmentation
@@ -385,11 +390,11 @@ segmentation_tool/
 │   │       │                                    #     Detector: GroundingDINO, Qwen2/2.5/3-VL, InternVL, LLaVA, MiniCPM-V, Phi3-V, CogVLM
 │   │       │                                    #     Segmenter: SAM2, MedSAM, SAM-Med2D, LiteMedSAM
 │   │       └── medisee/          (3 modules)    #     MediSee: LLM reasoning segmenter
-│   ├── losses/                   (15 modules)   # 89 losses
+│   ├── losses/                   (15 modules)   # 81 losses
 │   │                                            #   Supervised: CE, Dice, Focal, Tversky, Lovász, Boundary, Hausdorff, ...
 │   │                                            #   Distillation: VanillaKD, DKD, CWD, MGD, DIST, AT, RKD, ...
 │   │                                            #   Domain adaptation: AdvEnt, DANN, FDA, MIC, TENT, ...
-│   │                                            #   Weakly supervised: Box, CAM, Point, Scribble, TreeEnergy, GatedCRF, ...
+│   │                                            #   Weakly supervised: Box, CAM, Point, Scribble, TreeEnergy, SEAM, ...
 │   ├── datasets/                 (10 modules)   # Data loading: Synapse, ACDC, Generic, QaTa-COV19, MosMedData+, 24 augmentations
 │   │   ├── advanced_aug.py                      #   24 advanced augmentations (YAML configurable)
 │   │   └── transforms.py                        #   Basic transforms (Resize, ToTensor, Normalize)
@@ -416,22 +421,21 @@ segmentation_tool/
 │   └── test_dummy/                              #   Dummy test data
 ├── figs/                                        # Figures & logos
 │   └── logo.png                                 #   Project logo
-├── configs/                      (921 yamls)    # YAML configs
-│   ├── architectures/            (791 yamls)    #   Network architecture configs
-│   │   ├── networks/             (307 yamls)    #     Complete networks (132 arch across general/acdc/synapse)
-│   │   ├── combinations/         (171 yamls)    #     Encoder+decoder free combinations
-│   │   ├── decoder_study/        (133 yamls)    #     Decoder ablation (3 enc × 45 dec)
+├── configs/                      (918 yamls)    # YAML configs
+│   ├── architectures/            (783 yamls)    #   Network architecture configs
+│   │   ├── networks/             (302 yamls)    #     Complete networks (132 arch across general/acdc/synapse)
+│   │   ├── combinations/         (169 yamls)    #     Encoder+decoder free combinations
+│   │   ├── decoder_study/        (133 yamls)    #     Decoder ablation (3 enc × 44 dec + 1)
 │   │   ├── skip_study/           (75 yamls)     #     Skip ablation (3 enc × 25 skip)
 │   │   ├── bottleneck_study/     (51 yamls)     #     Bottleneck ablation (3 enc × 17 bn)
-│   │   └── foundation/           (54 yamls)     #     Foundation models (9 modalities × 35 encoders)
-│   ├── training_paradigms/       (100 yamls)    #   Training paradigm configs
+│   │   └── foundation/           (53 yamls)     #     Foundation models (9 modalities × 38 encoders)
+│   ├── training_paradigms/       (105 yamls)    #   Training paradigm configs
 │   │   ├── semi_supervision/     (21 yamls)     #     Semi-supervised (21 methods)
 │   │   ├── domain_adaptation/    (18 yamls)     #     Domain adaptation (18 methods)
-│   │   ├── distillation/         (22 yamls)     #     Distillation (27 methods)
-│   │   ├── text_guided/          (19 yamls)     #     Text-guided (13 models + pipeline)
-│   │   └── weak_supervision/     (20 yamls)     #     Weakly supervised (28 methods)
-│   ├── intro_to_datasets/        (27 yamls)     #   27 dataset introductions + example configs
-│   └── experiments/                             #   Experiment configs
+│   │   ├── distillation/         (29 yamls)     #     Distillation (27 methods)
+│   │   ├── text_guided/          (17 yamls)     #     Text-guided (12 models + pipeline)
+│   │   └── weak_supervision/     (20 yamls)     #     Weakly supervised (20 methods)
+│   └── intro_to_datasets/        (27 yamls)     #   27 dataset introductions + example configs
 ├── scripts/                                     # Utility + experiment scripts
 │   ├── experiments/              (14 scripts)   #   Experiment bash scripts
 │   │   ├── run_sota_benchmark.sh                #     SOTA architecture comparison (11 models × 7 datasets)
@@ -455,19 +459,19 @@ segmentation_tool/
 │   ├── gen_standalone_yamls.py                  #   Generate standalone model YAML configs
 │   ├── prepare_qata_mosmed.py                   #   QaTa-COV19 / MosMedData+ dataset validation
 │   └── visualize.py                             #   Prediction visualization (input + pred + overlay)
-├── docs/                         (51 docs)      # Detailed documentation
-│   ├── tutorial/                 (21 files)     #   Step-by-step tutorial (01-09, EN+CN, README, complete_guide)
+├── docs/                         (61 docs)      # Detailed documentation
+│   ├── tutorial/                 (31 files)     #   Step-by-step tutorial (01-09, 08a-08e sub-chapters, EN+CN, README, complete_guide)
 │   ├── models/                                  #   Model docs: overview, networks, encoders, decoders, skip, bottleneck
 │   ├── paradigms/                               #   Paradigm docs: infrastructure, semi, weak, DA, distillation, text-guided
 │   ├── deployment/                              #   Deployment docs: ONNX, FLOPs, params, FPS
-│   ├── data/                                    #   Data docs: 26 datasets, 5 types, 4 split modes
+│   ├── data/                                    #   Data docs: 25 datasets, 5 types, 4 split modes
 │   └── research_guide.md                        #   Research guide: 8 directions + 14 experiment scripts
 ├── train.py                                     # Supervised training (AMP + DDP + DataParallel + Logger + Warmup)
 ├── semi_train.py                                # Semi-supervised training (21 methods)
-├── train_weakly_supervised.py                   # Weakly supervised training (28 methods)
+├── train_weakly_supervised.py                   # Weakly supervised training (20 methods)
 ├── train_domain_adaptation.py                   # Domain adaptation training (18 methods)
 ├── train_distillation.py                        # Knowledge distillation training (27 methods)
-├── train_text_guided.py                         # Text-guided training (13 models)
+├── train_text_guided.py                         # Text-guided training (12 models)
 ├── test_text_guided.py                          # Text-guided inference (trainable + pipeline)
 ├── test.py                                      # Inference / testing
 ├── profile_model.py                             # FLOPs / params / FPS profiling
@@ -484,36 +488,36 @@ segmentation_tool/
 
 | Category | Count | Examples |
 |---|---|---|
-| CNN | 36 | UNet3+, UNet++, Attention-UNet, nnU-Net, MedNeXt, STUNet, MEW-UNet, HRNet |
+| CNN | 36 | UNet, UNet3+, UNet++, Attention-UNet, nnU-Net, MedNeXt, MEW-UNet, DCSAU-Net |
 | Transformer | 37 | SegFormer, TransUNet, Swin-UNet, DAEFormer, MISSFormer, HiFormer, PolypPVT, CASCADE |
 | Mamba / SSM | 24 | VM-UNet, U-Mamba, Swin-UMamba, LKM-UNet, LoG-VMamba, HC-Mamba |
 | SAM family | 10 | MedSAM, SAM-Med2D, SAM2, SAMUS, AutoSAM, MobileSAM, LiteMedSAM |
-| KAN / MLP | 4 | RollingUNet, UNeXt, U-KAN, Wav-KAN |
+| KAN / MLP | 4 | RollingUNet, UNeXt, U-KAN, WA-UKAN |
 | Linear Attention | 3 | TTT-UNet, U-VixLSTM, xLSTM-UNet |
 | RWKV | 5 | U-RWKV (MICCAI 2025), U-RWKV (TIP 2026), RWKV-UNet, MD-RWKV-UNet, RIR-Zigzag |
-| Text-guided | 13 | CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg |
+| Text-guided | 12 | CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg |
 
 > Full list: [docs/models/networks.md](docs/models/networks.md)
 
 > **Note on U-RWKV disambiguation:** Two distinct networks share the "U-RWKV" name:
 > - `u_rwkv` — **MICCAI 2025**: Direction-Adaptive RWKV Module (DARM) + Stage-Adaptive Squeeze-and-Excitation (SASE), lightweight design with RWKV integrated within conv stages. Source: [hbyecoding/U-RWKV](https://github.com/hbyecoding/U-RWKV)
-> - `u_rwkv_tip` — **IEEE TIP 2026**: Standard U-Net + post-conv RWKV attention blocks with OmniShift multi-scale conv, originally for volumetric segmentation. Source: [Yaziwel/Restore-RWKV](https://github.com/Yaziwel/Restore-RWKV)
+> - `u_rwkv_tip` — **IEEE TIP 2026**: Standard U-Net + post-conv RWKV attention blocks with OmniShift multi-scale conv, originally for volumetric segmentation. Source: [hbyecoding/U-RWKV](https://github.com/hbyecoding/U-RWKV)
 
-### Encoders — 178
+### Encoders — 176
 
-**Highlight: 35 foundation model encoders covering 9 medical modalities**
+**Highlight: 38 foundation model encoders covering 9 medical modalities**
 
 | Modality | Count | Models |
 |---|---|---|
 | General | 5 | DINOv2, DINOv3, DINO, CLIP-ViT, SAM-ViT |
-| Pathology | 5 | Phikon, Phikon-v2, UNI, PLIP, MUSK |
-| Radiology | 3 | Rad-DINO, OmniRad, MedSigLIP |
+| Pathology | 6 | Phikon, Phikon-v2, UNI, PLIP, MUSK, KEEP |
+| Radiology | 4 | Rad-DINO, OmniRad, BioViL, CheXZero |
 | Ophthalmology | 4 | RETFound-DINOv2, RETFound, FLAIR, OphMAE |
 | Dermatology | 3 | DermCLIP, MoNet, PanDerm |
-| Multimodal Medical | 3 | BiomedCLIP, MedCLIP, KEEP |
+| General Medical | 3 | BiomedCLIP, MedCLIP, MedSigLIP |
 | MLLM Vision | 8 | Qwen2.5-VL, Qwen3-VL, MedGemma, LLaVA-Med, HuatuoGPT, HealthGPT, HuLuMed, LingShu |
-| Ultrasound | 3 | UltraDINO, UltraFedFM, US-FMAE |
-| Endoscopy | 1 | Endo-ViT |
+| Ultrasound | 2 | UltraFedFM, US-FMAE |
+| Endoscopy | 3 | EndoViT, Endo-FM, Surgical-SAM |
 
 All foundation ViTs use **DPT head** (multi-block multi-scale features), not naive FPN-from-tokens.
 
@@ -527,19 +531,19 @@ encoder:
 
 > Full list: [docs/models/encoders.md](docs/models/encoders.md)
 
-### Decoders — 45
+### Decoders — 47
 
 | Category | Count | Examples |
 |---|---|---|
-| Basic (upsampling) | 4 | UNet, Bilinear, Deconv, DepthwiseSep |
+| Basic (upsampling) | 6 | deconv_upcat (unet), Bilinear, deconv_catup (deconv), DepthwiseSep + 2 aliases |
 | Dense (connections) | 2 | UNet++, UNet3+ |
 | Cascade | 10 | CASCADE, EMCAD (2 variants), G-CASCADE (2 variants), CFM, MERIT (2 variants), EDLDNet |
-| Attention | 5 | Attention Gate, HAM, Lawin, OCRNet, CCNet |
-| Transformer | 5 | DAEFormer, MTUNet, SwinUNet, nnFormer, UCTransNet |
+| Attention | 6 | Attention Gate, BANet, CCNet, Lawin, OCRNet, UCTransNet |
+| Transformer | 5 | DAEFormer, MISSFormer, MTUNet, SwinUNet, nnFormer |
 | MLP | 2 | SegFormer MLP, MLP Decoder |
-| Specific (network) | 15 | TransUNet CUP, HiFormer, H2Former, MISSFormer, ScaleFormer, FAT-Net, MALUNet, EGE-UNet, DeepLabV3, BANet, FF-Parser, ... |
+| Specific (network) | 13 | CFA-Net, DCSA-UNet, EGNet, FAT-Net, FF-Parser, H2Former, HAM, HiFormer, KI-UNet, MALUNet, RWKV-UNet, ScaleFormer, TransUNet |
 | Mamba | 1 | VM-UNet |
-| Pyramid | 1 | UPerNet |
+| Pyramid | 2 | UPerNet, DeepLabV3 (ASPP) |
 
 > Full list: [docs/models/decoders.md](docs/models/decoders.md)
 
@@ -635,15 +639,17 @@ Vanilla KD · FitNets · AT · FSP · NST · RKD · VID · DKD · MGD · DIST ·
 
 > Details: [docs/paradigms/distillation.md](docs/paradigms/distillation.md)
 
-### Weakly Supervised — 29 Methods
+### Weakly Supervised — 20 Methods
 
-Box · CAM · MIL · EM · Point · Scribble · GatedCRF · Affinity · TreeEnergy · SEAM · PuzzleCAM · AdvCAM · MCTformer · SAMGuidedWeak · fBRS · iSeg · ClickSupervision · EPS · BoxInst · ReCAM · ToCo · LPCAM · MARS · BACoN · WPGSeg · DuPL · MoRe · PSDPM · SemPLeS
+Box · CAM · MIL · Point · Scribble · TreeEnergy · SEAM · PuzzleCAM · AdvCAM · MCTformer · EPS · BoxInst · ReCAM · ToCo · LPCAM · MARS · DuPL · MoRe · PSDPM · SemPLeS
 
 > Details: [docs/paradigms/weakly_supervised.md](docs/paradigms/weakly_supervised.md)
 
-### Text-Guided — 13 Models + Inference Pipeline
+### Text-Guided — 12 Trainable Models + Inference Pipeline
 
-**Trainable models**: CRIS · BiomedParse · LanGuideMedSeg · LViT · TGANet · TPRO · CausalCLIPSeg · CLIP-Universal · CXR-CLIP-Seg · TP-DRSeg · MedCLIP-SAM · SaLIP · MediSee
+**Trainable models (12)**: CRIS · BiomedParse · LanGuideMedSeg · LViT · TGANet · TPRO · CausalCLIPSeg · CLIP-Universal · CXR-CLIP-Seg · TP-DRSeg · MedCLIP-SAM · SaLIP
+
+**Inference-only**: MediSee (requires vendor model weights, see inference pipeline below)
 
 **Inference Pipeline** (9 detector × 4 segmenter = 36 combinations):
 - Detector: GroundingDINO · Qwen2-VL · Qwen2.5-VL · Qwen3-VL · InternVL · LLaVA · MiniCPM-V · Phi3-V · CogVLM

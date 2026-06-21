@@ -8,4 +8,7 @@ from .md_rwkv_unet import MDRWKVUNet
 # Self-contained ports from GitHub (all building blocks inline)
 from .rirzigzag_model import RIRZigzag
 
-__all__ = ["URWKV", "RWKVUNet", "MDRWKVUNet", "RIRZigzag"]
+# U-RWKV TIP 2026 variant (post-conv RWKV attention, OmniShift spatial mixing)
+from .u_rwkv_tip import URWKVTIP
+
+__all__ = ["URWKV", "RWKVUNet", "MDRWKVUNet", "RIRZigzag", "URWKVTIP"]

@@ -153,8 +153,8 @@ Do you have pixel-level masks for all training data?
 - [Semi-Supervised Methods](../paradigms/semi_supervised.md) — All 21 semi-supervised methods
 - [Domain Adaptation](../paradigms/domain_adaptation.md) — All 18 domain adaptation methods
 - [Distillation](../paradigms/distillation.md) — All 27 distillation methods
-- [Weakly Supervised](../paradigms/weakly_supervised.md) — All 28 weakly supervised methods
-- [Text-Guided](../paradigms/text_guided.md) — All 13 text-guided models + MLLM pipeline
+- [Weakly Supervised](../paradigms/weakly_supervised.md) — All 20 weakly supervised methods
+- [Text-Guided](../paradigms/text_guided.md) — All 12 text-guided models + MLLM pipeline
 
 ---
 

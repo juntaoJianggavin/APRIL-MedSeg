@@ -1,4 +1,4 @@
-# 编码器 (`medseg/encoders/`)
+# 编码器 (`medseg/models/encoders/`)
 
 [English](README.md)
 
@@ -70,8 +70,8 @@ model:
 
 ## 添加新编码器
 
-1. 在 `medseg/encoders/` 中创建 `my_encoder.py`。
+1. 在 `medseg/models/encoders/` 中创建 `my_encoder.py`。
 2. 用 `@ENCODER_REGISTRY.register("my_key")` 装饰类。
 3. 实现 `forward(x) -> List[Tensor]` 返回多尺度特征。
 4. 添加 `out_channels` 属性列出每个尺度的通道数。
-5. 在 `medseg/encoders/__init__.py` 中导入模块。
+5. 在 `medseg/models/encoders/__init__.py` 中导入模块。

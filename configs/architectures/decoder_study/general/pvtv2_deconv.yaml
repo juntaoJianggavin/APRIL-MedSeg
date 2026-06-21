@@ -11,7 +11,7 @@ model:
     in_channels: 3
     params: {}
   decoder:
-    name: deconv
+    name: deconv_catup
     params: {}
   skip_connection:
     name: concat

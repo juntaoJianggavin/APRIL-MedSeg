@@ -1,4 +1,4 @@
-# Encoders (`medseg/encoders/`)
+# Encoders (`medseg/models/encoders/`)
 
 [中文文档](README_CN.md)
 
@@ -70,8 +70,8 @@ model:
 
 ## Adding a New Encoder
 
-1. Create `my_encoder.py` in `medseg/encoders/`.
+1. Create `my_encoder.py` in `medseg/models/encoders/`.
 2. Decorate the class with `@ENCODER_REGISTRY.register("my_key")`.
 3. Implement `forward(x) -> List[Tensor]` returning multi-scale features.
 4. Add an `out_channels` property listing channel counts per scale.
-5. Import the module in `medseg/encoders/__init__.py`.
+5. Import the module in `medseg/models/encoders/__init__.py`.

@@ -4,13 +4,14 @@
 
 ## 损失函数
 
-本框架通过 `LOSS_REGISTRY` 注册了 **88 个** loss，按用途分为以下类别：
+本框架通过 `LOSS_REGISTRY` 注册了 **81 个** loss（监督 + 蒸馏 + 域适应 + 弱监督）。另有 **21 个** 半监督损失直接集成在训练循环中（非 `LOSS_REGISTRY` 注册）：
 
-### 监督损失 (15)
+### 监督损失 (16)
 
 | 名称 | 说明 | 源码 |
 |------|------|------|
 | `ce` | 交叉熵 | [ce_loss.py](../../medseg/losses/ce_loss.py) |
+| `bce` | 二元交叉熵 | [ce_loss.py](../../medseg/losses/ce_loss.py) |
 | `dice` | Dice 损失 | [dice_loss.py](../../medseg/losses/dice_loss.py) |
 | `focal` | Focal 损失 (Lin et al.) | [focal_loss.py](../../medseg/losses/focal_loss.py) |
 | `tversky` | Tversky 损失 | [tversky_loss.py](../../medseg/losses/tversky_loss.py) |
@@ -38,7 +39,7 @@
 
 详见 [distillation.md](distillation.md)。
 
-### 弱监督损失 (28)
+### 弱监督损失 (20)
 
 详见 [weakly_supervised.md](weakly_supervised.md)。
 

@@ -2,6 +2,6 @@
     KAN / MLP / LSTM-based complete segmentation architectures."""
 
 from .ukan import UKAN
-from .wav_kan_unet import WavKANUNet
+from .wa_ukan import WAUKAN
 
-__all__ = ["UKAN", "WavKANUNet"]
+__all__ = ["UKAN", "WAUKAN"]

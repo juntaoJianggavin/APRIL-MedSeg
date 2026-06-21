@@ -1,0 +1,56 @@
+# Hint Distillation — FitNets intermediate feature matching KD
+# 提示蒸馏 —— FitNets 中间特征匹配 KD
+#
+# Reference: https://github.com/net-timu/FitNets
+# Paper: Romero et al., "FitNets: Hints for Thin Deep Nets", ICLR 2015
+#
+# Usage:
+#   python train_distillation.py \
+#       --teacher_config configs/training_paradigms/distillation/teacher_large.yaml \
+#       --student_config configs/training_paradigms/distillation/hint_distillation.yaml
+
+model:
+  num_classes: 4
+  img_size: 224
+  encoder:
+    name: timm_resnet34
+    pretrained: true
+    in_channels: 3
+    params: {}
+  decoder:
+    name: bilinear
+    params: {}
+  bottleneck:
+    name: none
+
+data:
+  img_size: 224
+  source:
+    image_dir: ./data/source/images
+    mask_dir: ./data/source/masks
+  target:
+    image_dir: ./data/target/images
+  val:
+    image_dir: ./data/target_val/images
+    mask_dir: ./data/target_val/masks
+
+distillation:
+  method: hint_distillation
+  weight: 1.0
+  params:
+    hint_layer: 3
+    regressor: conv1x1
+
+training:
+  epochs: 100
+  batch_size: 8
+  num_workers: 4
+  val_interval: 10
+  save_interval: 50
+  optimizer:
+    name: adamw
+    lr: 0.0001
+    weight_decay: 0.0001
+  scheduler:
+    name: cosine
+    min_lr: 0.000001

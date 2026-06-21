@@ -2,7 +2,7 @@
 
 [English](networks.md)
 
-本项目支持 132 个完整网络架构（136 注册，合并尺寸变体；119 个标准 + 13 个文本引导），通过 `architecture` 字段直接使用。
+本项目支持 132 个完整网络架构（135 注册，合并尺寸变体；120 个标准 + 12 个文本引导），通过 `architecture` 字段直接使用。
 
 ## CNN (36)
 
@@ -10,6 +10,7 @@
 
 | 名称 | 论文 | 发表 | GitHub | YAML |
 |---|---|---|---|---|
+| `unet` | U-Net | MICCAI 2015 | [milesial/Pytorch-UNet](https://github.com/milesial/Pytorch-UNet) | [unet.yaml](../../configs/architectures/networks/general/unet.yaml) |
 | `attention_unet` | Attention U-Net | MIDL 2018 | [ozan-oktay/Attention-Gating-Network](https://github.com/ozan-oktay/Attention-Gating-Network) | [attention_unet_basic.yaml](../../configs/architectures/combinations/general/attention_unet_basic.yaml) |
 | `unetpp` | UNet++ | DLMIA 2018 | [MrGiovanni/UNetPlusPlus](https://github.com/MrGiovanni/UNetPlusPlus) | [unetpp.yaml](../../configs/architectures/networks/general/unetpp.yaml) |
 | `r2unet` | R2U-Net | IEEE Access 2018 | - | [r2unet.yaml](../../configs/architectures/networks/general/r2unet.yaml) |
@@ -42,10 +43,8 @@
 | `cmu_net` | CMU-Net | Bioinformatics 2024 | - | [cmu_net.yaml](../../configs/architectures/networks/general/cmu_net.yaml) |
 | `dscnet` | DSCNet | MICCAI 2023 | - | [dscnet.yaml](../../configs/architectures/networks/general/dscnet.yaml) |
 | `dconnnet` | DconnNet | MICCAI 2023 | - | [dconnnet.yaml](../../configs/architectures/networks/general/dconnnet.yaml) |
-| `stu_net` | STU-Net | arXiv 2023 | - | [stu_net.yaml](../../configs/architectures/networks/general/stu_net.yaml) |
 | `polyper` | Polyper | - | - | [polyper.yaml](../../configs/architectures/networks/general/polyper.yaml) |
 | `hovernet_lite` | HoverNet Lite | - | - | [hovernet_lite.yaml](../../configs/architectures/networks/general/hovernet_lite.yaml) |
-| `hrnet_w18` / `hrnet_w32` | HRNet（高分辨率网络） | CVPR 2019 | - | [hrnet_w18.yaml](../../configs/architectures/networks/general/hrnet_w18.yaml), [hrnet_w32.yaml](../../configs/architectures/networks/general/hrnet_w32.yaml) |
 
 ## Transformer (37)
 
@@ -72,22 +71,22 @@
 | `da_transunet` | DA-TransUNet | arXiv 2023 | - | [da_transunet.yaml](../../configs/architectures/networks/acdc/da_transunet.yaml) |
 | `ds_transunet` | DS-TransUNet | arXiv 2022 | - | [ds_transunet.yaml](../../configs/architectures/networks/acdc/ds_transunet.yaml) |
 | `uctransnet_full` / `uctransnet_enc` | UCTransNet | AAAI 2022 | - | [uctransnet.yaml](../../configs/architectures/combinations/general/uctransnet.yaml) |
-| `mobile_u_vit` | Mobile-UViT | - | - | [mobile_u_vit.yaml](../../configs/architectures/networks/general/mobile_u_vit.yaml) |
-| `cswin_unet` | CSWin-UNet | - | - | [cswin_unet.yaml](../../configs/architectures/networks/general/cswin_unet.yaml) |
+| `mobile_u_vit` | Mobile-UViT | ACM MM 2025 | - | [mobile_u_vit.yaml](../../configs/architectures/networks/general/mobile_u_vit.yaml) |
+| `cswin_unet` | CSWin-UNet | Information Fusion 2024 | - | [cswin_unet.yaml](../../configs/architectures/networks/general/cswin_unet.yaml) |
 | `fcbformer` | FCBFormer | MICCAI 2022 | - | [fcbformer.yaml](../../configs/architectures/networks/general/fcbformer.yaml) |
-| `pvt_unet` | PVT-UNet | - | - | [pvtv2_emcad.yaml](../../configs/architectures/combinations/general/pvtv2_emcad.yaml), [pvtv2_cascade_full.yaml](../../configs/architectures/combinations/general/pvtv2_cascade_full.yaml), [pvtv2_cfm.yaml](../../configs/architectures/combinations/general/pvtv2_cfm.yaml) |
-| `pvtb2_emcad` | PVTb2-EMCAD | - | - | [pvtb2_emcad.yaml](../../configs/architectures/networks/general/pvtb2_emcad.yaml) |
+| `pvt_unet` | PVT-UNet | arXiv 2024 | - | [pvtv2_emcad.yaml](../../configs/architectures/combinations/general/pvtv2_emcad.yaml), [pvtv2_cascade_full.yaml](../../configs/architectures/combinations/general/pvtv2_cascade_full.yaml), [pvtv2_cfm.yaml](../../configs/architectures/combinations/general/pvtv2_cfm.yaml) |
+| `pvtb2_emcad` | PVTb2-EMCAD | CVPR 2024 | - | [pvtb2_emcad.yaml](../../configs/architectures/networks/general/pvtb2_emcad.yaml) |
 | `transnetr` | TransNetR | IEEE Access 2023 | - | [transnetr.yaml](../../configs/architectures/networks/general/transnetr.yaml) |
-| `polyp_pvt` | Polyp-PVT | MICCAI 2021 | - | [polyp_pvt.yaml](../../configs/architectures/networks/general/polyp_pvt.yaml) |
+| `polyp_pvt` | Polyp-PVT | CAAI AIR 2023 | - | [polyp_pvt.yaml](../../configs/architectures/networks/general/polyp_pvt.yaml) |
 | `cascade` | CASCADE | MICCAI 2023 | - | [cascade_resnet34.yaml](../../configs/architectures/combinations/general/cascade_resnet34.yaml) |
 | `hsnet` | HSNet | MedIA 2023 | - | [hsnet.yaml](../../configs/architectures/networks/general/hsnet.yaml) |
 | `ssformer` | SSFormer | MICCAI 2022 | - | [ssformer.yaml](../../configs/architectures/networks/general/ssformer.yaml) |
 | `ldnet` | LDNet | MICCAI 2022 | - | [ldnet.yaml](../../configs/architectures/networks/general/ldnet.yaml) |
 | `esfpnet` | ESFPNet | MICCAI 2022 | - | [esfpnet.yaml](../../configs/architectures/networks/general/esfpnet.yaml) |
-| `mist` | MIST | IEEE TMI 2023 | - | [mist.yaml](../../configs/architectures/networks/general/mist.yaml) |
+| `mist` | MIST | WACV 2024 | - | [mist.yaml](../../configs/architectures/networks/general/mist.yaml) |
 | `double_unet` | DoubleU-Net | CBMS 2020 | - | [double_unet.yaml](../../configs/architectures/networks/general/double_unet.yaml) |
-| `sepnet` | SEPNet | - | - | [sepnet.yaml](../../configs/architectures/networks/general/sepnet.yaml) |
-| `ctnet` | CTNet | - | - | [ctnet.yaml](../../configs/architectures/networks/general/ctnet.yaml) |
+| `sepnet` | SEPNet | IEEE TCSVT 2024 | - | [sepnet.yaml](../../configs/architectures/networks/general/sepnet.yaml) |
+| `ctnet` | CTNet | IEEE TCYB 2024 | - | [ctnet.yaml](../../configs/architectures/networks/general/ctnet.yaml) |
 | `nulite` | NuLite | - | - | [nulite.yaml](../../configs/architectures/networks/general/nulite.yaml) |
 
 ## Mamba / SSM (24)
@@ -106,10 +105,10 @@
 | `vm_unet_v2` | VM-UNet V2 | arXiv 2024 | [vm_unet_v2.yaml](../../configs/architectures/networks/general/vm_unet_v2.yaml) |
 | `lkm_unet` | LKM-UNet | arXiv 2024 | [lkm_unet.yaml](../../configs/architectures/networks/general/lkm_unet.yaml) |
 | `log_vmamba` | LoG-VMamba | arXiv 2024 | [log_vmamba.yaml](../../configs/architectures/networks/general/log_vmamba.yaml) |
-| `vmkla_unet` | VMKLA-UNet | arXiv 2024 | [vmkla_unet.yaml](../../configs/architectures/networks/general/vmkla_unet.yaml) |
+| `vmkla_unet` | VMKLA-UNet | Nature Sci Rep 2025 | [vmkla_unet.yaml](../../configs/architectures/networks/general/vmkla_unet.yaml) |
 | `ultralbm_unet` | UltraLBM-UNet | arXiv 2024 | [ultralbm_unet.yaml](../../configs/architectures/networks/general/ultralbm_unet.yaml) |
 | `nnmamba_2d` | nnMamba (2D) | arXiv 2024 | [nnmamba_2d.yaml](../../configs/architectures/networks/general/nnmamba_2d.yaml) |
-| `polyp_mamba` | Polyp-Mamba | arXiv 2024 | [polyp_mamba.yaml](../../configs/architectures/networks/general/polyp_mamba.yaml) |
+| `polyp_mamba` | Polyp-Mamba | MICCAI 2024 | [polyp_mamba.yaml](../../configs/architectures/networks/general/polyp_mamba.yaml) |
 | `hc_mamba` | HC-Mamba | arXiv 2024 | [hc_mamba.yaml](../../configs/architectures/networks/general/hc_mamba.yaml) |
 | `ac_mambaseg` | AC-MambaSeg | arXiv 2024 | [ac_mambaseg.yaml](../../configs/architectures/networks/general/ac_mambaseg.yaml) |
 | `dcm_net` | DCM-Net | arXiv 2024 | [dcm_net.yaml](../../configs/architectures/networks/general/dcm_net.yaml) |
@@ -143,7 +142,7 @@
 | 名称 | 论文 | 发表 | YAML |
 |---|---|---|---|
 | `ukan` | U-KAN | arXiv 2024 | [ukan.yaml](../../configs/architectures/networks/general/ukan.yaml) |
-| `wav_kan_unet` | Wav-KAN UNet | arXiv 2024 | [wav_kan_unet.yaml](../../configs/architectures/networks/general/wav_kan_unet.yaml) |
+| `wa_ukan` | WA-UKAN | SPIC 2026 | [wa_ukan.yaml](../../configs/architectures/networks/general/wa_ukan.yaml) |
 | `unext` | UNeXt | MICCAI 2022 | [unext.yaml](../../configs/architectures/networks/general/unext.yaml) |
 | `rolling_unet` | Rolling-UNet (S/M/L) | arXiv 2024 | [rolling_unet.yaml](../../configs/architectures/networks/general/rolling_unet.yaml), [rolling_unet_s.yaml](../../configs/architectures/networks/general/rolling_unet_s.yaml), [rolling_unet_m.yaml](../../configs/architectures/networks/general/rolling_unet_m.yaml), [rolling_unet_l.yaml](../../configs/architectures/networks/general/rolling_unet_l.yaml) |
 
@@ -176,14 +175,13 @@
 | `languide` | LanGuideMedSeg | MICCAI 2023 | [mosmed_plus_languide.yaml](../../configs/training_paradigms/text_guided/mosmed_plus_languide.yaml), [qata_covid19_languide.yaml](../../configs/training_paradigms/text_guided/qata_covid19_languide.yaml) |
 | `clip_universal` | CLIP-Driven Universal Model | ICCV 2023 | [synapse_clip_large.yaml](../../configs/training_paradigms/text_guided/synapse_clip_large.yaml) |
 | `cris` | CRIS | CVPR 2022 | [synapse_clip.yaml](../../configs/training_paradigms/text_guided/synapse_clip.yaml) |
-| `biomedparse` | BiomedParse | Nature Methods 2024 | - |
-| `tpro` | TPRO | ECCV 2024 | - |
-| `salip` | SaLIP | arXiv 2024 | - |
-| `causal_clipseg` | Causal CLIPSeg | arXiv 2024 | - |
-| `medclip_sam` | MedCLIP-SAM | arXiv 2024 | [synapse_grounding_dino_medsam.yaml](../../configs/training_paradigms/text_guided/synapse_grounding_dino_medsam.yaml) |
-| `tp_drseg` | TP-DRSeg | arXiv 2024 | - |
-| `cxrclipseg` | CXR-CLIPSeg | arXiv 2024 | - |
-| `medisee` | MediSee (MLLM) | arXiv 2024 | [mosmed_plus_medisee.yaml](../../configs/training_paradigms/text_guided/mosmed_plus_medisee.yaml), [qata_covid19_medisee.yaml](../../configs/training_paradigms/text_guided/qata_covid19_medisee.yaml) |
+| `biomedparse` | BiomedParse | Nature Methods 2025 | - |
+| `tpro` | TPRO | MICCAI 2023 | - |
+| `salip` | SaLIP | CVPRW 2024 | - |
+| `causal_clipseg` | CausalCLIPSeg | MICCAI 2024 | - |
+| `medclip_sam` | MedCLIP-SAM | MICCAI 2024 | [synapse_grounding_dino_medsam.yaml](../../configs/training_paradigms/text_guided/synapse_grounding_dino_medsam.yaml) |
+| `tp_drseg` | TP-DRSeg | MICCAI 2024 | - |
+| `cxrclipseg` | CXR-CLIPSeg | MICCAI 2023 | - |
 
 ## YAML 使用示例
 

@@ -1,11 +1,13 @@
-# Source: https://github.com/uni-medical/STU-Net
-# Network: stu_net (complete architecture)
-# 完整网络：stu_net（完整架构）
+# Reference: Liu & Wang, "WA-UKAN: Wavelet-Enhanced Attention Kolmogorov-Arnold
+#   Networks for medical image segmentation", Signal Processing: Image
+#   Communication, 2026. DOI: 10.1016/j.image.2026.117534
+# Network: wa_ukan (complete architecture)
+# 完整网络：wa_ukan（完整架构）
 
 model:
   num_classes: 2
   img_size: 256
-  architecture: stu_net
+  architecture: wa_ukan
   encoder:
     in_channels: 3
   arch_params: {}

@@ -28,16 +28,21 @@ Currently included:
 - ``cris``             Wang et al., CVPR 2022, "CRIS: CLIP-Driven
                        Referring Image Segmentation"
                        https://github.com/DerrickWang005/CRIS.pytorch
-- ``biomedparse``      Zhao et al., Nature Methods 2024, BiomedParse
+- ``biomedparse``      Zhao et al., Nature Methods 2025, BiomedParse
                        https://github.com/microsoft/BiomedParse
-- ``tpro``             Zhang et al., MICCAI 2023, "TPRO"
-                       https://github.com/shijun18/TPRO
-- ``salip``            Aleem et al., BMVC 2024, "SaLIP"
+- ``tpro``             Zhang et al., MICCAI 2023, "TPRO: Text-Prompting-Based
+                       Weakly Supervised Histopathology Tissue Segmentation"
+                       https://github.com/zhangst431/TPRO
+- ``salip``            Aleem et al., CVPRW 2024, "SaLIP"
                        https://github.com/aleemsidra/SaLIP
 - ``causal_clipseg``   Chen et al., MICCAI 2024, "CausalCLIPSeg"
                        https://github.com/WUTCM-Lab/CausalCLIPSeg
 - ``medclip_sam``      Koleilat et al., MICCAI 2024, "MedCLIP-SAM"
                        https://github.com/HealthX-Lab/MedCLIP-SAM
+- ``tp_drseg``         Li et al., MICCAI 2024, "TP-DRSeg"
+                       https://github.com/wxliii/TP-DRSeg *(no longer available)*
+- ``cxrclipseg``       You et al., MICCAI 2023, "CXR-CLIP"
+                       https://github.com/Soombit-ai/cxr-clip
 Prompt-guided (non-text) models like SAM-Med2D and LiteMedSAM have been
 moved to ``medseg/networks/sam/`` where the rest of the SAM family lives.
 """

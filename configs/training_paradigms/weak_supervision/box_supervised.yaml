@@ -27,8 +27,8 @@ data:
 weak_supervision:
   method: box_supervised
   params:
-    box_penalty: 0.1
-    refine_iterations: 3
+    mask_type: ellipse       # BoxSup: inscribed ellipse avoids box-corner false positives
+    outside_penalty: 0.1     # suppress predictions outside bounding boxes
 training:
   epochs: 150
   batch_size: 16
@@ -38,8 +38,8 @@ training:
   loss:
     name: box_supervised
     params:
-      box_penalty: 0.1
-      refine_iterations: 3
+      mask_type: ellipse
+      outside_penalty: 0.1
   optimizer:
     name: adamw
     lr: 0.0002

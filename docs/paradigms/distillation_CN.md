@@ -26,7 +26,7 @@
 | `cwd` | Shu et al. | ICCV 2021 | [irfanICMLL/TorchDistiller](https://github.com/irfanICMLL/TorchDistiller) | 通道级蒸馏 | [cwd.yaml](../../configs/training_paradigms/distillation/cwd.yaml) |
 | `review_kd` | Chen et al. | CVPR 2021 | [dvlab-research/ReviewKD](https://github.com/dvlab-research/ReviewKD) | 知识回顾 | [review_kd.yaml](../../configs/training_paradigms/distillation/review_kd.yaml) |
 | `simkd` | Chen et al. | CVPR 2022 | [DefangChen/SimKD](https://github.com/DefangChen/SimKD) | 简单投影蒸馏 | - |
-| `norm_kd` | Liu et al. (NORM) | ICLR 2023 | [xyliu7/NORM](https://github.com/xyliu7/NORM) | 归一化 logits 蒸馏 | [norm_kd.yaml](../../configs/training_paradigms/distillation/norm_kd.yaml) |
+| `norm_kd` | Liu et al. (NormKD) | ICLR 2023 | [xyliu7/NORM](https://github.com/xyliu7/NORM) *(已失效)* | 归一化 logits 蒸馏 | [norm_kd.yaml](../../configs/training_paradigms/distillation/norm_kd.yaml) |
 | `sdd` | Wei et al. | CVPR 2024 | [shicaiwei123/SDD-CVPR2024](https://github.com/shicaiwei123/SDD-CVPR2024) | 尺度解耦蒸馏 | [sdd.yaml](../../configs/training_paradigms/distillation/sdd.yaml) |
 | `aicsd` | Mansurian et al. | TNNLS 2024 | [AmirMansurian/AICSD](https://github.com/AmirMansurian/AICSD) | 自适应类间相似度 | [aicsd.yaml](../../configs/training_paradigms/distillation/aicsd.yaml) |
 | `logit_std_kd` | Sun et al. | CVPR 2024 | [sunshangquan/logit-standardization-KD](https://github.com/sunshangquan/logit-standardization-KD) | Logit 标准化 | [logit_std_kd.yaml](../../configs/training_paradigms/distillation/logit_std_kd.yaml) |

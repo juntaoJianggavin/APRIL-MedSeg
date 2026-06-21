@@ -1,9 +1,9 @@
 # TPRO (MICCAI 2023)
-# 参考: https: / / github. com / shijun18 / TPRO / Reference: https://github.com/shijun18/TPRO
-# Paper: https://arxiv.org/abs/2308.09728
+# 参考: https: / / github. com / zhangst431 / TPRO / Reference: https://github.com/zhangst431/TPRO
+# Paper: DOI: 10.1007/978-3-031-43907-0_11 (MICCAI 2023 proceedings, no arXiv preprint)
 # Implemented from paper formulas; not a copy of the official repo.
-"""TPRO: Text-Prompted Multi-modal medical image segmentation.
-    TPRO: Text-Prompted Multi-modal 医学的 图像 分割。
+"""TPRO: Text-Prompting-Based Weakly Supervised Histopathology Tissue Segmentation.
+    TPRO: 基于文本提示的弱监督组织病理学组织分割。
 
 The paper describes a U-shape segmentation network in which **knowledge
 prompts** (per-class descriptive text snippets) are encoded by a frozen

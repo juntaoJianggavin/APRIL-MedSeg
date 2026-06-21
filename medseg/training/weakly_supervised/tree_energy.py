@@ -1,7 +1,9 @@
 """Tree Energy Loss for sparsely-annotated semantic segmentation.
 
-Liang et al., CVPR 2022.
-Official: https://github.com/megviiresearch/TEL
+Liang et al., "Tree Energy Loss: Towards Sparsely Annotated Semantic
+Segmentation", CVPR 2022.
+Paper: https://arxiv.org/abs/2203.10739
+Official: https://github.com/megvii-research/treeenergyloss
 """
 
 import torch

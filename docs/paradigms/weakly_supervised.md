@@ -2,32 +2,26 @@
 
 [中文文档](weakly_supervised_CN.md)
 
-28 built-in weakly supervised methods in `medseg/training/weakly_supervised/`.
+20 built-in weakly supervised methods in `medseg/training/weakly_supervised/`.
 
 ## Methods
 
-### Core Methods (16)
+### Core Methods (10)
 
 | Method | Paper | Published | Description | YAML |
 |--------|-------|-------|-------------|------|
 | `box_supervised` | BoxSup family | - | Box-only mask + FG/BG CE | [box_supervised.yaml](../../configs/training_paradigms/weak_supervision/box_supervised.yaml) |
 | `cam` | Zhou et al. / Selvaraju et al. | CVPR 2016 / ICCV 2017 | Class Activation Mapping (Grad-CAM) | [cam.yaml](../../configs/training_paradigms/weak_supervision/cam.yaml) |
 | `mil` | Multi-instance learning | - | Image-level label MIL | - |
-| `em_pseudo_label` | EM refinement | - | EM pseudo mask refinement | - |
 | `point` | Bearman et al. | ECCV 2016 | Point supervision | [point.yaml](../../configs/training_paradigms/weak_supervision/point.yaml) |
-| `gated_crf` | Obukhov et al. | NeurIPS 2019 | Differentiable CRF | [gated_crf.yaml](../../configs/training_paradigms/weak_supervision/gated_crf.yaml) |
-| `affinity` | AffinityNet style | - | Pixel affinity propagation | [affinity.yaml](../../configs/training_paradigms/weak_supervision/affinity.yaml) |
 | `tree_energy` | Tree energy | - | Tree-structured energy minimization | [tree_energy.yaml](../../configs/training_paradigms/weak_supervision/tree_energy.yaml) |
 | `seam` | Wang et al. | CVPR 2020 | Self-supervised equivariant attention | - |
 | `puzzle_cam` | Jo & Yu | ICIP 2021 | Puzzle piece matching CAM | - |
 | `advcam` | Lee et al. | CVPR 2021 | Adversarial complementary erasing | - |
 | `mctformer` | Xu et al. | CVPR 2022 | Multi-class token transformer | - |
-| `sam_guided_weak` | SAM-guided | - | SAM pseudo-mask refinement | - |
-| `iseg` | Interactive seg | - | Interactive click-based supervision | - |
-| `click_supervision` | Click-based | - | Click point supervision | - |
-| `scribble_sup` | Scribble supervision | - | Scribble annotation supervision | [scribble_sup.yaml](../../configs/training_paradigms/weak_supervision/scribble_sup.yaml) |
+| `scribble_sup` | Lin et al. | CVPR 2016 | Scribble annotation supervision (light variant with inlined pairwise CRF surrogate) | [scribble_sup.yaml](../../configs/training_paradigms/weak_supervision/scribble_sup.yaml) |
 
-### Extended Methods (12)
+### Extended Methods (10)
 
 | Method | Paper | Published | GitHub | Description | YAML |
 |--------|-------|-------|--------|-------------|------|
@@ -37,8 +31,6 @@
 | `toco` | ToCo | - | - | Token contrast | [toco.yaml](../../configs/training_paradigms/weak_supervision/toco.yaml) |
 | `lpcam` | LPCAM | - | - | Low-pass filtered CAM | [lpcam.yaml](../../configs/training_paradigms/weak_supervision/lpcam.yaml) |
 | `mars` | MARS | - | - | Mask-aware refinement | [mars.yaml](../../configs/training_paradigms/weak_supervision/mars.yaml) |
-| `bacon` | BACoN | - | - | Background-aware contrastive network | [bacon.yaml](../../configs/training_paradigms/weak_supervision/bacon.yaml) |
-| `wpgseg` | WPGSeg | - | - | Weakly-supervised progressive guided | [wpgseg.yaml](../../configs/training_paradigms/weak_supervision/wpgseg.yaml) |
 | `dupl` | DuPL | - | - | Dual pseudo label | [dupl.yaml](../../configs/training_paradigms/weak_supervision/dupl.yaml) |
 | `more` | MoRe | - | - | Momentum refinement | [more.yaml](../../configs/training_paradigms/weak_supervision/more.yaml) |
 | `psdpm` | PSDPM | - | - | Pseudo-label denoising with prior | [psdpm.yaml](../../configs/training_paradigms/weak_supervision/psdpm.yaml) |
@@ -59,7 +51,7 @@ Only the image-level class presence is required — no spatial annotation.
 ]
 ```
 
-**Used by:** `cam`, `mil`, `seam`, `puzzle_cam`, `advcam`, `mctformer`, `recam`, `lpcam`, `toco`, `mars`, `bacon`, `wpgseg`, `dupl`, `more`, `psdpm`, `semples`, `eps`, `em_pseudo_label`
+**Used by:** `cam`, `mil`, `seam`, `puzzle_cam`, `advcam`, `mctformer`, `recam`, `lpcam`, `toco`, `mars`, `dupl`, `more`, `psdpm`, `semples`, `eps`
 
 ### Bounding Box (`box`)
 
@@ -130,7 +122,7 @@ Coordinates are normalised `[x, y]` in `[0, 1]` range. The dataset automatically
 
 **Instance-to-semantic conversion:** Per-point classes are automatically converted to image-level multi-labels, same as box conversion.
 
-**Used by:** `point`, `click_supervision`, `iseg`
+**Used by:** `point`
 
 ### Scribble (`scribble`)
 
@@ -193,9 +185,9 @@ data:
 |------|-----------|---------------|---------|
 | Image-level | Class label | `ImageLabelDataset` | cam, mil, seam, puzzle_cam, advcam, mctformer, + 12 extended |
 | Box | Bounding box (variable-length, per-box class) | `BoxSupervisedDataset` | box_supervised, boxinst |
-| Point | Click points (variable-length, per-point class) | `WeaklySupervisedDataset(point)` | point, click_supervision, iseg |
+| Point | Click points (variable-length, per-point class) | `WeaklySupervisedDataset(point)` | point |
 | Scribble | Scribble lines (variable-length, per-scribble class) | `WeaklySupervisedDataset(scribble)` | scribble_sup |
-| Mixed | Multiple types | — | sam_guided_weak, eps |
+| Mixed | Multiple types | — | eps |
 
 ### Methods Requiring Annotation Files
 
@@ -207,7 +199,6 @@ The following methods require specific annotation files to be configured in the 
 | `boxinst` | boxes.json | `data.annotation_file` |
 | `point` | points.json | `data.annotation_file` |
 | `scribble_sup` | scribbles.json | `data.annotation_file` |
-| `gated_crf` | weak_labels.json | `data.label_file` |
 | `tree_energy` | sparse_labels.json | `data.label_file` |
 
 ## YAML Config
@@ -238,11 +229,10 @@ data:
     mask_dir: ./data/test/masks
 
 weak_supervision:
-  method: affinity           # any method name from tables above
+  method: seam           # any method name from tables above
   params:
-    affinity_weight: 1.0
-    propagation_steps: 3
-    temperature: 0.5
+    scale_factor: 0.3
+    ecr_top_k_ratio: 0.2
 
 training:
   epochs: 150
@@ -251,11 +241,10 @@ training:
   val_interval: 10
   save_interval: 30
   loss:
-    name: affinity_loss
+    name: seam_loss
     params:
-      affinity_weight: 1.0
-      propagation_steps: 3
-      temperature: 0.5
+      scale_factor: 0.3
+      ecr_top_k_ratio: 0.2
   optimizer:
     name: adamw
     lr: 2e-4

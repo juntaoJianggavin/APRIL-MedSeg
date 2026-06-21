@@ -1,6 +1,6 @@
 # SimKD (CVPR 2022)
 # Reference: https://github.com/DefangChen/SimKD
-# Paper: https://arxiv.org/abs/2203.16633
+# Paper: https://arxiv.org/abs/2203.14001
 # Implemented from paper formulas; not a copy of the official repo.
 """SimKD: Knowledge Distillation with the Reused Teacher Classifier.
 

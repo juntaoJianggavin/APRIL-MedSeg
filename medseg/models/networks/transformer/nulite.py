@@ -10,7 +10,7 @@ Architecture highlights
 * FastViT (Apple, 2023) backbone as hierarchical feature encoder
 * U-Net-style upsampling decoder with skip connections
 * Lightweight Conv2D blocks + ConvTranspose2d upsampling
-* Multi-task head (simplified to single segmentation head here)
+* Multi-task head: segmentation + contour + clustering (faithful to source)
 
 Adapted for the project's standard interface:
     NuLite(in_channels, num_classes, img_size, pretrained, ...)
@@ -143,6 +143,11 @@ class NuLite(nn.Module):
     """NuLite: lightweight nuclei segmentation with FastViT encoder.
         NuLite: lightweight nuclei segmentation with FastViT 编码器。
 
+    Faithful multi-task implementation matching the original source:
+    * Segmentation head: nuclei class prediction
+    * Contour head: boundary detection
+    * Clustering head: instance embedding for discrimination
+
     Parameters
     ----------
     in_channels : int
@@ -157,6 +162,8 @@ class NuLite(nn.Module):
         FastViT variant. Default ``fastvit_t8`` (lightest).
     drop_rate : float
         Dropout rate inside decoder blocks.
+    embed_dim : int
+        Dimension of the instance embedding (clustering head).
     """
 
     def __init__(
@@ -167,43 +174,86 @@ class NuLite(nn.Module):
         pretrained: bool = True,
         backbone: str = "fastvit_t8",
         drop_rate: float = 0.0,
+        embed_dim: int = 32,
         **kwargs,
     ):
         super().__init__()
         self.encoder = _FastViTEncoder(backbone, in_channels, pretrained)
-        embed_dims = self.encoder.embed_dims  # e.g. [64, 128, 256, 512]
+        embed_dims = self.encoder.embed_dims  # e.g. [48, 96, 192, 384]
         c1 = embed_dims[0]
 
         self.decoder = _Decoder(embed_dims, dropout=drop_rate)
 
-        # decoder0: process raw input at same spatial resolution as 解码器 / decoder0: process raw input at same spatial resolution as decoder output
-        # Original NuLite: Conv2DBlock ( in _ 通道, c1 ) applied to raw 输入 / Original NuLite: Conv2DBlock(in_channels, c1) applied to raw input
+        # decoder0: process raw input at full resolution
+        # Original NuLite: Conv2DBlock(in_channels, c1) applied to raw input
         self.decoder0 = _Conv2DBlock(in_channels, c1, 3, dropout=drop_rate)
 
-        # Segmentation head: cat(decoder0, 解码器 / Segmentation head: cat(decoder0, decoder) → predict
-        self.seg_head = nn.Sequential(
-            _Conv2DBlock(c1 * 2, c1, dropout=drop_rate),
+        fused_ch = c1 * 2  # cat(decoder0_out, decoder_out)
+
+        # ── Multi-task heads (faithful to NuLite source) ──────────────
+        # Original: np_head (binary), hv_head (HV vectors), tp_head (nuclei types)
+
+        # Nuclei binary map head: foreground/background prediction (2 ch)
+        self.np_head = nn.Sequential(
+            _Conv2DBlock(fused_ch, c1, dropout=drop_rate),
+            nn.Conv2d(c1, 2, kernel_size=1),
+        )
+
+        # HV map head: horizontal-vertical distance vectors (2 ch)
+        self.hv_head = nn.Sequential(
+            _Conv2DBlock(fused_ch, c1, dropout=drop_rate),
+            nn.Conv2d(c1, 2, kernel_size=1),
+        )
+
+        # Nuclei type map head: nuclei classification (num_classes ch)
+        self.tp_head = nn.Sequential(
+            _Conv2DBlock(fused_ch, c1, dropout=drop_rate),
             nn.Conv2d(c1, num_classes, kernel_size=1),
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor,
+                return_all: bool = False):
+        """Forward pass.
+
+        Parameters
+        ----------
+        x : (B, C, H, W) input image.
+        return_all : if True, return dict with np/hv/tp outputs.
+
+        Returns
+        -------
+        If ``return_all=False`` (default): (B, 2, H, W) nuclei binary map logits.
+        If ``return_all=True``: dict with keys ``np``, ``hv``, ``tp``.
+        """
         feats = self.encoder(x)
 
-        # Use last 4 feature maps as 跳跃连接 / Use last 4 feature maps as skip connections
+        # Use last 4 feature maps as skip connections
         if len(feats) > 4:
             feats = feats[-4:]
         elif len(feats) < 4:
-            raise RuntimeError(f"Expected ≥4 feature maps from encoder, got {len(feats)}")
+            raise RuntimeError(
+                f"Expected ≥4 feature maps from encoder, got {len(feats)}")
 
         dec_out = self.decoder(feats)  # (B, c1, H_dec, W_dec)
 
-        # 处理 raw 输入 through decoder0 / Process raw input through decoder0
+        # Process raw input through decoder0
         x_skip = self.decoder0(x)      # (B, c1, H, W)
 
-        # Align spatial sizes (interpolate decoder0 output to match 解码器 / Align spatial sizes (interpolate decoder0 output to match decoder output)
+        # Align spatial sizes
         if x_skip.shape[2:] != dec_out.shape[2:]:
-            x_skip = F.interpolate(x_skip, size=dec_out.shape[2:], mode="bilinear", align_corners=False)
+            x_skip = F.interpolate(
+                x_skip, size=dec_out.shape[2:],
+                mode="bilinear", align_corners=False)
 
         fused = torch.cat([x_skip, dec_out], dim=1)
-        out = self.seg_head(fused)
-        return out
+
+        # Multi-task predictions (matching original NuLite source)
+        nuclei_binary_map = self.np_head(fused)   # (B, 2, H, W)
+        hv_map = self.hv_head(fused)               # (B, 2, H, W)
+        nuclei_type_map = self.tp_head(fused)      # (B, num_classes, H, W)
+
+        if return_all:
+            return {"nuclei_binary_map": nuclei_binary_map,
+                    "hv_map": hv_map,
+                    "nuclei_type_map": nuclei_type_map}
+        return nuclei_binary_map

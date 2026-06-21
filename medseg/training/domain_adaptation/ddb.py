@@ -1,8 +1,9 @@
-# DDB: Learning Dynamic Domain-Bridging from Two Domains for UDA-SS (CVPR 2023)
-# Reference: https://github.com/xinyuelll/DDB
-# Paper: https://arxiv.org/abs/2304.05285
+# DDB: Deliberated Domain Bridging for Domain Adaptive Semantic Segmentation
+# (NeurIPS 2022 Spotlight)
+# Reference: https://github.com/xiaoachen98/DDB
+# Paper: https://arxiv.org/abs/2209.07695
 # Implemented from paper formulas; not a copy of the official repo.
-"""DDB (Dual-domain Decoupled Bridging) constructs a *mixed-domain* image
+"""DDB (Deliberated Domain Bridging) constructs a *mixed-domain* image
 between source and target via class-mix / mix-up, and trains two cross-
 distillation paths:
 
@@ -40,8 +41,8 @@ from medseg.registry import LOSS_REGISTRY
 class DDBLoss(nn.Module):
     """Dual-domain Decoupled Bridging loss.
 
-    Du et al., CVPR 2023.
-    Reference (not copied): https://github.com/xinyuelll/DDB
+    Du et al., NeurIPS 2022 Spotlight.
+    Reference (not copied): https://github.com/xiaoachen98/DDB
 
     Args:
         mix_alpha: Beta(a, a) concentration for the per-sample mix-up

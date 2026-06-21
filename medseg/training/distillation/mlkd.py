@@ -1,6 +1,6 @@
 # MLKD: Multi-Level Logit Distillation (CVPR 2023)
 # Reference: https://github.com/Jin-Ying/Multi-Level-Logit-Distillation
-# Paper: https://arxiv.org/abs/2302.13652
+# Paper: https://openaccess.thecvf.com/content/CVPR2023/papers/Jin_Multi-Level_Logit_Distillation_CVPR_2023_paper.pdf
 # Implemented from paper formulas; not a copy of the official repo.
 """MLKD: align logit predictions at instance, batch and class levels.
 

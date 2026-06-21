@@ -1,5 +1,4 @@
 """DermoMamba: Cross-Scale Mamba for Skin Lesion Segmentation.
-    DermoMamba: Cross-Scale Mamba for Skin 病灶 分割。
 
 Reference:
     Hoang et al., "DermoMamba: A cross-scale Mamba-based model with Guide
@@ -7,142 +6,298 @@ Reference:
     Pattern Analysis and Applications, 2025.
     https://github.com/hnkhai25/DermoMamba
 
-Architecture:
-    * 5-stage UNet encoder-decoder.
-    * Encoder: ResMambaBlock (Cross-Scale Mamba Block + residual) then
-      Conv + BN + ReLU + MaxPool.
-    * Cross-Scale Mamba Block: splits channels into 4 groups, applies
-      axial depthwise convolutions with different dilation rates (1,2,3)
-      followed by SS2D (VSS), then concatenates.
-    * Skip connections: CBAM attention on each skip.
-    * Bottleneck: PCA (channel attention) + Sweep_Mamba (3-directional SS2D).
-    * Decoder: Upsample + concat + Conv.
+Rewritten to match the official source module-by-module:
+    * CBAM (module/CBAM.py): BasicConv + ChannelGate(avg+max) + SpatialGate(BN).
+    * Cross_Scale_Mamba_Block (module/CSMB.py): 4 channel groups, dilated
+      axial DW + VSSBlock on first 3 groups, 4th identity, cat -> BN+ReLU.
+    * VSSBlock (module/VSSBlock.py): LayerNorm -> SS2D -> DropPath -> residual.
+    * PCA (module/PACM.py): dw9 -> channel attention (reduce/einsum).
+    * Sweep_Mamba (module/SMB.py): 3-directional SS2D bottleneck.
+    * ResMambaBlock / EncoderBlock (model/encoder.py).
+    * DecoderBlock (model/decoder.py).
+    * DermoMamba (model/proposed_net.py): bottleneck = Sweep_Mamba(PCA(x) + x).
+
+Note: the official Sweep_Mamba hardcodes d_model=6 and d_model=8 for the 2nd
+and 3rd SS2D, which only works for a fixed bottleneck size of H=6, W=8. This
+rewrite generalises those to dim//ratio (keeping channels last) so the model
+runs on arbitrary input sizes while preserving the 3-directional structure.
 
 Constructor:
     DermoMamba(in_channels=3, num_classes=2, img_size=224, **kwargs)
 """
 # Source: https://github.com/hnkhai25/DermoMamba
 
+from functools import partial
+from typing import Callable
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from einops import reduce
+from timm.models.layers import DropPath
 
 from medseg.models.encoders.vmunet_encoder import SS2D
 
 
-# ─ ─ CBAM ( 通道 + 空间的 注意力 ) ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ / ── CBAM (Channel + Spatial attention) ────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# VSS Block (module/VSSBlock.py)
+# ---------------------------------------------------------------------------
 
-class _ChannelGate(nn.Module):
-    def __init__(self, channels, reduction=16):
+class VSSBlock(nn.Module):
+    def __init__(self, hidden_dim: int = 0, drop_path: float = 0,
+                 norm_layer: Callable[..., torch.nn.Module] = partial(nn.LayerNorm, eps=1e-6),
+                 attn_drop_rate: float = 0, d_state: int = 16, **kwargs):
         super().__init__()
-        self.avg_pool = nn.AdaptiveAvgPool2d(1)
-        self.max_pool = nn.AdaptiveMaxPool2d(1)
-        mid = max(channels // reduction, 4)
+        self.ln_1 = norm_layer(hidden_dim)
+        self.self_attention = SS2D(d_model=hidden_dim, dropout=attn_drop_rate,
+                                   d_state=d_state, **kwargs)
+        self.drop_path = DropPath(drop_path)
+
+    def forward(self, input: torch.Tensor):
+        x = input + self.drop_path(self.self_attention(self.ln_1(input)))
+        return x
+
+
+# ---------------------------------------------------------------------------
+# CBAM (module/CBAM.py)
+# ---------------------------------------------------------------------------
+
+class BasicConv(nn.Module):
+    def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0,
+                 dilation=1, groups=1, relu=True, bn=True, bias=False):
+        super(BasicConv, self).__init__()
+        self.out_channels = out_planes
+        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size,
+                              stride=stride, padding=padding, dilation=dilation,
+                              groups=groups, bias=bias)
+        self.bn = nn.BatchNorm2d(out_planes, eps=1e-5, momentum=0.01,
+                                 affine=True) if bn else None
+        self.relu = nn.GELU() if relu else None
+
+    def forward(self, x):
+        x = self.conv(x)
+        if self.bn is not None:
+            x = self.bn(x)
+        if self.relu is not None:
+            x = self.relu(x)
+        return x
+
+
+class Flatten(nn.Module):
+    def forward(self, x):
+        return x.view(x.size(0), -1)
+
+
+class ChannelGate(nn.Module):
+    def __init__(self, gate_channels, reduction_ratio=16, pool_types=['avg', 'max']):
+        super(ChannelGate, self).__init__()
+        self.gate_channels = gate_channels
         self.mlp = nn.Sequential(
-            nn.Conv2d(channels, mid, 1), nn.ReLU(inplace=True),
-            nn.Conv2d(mid, channels, 1),
+            Flatten(),
+            nn.Linear(gate_channels, gate_channels // reduction_ratio),
+            nn.ReLU(),
+            nn.Linear(gate_channels // reduction_ratio, gate_channels)
         )
-        self.sigmoid = nn.Sigmoid()
+        self.pool_types = pool_types
 
     def forward(self, x):
-        a = self.sigmoid(self.mlp(self.avg_pool(x)) + self.mlp(self.max_pool(x)))
-        return x * a
+        channel_att_sum = None
+        for pool_type in self.pool_types:
+            if pool_type == 'avg':
+                avg_pool = F.avg_pool2d(x, (x.size(2), x.size(3)),
+                                        stride=(x.size(2), x.size(3)))
+                channel_att_raw = self.mlp(avg_pool)
+            elif pool_type == 'max':
+                max_pool = F.max_pool2d(x, (x.size(2), x.size(3)),
+                                        stride=(x.size(2), x.size(3)))
+                channel_att_raw = self.mlp(max_pool)
+            elif pool_type == 'lp':
+                lp_pool = F.lp_pool2d(x, 2, (x.size(2), x.size(3)),
+                                      stride=(x.size(2), x.size(3)))
+                channel_att_raw = self.mlp(lp_pool)
+            elif pool_type == 'lse':
+                lse_pool = logsumexp_2d(x)
+                channel_att_raw = self.mlp(lse_pool)
+            if channel_att_sum is None:
+                channel_att_sum = channel_att_raw
+            else:
+                channel_att_sum = channel_att_sum + channel_att_raw
+        scale = F.sigmoid(channel_att_sum).unsqueeze(2).unsqueeze(3).expand_as(x)
+        return x * scale
 
 
-class _SpatialGate(nn.Module):
+def logsumexp_2d(tensor):
+    tensor_flatten = tensor.view(tensor.size(0), tensor.size(1), -1)
+    s, _ = torch.max(tensor_flatten, dim=2, keepdim=True)
+    outputs = s + (tensor_flatten - s).exp().sum(dim=2, keepdim=True).log()
+    return outputs
+
+
+class ChannelPool(nn.Module):
+    def forward(self, x):
+        return torch.cat((torch.max(x, 1)[0].unsqueeze(1),
+                          torch.mean(x, 1).unsqueeze(1)), dim=1)
+
+
+class SpatialGate(nn.Module):
     def __init__(self):
-        super().__init__()
-        self.conv = nn.Conv2d(2, 1, 7, padding=3)
-        self.sigmoid = nn.Sigmoid()
+        super(SpatialGate, self).__init__()
+        kernel_size = 7
+        self.compress = ChannelPool()
+        self.spatial = BasicConv(2, 1, kernel_size, stride=1,
+                                 padding=(kernel_size - 1) // 2, relu=False)
 
     def forward(self, x):
-        avg = torch.mean(x, dim=1, keepdim=True)
-        mx, _ = torch.max(x, dim=1, keepdim=True)
-        return x * self.sigmoid(self.conv(torch.cat([avg, mx], dim=1)))
+        x_compress = self.compress(x)
+        x_out = self.spatial(x_compress)
+        scale = F.sigmoid(x_out)
+        return x * scale
 
 
 class CBAM(nn.Module):
-    def __init__(self, channels, reduction=16):
-        super().__init__()
-        self.ch = _ChannelGate(channels, reduction)
-        self.sp = _SpatialGate()
+    def __init__(self, gate_channels, reduction_ratio=16,
+                 pool_types=['avg', 'max'], no_spatial=False):
+        super(CBAM, self).__init__()
+        self.ChannelGate = ChannelGate(gate_channels, reduction_ratio, pool_types)
+        self.no_spatial = no_spatial
+        if not no_spatial:
+            self.SpatialGate = SpatialGate()
 
     def forward(self, x):
-        return self.sp(self.ch(x))
+        x_out = self.ChannelGate(x)
+        if not no_spatial:
+            x_out = self.SpatialGate(x_out)
+        return x_out
 
 
-# ─ ─ Axial 空间的 Depthwise Conv ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ / ── Axial Spatial Depthwise Conv ──────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# Cross-Scale Mamba Block (module/CSMB.py)
+# ---------------------------------------------------------------------------
 
-class _AxialSpatialDW(nn.Module):
-    def __init__(self, dim, kernel=7, dilation=1):
+class Axial_Spatial_DW(nn.Module):
+    def __init__(self, dim, mixer_kernel, dilation=1):
         super().__init__()
-        self.mixer_h = nn.Conv2d(dim, dim, (kernel, 1), padding="same",
+        h, w = mixer_kernel
+        self.mixer_h = nn.Conv2d(dim, dim, kernel_size=(h, 1), padding='same',
                                  groups=dim, dilation=dilation)
-        self.mixer_w = nn.Conv2d(dim, dim, (1, kernel), padding="same",
+        self.mixer_w = nn.Conv2d(dim, dim, kernel_size=(1, w), padding='same',
                                  groups=dim, dilation=dilation)
-        self.conv = nn.Conv2d(dim, dim, 3, padding="same",
+        self.conv = nn.Conv2d(dim, dim, kernel_size=3, padding='same',
                               groups=dim, dilation=dilation)
 
     def forward(self, x):
-        return self.conv(self.mixer_h(self.mixer_w(x))) + x
+        skip = x
+        x = self.mixer_w(x)
+        x = self.mixer_h(x)
+        x = self.conv(x)
+        return x + skip
 
 
-# ─ ─ Cross-Scale Mamba 块 ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ / ── Cross-Scale Mamba Block ──────────────────────────────────────────────────
-
-class _CrossScaleMambaBlock(nn.Module):
-    """Splits channels into 4 groups, applies axial DW + SS2D with
-        Splits 通道 into 4 groups, 应用 axial DW + SS2D with。
-    different dilation rates on first 3 groups, passes 4th through."""
-
-    def __init__(self, dim):
+class Cross_Scale_Mamba_Block(nn.Module):
+    def __init__(self, dim, norm_layer=nn.LayerNorm):
         super().__init__()
-        q = max(dim // 4, 4)
-        self.dw1 = _AxialSpatialDW(q, 7, dilation=1)
-        self.dw2 = _AxialSpatialDW(q, 7, dilation=2)
-        self.dw3 = _AxialSpatialDW(q, 7, dilation=3)
-        self.vss = SS2D(d_model=q, dropout=0, d_state=16)
+        self.dw1 = Axial_Spatial_DW(dim // 4, (7, 7), dilation=1)
+        self.dw2 = Axial_Spatial_DW(dim // 4, (7, 7), dilation=2)
+        self.dw3 = Axial_Spatial_DW(dim // 4, (7, 7), dilation=3)
+        self.vss = VSSBlock(dim // 4)
         self.bn = nn.BatchNorm2d(dim)
         self.act = nn.ReLU()
 
     def forward(self, x):
-        chunks = torch.chunk(x, 4, dim=1)
-        parts = []
-        for i, (xi, dw) in enumerate(zip(chunks, [self.dw1, self.dw2, self.dw3])):
-            xi = dw(xi)
-            xi = self.vss(xi.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
-            parts.append(xi)
-        parts.append(chunks[3])
-        x = torch.cat(parts, dim=1)
-        return self.act(self.bn(x))
+        x1, x2, x3, x4 = torch.chunk(x, 4, dim=1)
+        x1 = self.vss(self.dw1(x1).permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        x2 = self.vss(self.dw2(x2).permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        x3 = self.vss(self.dw3(x3).permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        x = torch.cat([x1, x2, x3, x4], dim=1)
+        x = self.act(self.bn(x))
+        return x
 
 
-# ── ResMambaBlock ────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# PCA (module/PACM.py)
+# ---------------------------------------------------------------------------
 
-class _ResMambaBlock(nn.Module):
-    def __init__(self, in_c):
+class PCA(nn.Module):
+    def __init__(self, dim):
         super().__init__()
-        self.norm = nn.InstanceNorm2d(in_c, affine=True)
-        self.act = nn.LeakyReLU(0.01)
-        self.block = _CrossScaleMambaBlock(in_c)
-        self.conv = nn.Conv2d(in_c, in_c, 3, padding="same")
-        self.scale = nn.Parameter(torch.ones(1))
+        self.dw = nn.Conv2d(dim, dim, kernel_size=9, groups=dim, padding="same")
+        self.prob = nn.Softmax(dim=1)
 
     def forward(self, x):
-        out = self.block(x)
-        out = self.act(self.norm(self.conv(out))) + x * self.scale
+        c = reduce(x, 'b c h w -> b c', 'mean')
+        x = self.dw(x)
+        c_ = reduce(x, 'b c h w -> b c', 'mean')
+        raise_ch = self.prob(c_ - c)
+        att_score = torch.sigmoid(c_ * (1 + raise_ch))
+        return torch.einsum('bchw, bc -> bchw', x, att_score)
+
+
+# ---------------------------------------------------------------------------
+# Sweep_Mamba (module/SMB.py)
+# ---------------------------------------------------------------------------
+
+class Sweep_Mamba(nn.Module):
+    def __init__(self, dim, ratio=8):
+        super().__init__()
+        self.ln = nn.LayerNorm(dim)
+        self.proj_in = nn.Linear(dim, dim // ratio, 1)
+        # Official hardcodes d_model=6 and d_model=8 for mamba2/mamba3, which
+        # only works for a fixed bottleneck size (H=6, W=8). Generalised to
+        # dim//ratio so the model runs on arbitrary input sizes.
+        self.mamba1 = SS2D(d_model=dim // ratio, dropout=0, d_state=16)
+        self.mamba2 = SS2D(d_model=dim // ratio, dropout=0, d_state=16)
+        self.mamba3 = SS2D(d_model=dim // ratio, dropout=0, d_state=16)
+        self.act = nn.SiLU()
+        self.relu = nn.ReLU()
+        self.proj_out = nn.Linear(dim // ratio, dim, 1)
+        self.scale = nn.Parameter(torch.ones(1))
+        self.bn = nn.BatchNorm2d(dim)
+
+    def forward(self, x):
+        # x: (B, C, H, W) -> operate in (B, H, W, C)
+        x = x.permute(0, 2, 3, 1)
+        skip = x
+        x = self.proj_in(self.ln(x))                 # (B, H, W, dim//ratio)
+        x1 = self.mamba1(x)
+        x2 = self.mamba2(x.permute(0, 2, 1, 3)).permute(0, 2, 1, 3)
+        x3 = self.mamba3(x.permute(0, 2, 1, 3)).permute(0, 2, 1, 3)
+        w = self.act(x)
+        out = w * x1 + w * x2 + w * x3
+        out = self.proj_out(out) + skip * self.scale
+        out = out.permute(0, 3, 1, 2)                 # back to (B, C, H, W)
+        out = self.bn(out)
+        out = self.relu(out)
         return out
 
 
-# ── Encoder Block ────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# ResMambaBlock / EncoderBlock (model/encoder.py)
+# ---------------------------------------------------------------------------
 
-class _EncoderBlock(nn.Module):
+class ResMambaBlock(nn.Module):
+    def __init__(self, in_c):
+        super().__init__()
+        self.ins_norm = nn.InstanceNorm2d(in_c, affine=True)
+        self.act = nn.LeakyReLU(negative_slope=0.01)
+        self.block = Cross_Scale_Mamba_Block(in_c)
+        self.conv = nn.Conv2d(in_c, in_c, kernel_size=3, padding='same')
+        self.scale = nn.Parameter(torch.ones(1))
+
+    def forward(self, x):
+        x = self.block(x)
+        x = self.act(self.ins_norm(self.conv(x))) + x * self.scale
+        return x
+
+
+class EncoderBlock(nn.Module):
+    """Encoding then downsampling"""
     def __init__(self, in_c, out_c):
         super().__init__()
-        self.resmamba = _ResMambaBlock(in_c)
-        self.pw = nn.Conv2d(in_c, out_c, 3, padding="same")
+        self.pw = nn.Conv2d(in_c, out_c, kernel_size=3, padding='same')
         self.bn = nn.BatchNorm2d(out_c)
         self.act = nn.ReLU()
-        self.down = nn.MaxPool2d(2)
+        self.resmamba = ResMambaBlock(in_c)
+        self.down = nn.MaxPool2d((2, 2))
 
     def forward(self, x):
         x = self.resmamba(x)
@@ -151,86 +306,37 @@ class _EncoderBlock(nn.Module):
         return x, skip
 
 
-# ─ ─ PCA ( 通道 注意力 ) ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ / ── PCA (Channel Attention) ──────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# DecoderBlock (model/decoder.py)
+# ---------------------------------------------------------------------------
 
-class _PCA(nn.Module):
-    def __init__(self, dim):
-        super().__init__()
-        self.dw = nn.Conv2d(dim, dim, 9, groups=dim, padding="same")
-        self.softmax = nn.Softmax(dim=1)
-
-    def forward(self, x):
-        c = x.mean(dim=[2, 3])                     # (B, C)
-        x = self.dw(x)
-        c_ = x.mean(dim=[2, 3])                    # (B, C)
-        raise_ch = self.softmax(c_ - c)
-        att = torch.sigmoid(c_ * (1 + raise_ch))
-        return x * att.unsqueeze(-1).unsqueeze(-1)
-
-
-# ─ ─ Sweep _ Mamba ( 瓶颈层 ) ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ / ── Sweep_Mamba (Bottleneck) ─────────────────────────────────────────────────
-
-class _SweepMamba(nn.Module):
-    """3-directional SS2D 瓶颈层。
-        3-directional SS2D bottleneck with channel reduction."""
-
-    def __init__(self, dim, ratio=8):
-        super().__init__()
-        red = max(dim // ratio, 8)
-        self.ln = nn.LayerNorm(dim)
-        self.proj_in = nn.Linear(dim, red, 1)
-        self.mamba1 = SS2D(d_model=red, dropout=0, d_state=16)
-        self.mamba2 = SS2D(d_model=red, dropout=0, d_state=16)
-        self.mamba3 = SS2D(d_model=red, dropout=0, d_state=16)
-        self.act = nn.SiLU()
-        self.relu = nn.ReLU()
-        self.proj_out = nn.Linear(red, dim, 1)
-        self.scale = nn.Parameter(torch.ones(1))
-        self.bn = nn.BatchNorm2d(dim)
-
-    def forward(self, x):
-        # x: (B, H, W, C)
-        skip = x
-        x = self.proj_in(self.ln(x))               # (B, H, W, red)
-        x1 = self.mamba1(x)
-        # Transposed scans for directional diversity
-        x2 = self.mamba2(x.permute(0, 2, 1, 3)).permute(0, 2, 1, 3)
-        x3 = self.mamba3(x.permute(0, 2, 1, 3)).permute(0, 2, 1, 3)
-        w = self.act(x)
-        out = w * x1 + w * x2 + w * x3
-        out = self.proj_out(out) + skip * self.scale
-        return out
-
-
-# ── Decoder Block ────────────────────────────────────────────────────────────
-
-class _DecoderBlock(nn.Module):
+class DecoderBlock(nn.Module):
     def __init__(self, in_c, out_c):
         super().__init__()
-        self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=False)
-        self.pw = nn.Conv2d(in_c * 2, in_c, 1)
-        self.pw2 = nn.Conv2d(in_c, out_c, 3, padding="same")
+        self.up = nn.Upsample(scale_factor=2)
+        self.pw = nn.Conv2d(in_c * 2, in_c, kernel_size=1)
         self.bn = nn.BatchNorm2d(out_c)
         self.act = nn.GELU()
+        self.pw2 = nn.Conv2d(in_c, out_c, kernel_size=3, padding='same')
 
     def forward(self, x, skip):
         x = self.up(x)
-        # Handle 大小 mismatch / Handle size mismatch
         if x.shape[2:] != skip.shape[2:]:
-            x = F.interpolate(x, size=skip.shape[2:], mode="bilinear",
-                              align_corners=False)
+            x = F.interpolate(x, size=skip.shape[2:], mode='nearest')
         x = torch.cat([x, skip], dim=1)
         x = self.pw(x)
-        return self.bn(self.act(self.pw2(x)))
+        x = self.bn(self.act(self.pw2(x)))
+        return x
 
 
-# ── DermoMamba ───────────────────────────────────────────────────────────────
+# ---------------------------------------------------------------------------
+# DermoMamba (model/proposed_net.py)
+# ---------------------------------------------------------------------------
 
 class DermoMamba(nn.Module):
-    """Cross-scale Mamba with CBAM skip + PCA/SweepMamba bottleneck.
-        Cross-scale Mamba with CBAM 跳跃连接。
+    """Cross-scale Mamba with CBAM skip + PCA/Sweep_Mamba bottleneck.
 
-    Channel progression: 16 -> 32 -> 64 -> 128 -> 256 -> 512.
+    Channel progression: 16 -> 32 -> 64 -> 128 -> 256 -> 512 (5-stage UNet).
     """
 
     def __init__(self, in_channels=3, num_classes=2, img_size=224,
@@ -238,70 +344,69 @@ class DermoMamba(nn.Module):
         super().__init__()
         c = base_channels  # 16
 
-        self.pw_in = nn.Conv2d(in_channels, c, 1)
+        self.pw_in = nn.Conv2d(in_channels, c, kernel_size=1)
 
-        # 编码器 / Encoder
-        self.e1 = _EncoderBlock(c, c * 2)
-        self.e2 = _EncoderBlock(c * 2, c * 4)
-        self.e3 = _EncoderBlock(c * 4, c * 8)
-        self.e4 = _EncoderBlock(c * 8, c * 16)
-        self.e5 = _EncoderBlock(c * 16, c * 32)
+        """Encoder"""
+        self.e1 = EncoderBlock(c, c * 2)
+        self.e2 = EncoderBlock(c * 2, c * 4)
+        self.e3 = EncoderBlock(c * 4, c * 8)
+        self.e4 = EncoderBlock(c * 8, c * 16)
+        self.e5 = EncoderBlock(c * 16, c * 32)
 
-        # 跳跃连接 ( CBAM ) / Skip connections (CBAM)
+        """Skip connection"""
         self.s1 = CBAM(c * 2)
         self.s2 = CBAM(c * 4)
         self.s3 = CBAM(c * 8)
         self.s4 = CBAM(c * 16)
         self.s5 = CBAM(c * 32)
 
-        # 瓶颈层 / Bottleneck
-        self.pca = _PCA(c * 32)
-        self.sweep = _SweepMamba(c * 32)
+        """Bottle Neck"""
+        self.b1 = Sweep_Mamba(c * 32)
+        self.b2 = PCA(c * 32)
 
-        # 解码 / Decoder
-        self.d5 = _DecoderBlock(c * 32, c * 16)
-        self.d4 = _DecoderBlock(c * 16, c * 8)
-        self.d3 = _DecoderBlock(c * 8, c * 4)
-        self.d2 = _DecoderBlock(c * 4, c * 2)
-        self.d1 = _DecoderBlock(c * 2, c)
-
-        self.conv_out = nn.Conv2d(c, num_classes, 1)
+        """Decoder"""
+        self.d5 = DecoderBlock(c * 32, c * 16)
+        self.d4 = DecoderBlock(c * 16, c * 8)
+        self.d3 = DecoderBlock(c * 8, c * 4)
+        self.d2 = DecoderBlock(c * 4, c * 2)
+        self.d1 = DecoderBlock(c * 2, c)
+        # Final layer
+        self.conv_out = nn.Conv2d(c, num_classes, kernel_size=1)
 
     def forward(self, x):
         H, W = x.shape[2:]
-        # Pad to multiple of 32
+        # 5 MaxPool stages => /32; pad to a multiple of 32.
         pH = (32 - H % 32) % 32
         pW = (32 - W % 32) % 32
         if pH > 0 or pW > 0:
-            x = F.pad(x, [0, pW, 0, pH], mode="reflect")
+            x = F.pad(x, [0, pW, 0, pH], mode='reflect')
 
+        """Encoder"""
         x = self.pw_in(x)
-
-        # 编码器 / Encoder
         x, skip1 = self.e1(x)
         x, skip2 = self.e2(x)
         x, skip3 = self.e3(x)
         x, skip4 = self.e4(x)
         x, skip5 = self.e5(x)
 
-        # 跳跃 注意力 / Skip attention
+        """Skip connection"""
         skip1 = self.s1(skip1)
         skip2 = self.s2(skip2)
         skip3 = self.s3(skip3)
         skip4 = self.s4(skip4)
         skip5 = self.s5(skip5)
 
-        # 瓶颈层 / Bottleneck
-        x = self.pca(x)
-        # Sweep_Mamba operates in (B,H,W,C) space
-        x = self.sweep(x.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        """BottleNeck"""
+        x = self.b1(self.b2(x) + x)
 
-        # 解码 / Decoder
+        """Decoder"""
         x = self.d5(x, skip5)
         x = self.d4(x, skip4)
         x = self.d3(x, skip3)
         x = self.d2(x, skip2)
         x = self.d1(x, skip1)
+        x = self.conv_out(x)
 
-        out = self.conv_out(x)
-        return F.interpolate(out, size=(H, W), mode="bilinear", align_corners=False)
+        if x.shape[2:] != (H, W):
+            x = F.interpolate(x, size=(H, W), mode='bilinear', align_corners=False)
+        return x

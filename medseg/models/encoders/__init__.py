@@ -101,7 +101,9 @@ import sys as _sys
 for _stem in ('sam_vit_encoder', 'clip_encoder', 'dino_encoder', 'dinov2_encoder',
               'dinov3_encoder', 'biomedclip_encoder', 'medclip_encoder',
               'conch_encoder', 'uni_encoder', 'usfm_encoder', 'ctfm_encoder',
-              'raddino_encoder', 'radimagenet_encoder'):
+              'raddino_encoder', 'radimagenet_encoder',
+              'chexzero_encoder', 'biovil_encoder',
+              'endo_fm_encoder', 'surgical_sam_encoder'):
     _m = _sys.modules.get('medseg.models.encoders.' + _stem)
     if _m is not None:
         globals()[_stem] = _m

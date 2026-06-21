@@ -37,7 +37,7 @@ Active methods:
     - simkd              Chen et al., SimKD, CVPR 2022
                          https://github.com/DefangChen/SimKD
     - norm_kd            Liu et al., NORM (normalised logits KD), ICLR 2023
-                         https://github.com/xyliu7/NORM
+                         https://github.com/xyliu7/NORM  (no longer available)
     - sdd                Wei et al., Scale Decoupled Distillation, CVPR 2024
                          https://github.com/shicaiwei123/SDD-CVPR2024
     - aicsd              Mansurian et al., Adaptive Inter-Class Similarity

@@ -1,116 +1,367 @@
 """VMKLA-UNet: Vision Mamba with KAN Linear Attention U-Net.
-    VMKLA-UNet: Vision Mamba with KAN Linear 注意力 U-Net。
+    VMKLA-UNet: Vision Mamba with KAN Linear Attention U-Net。
 
-Combines Vision Mamba encoder with KAN (Kolmogorov-Arnold Network)
-linear attention for efficient skip connection refinement.
+Combines Vision Mamba (VSS blocks with SS2D) encoder with KAN (Kolmogorov-Arnold
+Network) linear attention decoder (MKCSA blocks) for medical image segmentation.
 
 Reference:
-    VMKLA-UNet: Vision Mamba with KAN Linear Attention U-Net for
-    Medical Image Segmentation. PMC 2025.
+    Su et al., "VMKLA-UNet: vision Mamba with KAN linear attention U-Net
+    for Medical Image Segmentation", Nature Scientific Reports 2025.
+    DOI: 10.1038/s41598-025-97397-2
+
+Architecture:
+    - Encoder: 4-stage U-Net with VSS blocks (SS2D 2D selective scan).
+      VSS Block (Eq. 5): E=Linear(x) -> E1=SiLU(Conv3x3(E)) ->
+      S1=LayerNorm(SS2D(E1)) -> S2=SiLU(E) -> Y=S1*Y2
+    - Decoder: MKCSA blocks (Eq. 10-18):
+      Main branch: Linear(LN(X)) -> SiLU(DWConv3x3) -> KANLinearAttention
+      Sub branch: ChannelAttention(LN(X)) -> SpatialAttention
+      Final: Linear(main * sub)
+    - Skip connections: element-wise addition (Eq. 9), not concatenation.
+
+Self-contained: SS2D is imported from medseg.models.encoders.vmunet_encoder
+(the project's vetted selective-scan implementation, which requires mamba_ssm).
 """
-# Source: NOT VERIFIED — fabricated by this repo, no upstream confirmed.
+# Implemented from paper formulas; no official code released.
+
+import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from typing import List, Optional
 
+from medseg.models.encoders.vmunet_encoder import SS2D
 
-class _KANLinearAttention(nn.Module):
-    """KAN-inspired linear attention for skip connection refinement.
-        KAN-inspired linear attention for 跳跃连接。
 
-    Uses learnable basis functions to transform skip features.
+# ---------------------------------------------------------------------------
+# KAN Linear Layer (B-spline basis functions)
+# ---------------------------------------------------------------------------
+class KANLinear(nn.Module):
+    """KAN linear layer with B-spline basis functions.
+
+    Implements the efficient-KAN formulation:
+        output = base_weight * SiLU(x) + spline(x)
+
+    The spline component uses B-spline basis functions on a uniform grid.
     """
 
-    def __init__(self, dim, num_basis=5):
+    def __init__(self, in_features, out_features, grid_size=5, spline_order=3,
+                 scale_noise=0.1, scale_base=1.0, scale_spline=1.0):
         super().__init__()
-        self.basis_weights = nn.Parameter(torch.randn(num_basis, dim, dim) * 0.02)
-        self.basis_bias = nn.Parameter(torch.zeros(dim))
-        self.act = nn.SiLU()
-        self.norm = nn.LayerNorm(dim)
+        self.in_features = in_features
+        self.out_features = out_features
+        self.grid_size = grid_size
+        self.spline_order = spline_order
+
+        # B-spline grid: uniform on [-2, 2] extended by spline_order
+        h = 2.0 / grid_size
+        grid = torch.linspace(
+            -2 - h * spline_order,
+            2 + h * spline_order,
+            grid_size + 2 * spline_order + 1,
+        ).expand(in_features, -1).contiguous()
+        self.register_buffer("grid", grid)
+
+        self.base_weight = nn.Parameter(torch.Tensor(out_features, in_features))
+        self.spline_weight = nn.Parameter(
+            torch.Tensor(out_features, in_features, grid_size + spline_order)
+        )
+        self.scale_base = scale_base
+        self.scale_spline = scale_spline
+        self.scale_noise = scale_noise
+
+        self.reset_parameters()
+
+    def reset_parameters(self):
+        nn.init.kaiming_uniform_(self.base_weight, a=math.sqrt(5))
+        with torch.no_grad():
+            noise = (
+                (torch.rand(self.spline_weight.shape) - 0.5) * self.scale_noise
+            )
+            self.spline_weight.data.copy_(self.scale_spline * noise)
+
+    def b_splines(self, x):
+        """Compute B-spline bases via Cox-de Boor recursion.
+
+        Args:
+            x: (..., in_features)
+        Returns:
+            (..., in_features, grid_size + spline_order)
+        """
+        assert x.dim() >= 2
+        x = x.unsqueeze(-1)  # (..., in_features, 1)
+        bases = (
+            (x >= self.grid[:, :-1]) & (x < self.grid[:, 1:])
+        ).float()
+
+        for k in range(1, self.spline_order + 1):
+            bases = (
+                (x - self.grid[:, : -(k + 1)])
+                / (self.grid[:, k:-1] - self.grid[:, : -(k + 1)])
+                * bases[..., :-1]
+            ) + (
+                (self.grid[:, k + 1:] - x)
+                / (self.grid[:, k + 1:] - self.grid[:, 1:(-k)])
+                * bases[..., 1:]
+            )
+        return bases.contiguous()
 
     def forward(self, x):
+        """x: (..., in_features) -> (..., out_features)"""
+        base_output = F.silu(x) @ self.base_weight.T
+        spline_bases = self.b_splines(x)
+        spline_output = torch.einsum("...ij,oij->...o", spline_bases, self.spline_weight)
+        return self.scale_base * base_output + spline_output
+
+
+# ---------------------------------------------------------------------------
+# KAN Linear Attention (Eq. 10-14)
+# ---------------------------------------------------------------------------
+class KANLinearAttention(nn.Module):
+    """KAN linear attention for the MKCSA decoder main branch.
+
+    Q and K are generated by separate KAN linear layers; attention uses
+    sigmoid instead of softmax: out = sigmoid(Q @ K^T) @ V.
+    """
+
+    def __init__(self, dim, grid_size=5, spline_order=3):
+        super().__init__()
+        self.q_kan = KANLinear(dim, dim, grid_size, spline_order)
+        self.k_kan = KANLinear(dim, dim, grid_size, spline_order)
+        self.v_proj = nn.Linear(dim, dim)
+
+    def forward(self, x):
+        """x: (B, C, H, W) -> (B, C, H, W)"""
         B, C, H, W = x.shape
         tokens = x.flatten(2).transpose(1, 2)  # (B, HW, C)
-        tokens = self.norm(tokens)
-        # KAN-style: weighted sum of basis function transformations
-        out = torch.zeros_like(tokens)
-        for i in range(self.basis_weights.shape[0]):
-            out = out + self.act(tokens @ self.basis_weights[i])
-        out = out + self.basis_bias
+
+        Q = self.q_kan(tokens)
+        K = self.k_kan(tokens)
+        V = self.v_proj(tokens)
+
+        # Sigmoid attention (Eq. 14)
+        attn = torch.sigmoid(Q @ K.transpose(-2, -1))  # (B, HW, HW)
+        out = attn @ V  # (B, HW, C)
+
         return out.transpose(1, 2).view(B, C, H, W)
 
 
-class _MambaKANBlock(nn.Module):
-    """块 combining Mamba SSM with KAN linear 注意力。
-        Block combining Mamba SSM with KAN linear attention."""
+# ---------------------------------------------------------------------------
+# Channel & Spatial Attention (Sub-branch, Eq. 15-18)
+# ---------------------------------------------------------------------------
+class ChannelAttention(nn.Module):
+    """Channel attention (Eq. 15-16): sigmoid(W2 * ReLU(W1 * GAP(X)))."""
 
-    def __init__(self, dim, d_state=16):
+    def __init__(self, dim, reduction=16):
         super().__init__()
-        self.norm1 = nn.LayerNorm(dim)
-        self.ssm_proj = nn.Linear(dim, dim * 2)
-        self.ssm_gate = nn.Sigmoid()
-        self.ssm_out = nn.Linear(dim, dim)
-        self.kan = _KANLinearAttention(dim)
-        self.norm2 = nn.LayerNorm(dim)
-        self.ffn = nn.Sequential(nn.Linear(dim, dim * 4), nn.GELU(), nn.Linear(dim * 4, dim))
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        self.fc1 = nn.Conv2d(dim, max(dim // reduction, 1), 1, bias=False)
+        self.relu = nn.ReLU(inplace=True)
+        self.fc2 = nn.Conv2d(max(dim // reduction, 1), dim, 1, bias=False)
+        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
+        y = self.gap(x)
+        y = self.fc2(self.relu(self.fc1(y)))
+        return self.sigmoid(y)
+
+
+class SpatialAttention(nn.Module):
+    """Spatial attention (Eq. 17-18): sigmoid(Conv([GAP(F'); GMP(F')]))."""
+
+    def __init__(self, kernel_size=7):
+        super().__init__()
+        self.conv = nn.Conv2d(2, 1, kernel_size, padding=kernel_size // 2, bias=False)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        avg_out = torch.mean(x, dim=1, keepdim=True)
+        max_out, _ = torch.max(x, dim=1, keepdim=True)
+        y = torch.cat([avg_out, max_out], dim=1)
+        return self.sigmoid(self.conv(y))
+
+
+# ---------------------------------------------------------------------------
+# VSS Block (Encoder, Eq. 5)
+# ---------------------------------------------------------------------------
+class VSSBlock(nn.Module):
+    """Visual State Space block with SS2D selective scan (Eq. 5).
+
+    E=Linear(x) -> E1=SiLU(Conv3x3(E)) -> S1=LayerNorm(SS2D(E1))
+    -> S2=SiLU(E) -> Y=S1*S2
+    """
+
+    def __init__(self, dim, d_state=16, d_conv=3, expand=2):
+        super().__init__()
+        self.dim = dim
+        self.linear = nn.Linear(dim, dim)
+        self.conv3x3 = nn.Conv2d(dim, dim, 3, padding=1, groups=dim)
+        self.act = nn.SiLU()
+        self.ss2d = SS2D(dim, d_state=d_state, d_conv=d_conv, expand=expand)
+        self.norm = nn.LayerNorm(dim)
+
+    def forward(self, x):
+        """x: (B, C, H, W) -> (B, C, H, W)"""
         B, C, H, W = x.shape
-        res = x
-        # SSM 分支 / SSM branch
-        tokens = x.flatten(2).transpose(1, 2)
-        kv = self.ssm_proj(self.norm1(tokens))
-        k, v = kv.chunk(2, dim=-1)
-        ssm_out = self.ssm_out(self.ssm_gate(k) * v)
-        ssm_feat = ssm_out.transpose(1, 2).view(B, C, H, W)
-        # KAN 分支 / KAN branch
-        kan_feat = self.kan(x)
-        # 组合 / Combine
-        out = ssm_feat + kan_feat + res
-        tokens = out.flatten(2).transpose(1, 2)
-        tokens = tokens + self.ffn(self.norm2(tokens))
-        return tokens.transpose(1, 2).view(B, C, H, W)
+        x_bhwc = x.permute(0, 2, 3, 1)  # (B, H, W, C)
+
+        # E = Linear(x)
+        E = self.linear(x_bhwc)
+
+        # E1 = SiLU(Conv3x3(E))
+        E_bchw = E.permute(0, 3, 1, 2)
+        E1 = self.act(self.conv3x3(E_bchw))
+        E1_bhwc = E1.permute(0, 2, 3, 1)
+
+        # S1 = LayerNorm(SS2D(E1))
+        S1 = self.norm(self.ss2d(E1_bhwc))
+
+        # S2 = SiLU(E)
+        S2 = self.act(E)
+
+        # Y = S1 * S2
+        Y = S1 * S2
+
+        return Y.permute(0, 3, 1, 2).contiguous()
 
 
+# ---------------------------------------------------------------------------
+# MKCSA Block (Decoder, Eq. 10-18)
+# ---------------------------------------------------------------------------
+class MKCSABlock(nn.Module):
+    """Mamba-KAN Channel-Spatial Attention block (decoder, Eq. 10-18).
+
+    Main branch: Linear(LN(X)) -> SiLU(DWConv3x3) -> KANLinearAttention
+    Sub branch: ChannelAttention(LN(X)) -> SpatialAttention
+    Final: Linear(main * sub)
+    """
+
+    def __init__(self, dim, grid_size=5, spline_order=3):
+        super().__init__()
+        self.norm = nn.LayerNorm(dim)
+
+        # Main branch
+        self.linear1 = nn.Linear(dim, dim)
+        self.dwconv = nn.Conv2d(dim, dim, 3, padding=1, groups=dim)
+        self.act = nn.SiLU()
+        self.kan_attn = KANLinearAttention(dim, grid_size, spline_order)
+        self.linear2 = nn.Linear(dim, dim)
+
+        # Sub branch
+        self.channel_attn = ChannelAttention(dim)
+        self.spatial_attn = SpatialAttention()
+
+    def forward(self, x):
+        """x: (B, C, H, W) -> (B, C, H, W)"""
+        B, C, H, W = x.shape
+        x_bhwc = x.permute(0, 2, 3, 1)
+
+        normed = self.norm(x_bhwc)
+        normed_bchw = normed.permute(0, 3, 1, 2)
+
+        # --- Main branch (Eq. 10-14) ---
+        Y1 = self.linear1(normed)  # (B, H, W, C)
+        Y1_bchw = Y1.permute(0, 3, 1, 2)
+        Y2 = self.act(self.dwconv(Y1_bchw))  # (B, C, H, W)
+        Y3 = self.kan_attn(Y2)  # (B, C, H, W)
+
+        # --- Sub branch (Eq. 15-18) ---
+        Y1_sub = self.channel_attn(normed_bchw) * normed_bchw
+        Y2_sub = self.spatial_attn(Y1_sub) * Y1_sub
+
+        # --- Combine (Eq. 10) ---
+        combined = Y3 * Y2_sub
+        combined_bhwc = combined.permute(0, 2, 3, 1)
+        out = self.linear2(combined_bhwc)
+
+        return out.permute(0, 3, 1, 2).contiguous()
+
+
+# ---------------------------------------------------------------------------
+# Main Model
+# ---------------------------------------------------------------------------
 class VMKLAUNet(nn.Module):
-    """VMKLA-UNet: Vision Mamba + KAN Linear 注意力。
-        VMKLA-UNet: Vision Mamba + KAN Linear Attention."""
+    """VMKLA-UNet: Vision Mamba + KAN Linear Attention.
+
+    4-stage U-Net with VSS blocks (SS2D) in the encoder and MKCSA blocks
+    (KAN linear attention + channel/spatial attention) in the decoder.
+    Skip connections use element-wise addition (Eq. 9).
+
+    Args:
+        in_channels: number of input image channels.
+        num_classes: number of segmentation classes.
+        img_size: nominal input spatial size (informational only).
+        embed_dim: channels of the first stage.
+        depths: per-stage block counts (must have length 4).
+    """
 
     def __init__(self, in_channels=3, num_classes=2, img_size=224,
                  embed_dim=64, depths=None, **kwargs):
         super().__init__()
         depths = depths or [2, 2, 6, 2]
         dims = [embed_dim * (2 ** i) for i in range(len(depths))]
-        self.stem = nn.Sequential(nn.Conv2d(in_channels, dims[0], 4, 4, bias=False), nn.BatchNorm2d(dims[0]))
+        self.in_channels = in_channels
+        self.num_classes = num_classes
+        self.img_size = img_size
+
+        # Stem: 4x4 stride-4 patch embed
+        self.stem = nn.Sequential(
+            nn.Conv2d(in_channels, dims[0], 4, 4, bias=False),
+            nn.BatchNorm2d(dims[0]),
+        )
+
+        # Encoder: VSS blocks per stage, downsample between stages
         self.enc = nn.ModuleList()
         self.downs = nn.ModuleList()
         for i in range(len(depths)):
-            self.enc.append(nn.Sequential(*[_MambaKANBlock(dims[i]) for _ in range(depths[i])]))
+            self.enc.append(
+                nn.Sequential(*[VSSBlock(dims[i]) for _ in range(depths[i])])
+            )
             if i < len(depths) - 1:
                 self.downs.append(nn.Conv2d(dims[i], dims[i + 1], 3, 2, 1))
+
+        # Decoder: upsample + MKCSA blocks, element-wise addition skip
         self.ups = nn.ModuleList()
         self.dec = nn.ModuleList()
-        self.merges = nn.ModuleList()
         for i in range(len(dims) - 1, 0, -1):
             self.ups.append(nn.ConvTranspose2d(dims[i], dims[i - 1], 2, 2))
-            self.merges.append(nn.Sequential(nn.Conv2d(dims[i - 1] * 2, dims[i - 1], 1, bias=False), nn.BatchNorm2d(dims[i - 1])))
-            self.dec.append(nn.Sequential(*[_MambaKANBlock(dims[i - 1]) for _ in range(depths[i - 1])]))
-        self.head = nn.Sequential(nn.ConvTranspose2d(dims[0], dims[0], 4, 4), nn.Conv2d(dims[0], num_classes, 1))
+            self.dec.append(
+                nn.Sequential(*[MKCSABlock(dims[i - 1]) for _ in range(depths[i - 1])])
+            )
+
+        # Head: final upsample to input resolution + 1x1 conv
+        self.head = nn.Sequential(
+            nn.ConvTranspose2d(dims[0], dims[0], 4, 4),
+            nn.Conv2d(dims[0], num_classes, 1),
+        )
 
     def forward(self, x):
         H, W = x.shape[2:]
         x = self.stem(x)
+
+        # Encoder
         skips = []
         for i, enc in enumerate(self.enc):
             x = enc(x)
             if i < len(self.downs):
                 skips.append(x)
                 x = self.downs[i](x)
-        for up, merge, dec in zip(self.ups, self.merges, self.dec):
-            x = up(x); s = skips.pop()
-            if x.shape[2:] != s.shape[2:]: x = F.interpolate(x, size=s.shape[2:], mode="bilinear", align_corners=False)
-            x = dec(merge(torch.cat([x, s], dim=1)))
+
+        # Decoder (element-wise addition skip connections, Eq. 9)
+        for up, dec in zip(self.ups, self.dec):
+            x = up(x)
+            s = skips.pop()
+            if x.shape[2:] != s.shape[2:]:
+                x = F.interpolate(
+                    x, size=s.shape[2:], mode="bilinear", align_corners=False
+                )
+            x = x + s  # element-wise addition
+            x = dec(x)
+
         x = self.head(x)
-        return F.interpolate(x, size=(H, W), mode="bilinear", align_corners=False) if x.shape[2:] != (H, W) else x
+        if x.shape[2:] != (H, W):
+            x = F.interpolate(
+                x, size=(H, W), mode="bilinear", align_corners=False
+            )
+        return x

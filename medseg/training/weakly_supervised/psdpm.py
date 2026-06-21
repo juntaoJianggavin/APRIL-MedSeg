@@ -1,13 +1,13 @@
 # PSDPM (CVPR 2024)
 # Reference: https://github.com/xinqiaozhao/PSDPM
-# Paper: https://arxiv.org/abs/2403.07630
+# Paper: https://openaccess.thecvf.com/content/CVPR2024/papers/Zhao_PSDPM_Prototype-based_Secondary_Discriminative_Pixels_Mining_for_Weakly_Supervised_Semantic_CVPR_2024_paper.pdf
 # Implemented from paper formulas; not a copy of the official repo.
 """PSDPM — Prototype-based Secondary Discriminative Pixels Mining for
 Weakly Supervised Semantic Segmentation.
 
 Zhao et al., "PSDPM: Prototype-based Secondary Discriminative Pixels
 Mining for Weakly Supervised Semantic Segmentation", CVPR 2024.
-Paper: https://arxiv.org/abs/2403.07630
+Paper: https://openaccess.thecvf.com/content/CVPR2024/papers/Zhao_PSDPM_Prototype-based_Secondary_Discriminative_Pixels_Mining_for_Weakly_Supervised_Semantic_CVPR_2024_paper.pdf
 Reference repository: https://github.com/xinqiaozhao/PSDPM
 
 Why it exists.

@@ -81,7 +81,10 @@ class BasicConv2d(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
-        return self.relu(self.bn(self.conv(x)))
+        # Faithful to official: relu is defined but NOT applied in forward
+        x = self.conv(x)
+        x = self.bn(x)
+        return x
 
 
 class SDI(nn.Module):
@@ -184,18 +187,18 @@ class VMUNetV2(nn.Module):
         ])
 
         # ---- 解码器 / ---- Decoder deconvolution layers ----
-        # ConvTranspose2d with 输出 _ 填充 = 1 for exact 2x 上采样 / ConvTranspose2d with output_padding=1 for exact 2x upsampling
+        # Faithful to official: no output_padding (kernel=4, stride=2, padding=1 → exact 2x)
         self.deconv2 = nn.ConvTranspose2d(mid_channel, mid_channel,
                                           kernel_size=4, stride=2,
-                                          padding=1, output_padding=1,
+                                          padding=1,
                                           bias=False)
         self.deconv3 = nn.ConvTranspose2d(mid_channel, mid_channel,
                                           kernel_size=4, stride=2,
-                                          padding=1, output_padding=1,
+                                          padding=1,
                                           bias=False)
         self.deconv4 = nn.ConvTranspose2d(mid_channel, mid_channel,
                                           kernel_size=4, stride=2,
-                                          padding=1, output_padding=1,
+                                          padding=1,
                                           bias=False)
         # 深度 supervision 合并: 上采样 second-finet seg _ out by 2x / Deep supervision merge: upsample second-finet seg_out by 2x
         self.deconv6 = nn.ConvTranspose2d(num_classes, num_classes, 3,

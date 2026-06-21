@@ -1,26 +1,30 @@
-"""nnMamba 2D: nnUNet-style encoder/decoder with Mamba SSM blocks inserted between stages.
-    nnMamba 2D: nnUNet-style 编码器。
+"""nnMamba 2D: nnMambaSeg with ResNet-Mamba blocks for medical segmentation.
 
-2D adaptation of nnMamba (Gong et al., 2024):
-  https://github.com/lhaof/nnMamba
+Reference:
+    Gong et al., "nnMamba: 3D Mamba for Medical Image Segmentation",
+    https://github.com/lhaof/nnMamba
 
-Architecture:
-  - Encoder: stack of nnU-Net-style ConvDropoutNormNonlin stages, each consisting
-    of two Conv->InstanceNorm->LeakyReLU blocks; the first conv of each non-stem
-    stage performs the 2x downsample (stride=2).
-  - After every encoder stage a MambaLayer operates on (B, H*W, C) patch-tokens,
-    providing long-range modelling between stages.
-  - Decoder mirrors the encoder with ConvTranspose2d upsamplers and the usual
-    skip-concatenation followed by two conv blocks per resolution.
-  - 1x1 segmentation head returns logits at the full input resolution.
+Rewritten to match the official source (nnunet/network_architecture/nnMamba.py):
+    * nnMambaSeg: ResNet-style encoder with MambaLayer inside BasicBlock +
+      channel-attention skip connections + deep supervision.
+    * BasicBlock (ResNet): conv3x3(stride) -> BN -> ReLU -> conv3x3 -> BN ->
+      (+ mamba_layer(x) if mamba) -> (+ identity) -> ReLU.
+    * make_res_layer: downsample(conv1x1+BN) + BasicBlock(stride) +
+      (blocks-1) * BasicBlock(with mamba_layer).
+    * MambaLayer: nin(conv1x1) -> BN -> ReLU -> flatten -> Mamba -> reshape.
+    * Attentionlayer: channel attention (Linear -> ReLU -> Linear -> Sigmoid)
+      applied as scale factors on skip connections.
+    * Decoder: Upsample -> concat(attended_skip) -> DoubleConv, 4 stages.
+    * Deep supervision: ds1-3 auxiliary outputs at lower resolutions.
 
-Self-contained — depends only on torch (timm is permitted but not required).
-Requires ``mamba_ssm`` — the official nnMamba source
-(https://github.com/lhaof/nnMamba) hard-depends on mamba_ssm.
+This is a 2D adaptation of the official 3D model — Conv3d->Conv2d,
+BatchNorm3d->BatchNorm2d, Upsample trilinear->bilinear, etc.
+
+Constructor:
+    NnMamba2D(in_channels=3, num_classes=2, img_size=224,
+              channels=32, blocks=3, deep_supervision=False, **kwargs)
 """
-# Source: https://github.com/lhaof/nnMamba
-
-from __future__ import annotations
+# Source: https://github.com/lhaof/nnMamba (nnunet/network_architecture/nnMamba.py)
 
 import torch
 import torch.nn as nn
@@ -28,36 +32,11 @@ import torch.nn.functional as F
 
 
 # ---------------------------------------------------------------------------
-# SSL-failure fallback for any future pretrained-weight loading
-# ---------------------------------------------------------------------------
-
-def _load_pretrained_with_fallback(load_fn, *args, **kwargs):
-    import ssl, urllib.request
-    try:
-        return load_fn(*args, **kwargs)
-    except Exception:
-        prev = ssl._create_default_https_context
-        try:
-            ssl._create_default_https_context = ssl._create_unverified_context
-            return load_fn(*args, **kwargs)
-        except Exception as e:
-            raise RuntimeError(
-                f"Pretrained weight download failed: {type(e).__name__}: {e}. "
-                "No silent fallback to random init — either: (a) ensure network "
-                "access, (b) provide a local checkpoint via pretrained_path, "
-                "or (c) explicitly pass pretrained=False for random init."
-            ) from e
-        finally:
-            ssl._create_default_https_context = prev
-
-
-# ---------------------------------------------------------------------------
-# Mamba SSM 封装器 ( hard dependency on mamba _ ssm, matching official 来源 ) / Mamba SSM wrapper (hard dependency on mamba_ssm, matching official source)
+# Mamba SSM wrapper (hard dependency on mamba_ssm, matching official source)
 # ---------------------------------------------------------------------------
 
 class _MambaSSM(nn.Module):
-    """Mamba SSM wrapper. Hard-depends on ``mamba_ssm`` (matches official nnMamba source).
-        Mamba SSM 封装器. Hard-depends on ` ` mamba _ ssm ` ` ( matches official nnMamba 来源 )。
+    """Wrapper around ``mamba_ssm.Mamba`` (1D SSM, no bimamba).
 
     Interface: (B, L, D) -> (B, L, D)
     """
@@ -65,15 +44,13 @@ class _MambaSSM(nn.Module):
     def __init__(self, d_model, d_state=16, d_conv=4, expand=2):
         super().__init__()
         self.d_model = d_model
-
         try:
             from mamba_ssm import Mamba  # type: ignore
         except ImportError as e:
             raise RuntimeError(
                 "nnMamba requires the `mamba_ssm` CUDA package. "
                 "Install from https://github.com/state-spaces/mamba. "
-                "The official nnMamba source hard-depends on mamba_ssm; "
-                "no pure-PyTorch fallback is provided."
+                "The official nnMamba source hard-depends on mamba_ssm."
             ) from e
         self.mamba = Mamba(
             d_model=d_model, d_state=d_state,
@@ -83,203 +60,279 @@ class _MambaSSM(nn.Module):
         return self.mamba(x)
 
 
-# Backward-compatible alias
-_MambaSSMFallback = _MambaSSM
+# ---------------------------------------------------------------------------
+# Conv helpers (matching official nnMamba.py)
+# ---------------------------------------------------------------------------
+
+def _conv3x3(in_planes, out_planes, stride=1):
+    """3x3 convolution with padding."""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=3,
+                     stride=stride, padding=1, bias=False)
+
+
+def _conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution."""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1,
+                     stride=stride, bias=False)
 
 
 # ---------------------------------------------------------------------------
-# MambaLayer: patch-token Mamba on (B, C, H, W) -> (B, H*W, C) -> Mamba -> back
+# MambaLayer (matching official nnMamba.py)
 # ---------------------------------------------------------------------------
 
 class _MambaLayer(nn.Module):
-    """Patch-token Mamba layer for 2D features.
-        Patch-token Mamba 层 for 2D 特征。
+    """nin(conv1x1) -> BN -> ReLU -> flatten -> Mamba -> reshape.
 
-    (B, C, H, W) -> flatten spatial to (B, H*W, C) -> LayerNorm -> Mamba ->
-    reshape back to (B, C, H, W).
+    (B, C, H, W) -> (B, C, H, W)
     """
 
     def __init__(self, dim, d_state=16, d_conv=4, expand=2):
         super().__init__()
         self.dim = dim
-        self.norm = nn.LayerNorm(dim)
-        self.mamba = _MambaSSM(dim, d_state=d_state,
-                               d_conv=d_conv, expand=expand)
+        self.nin = _conv1x1(dim, dim)
+        self.norm = nn.BatchNorm2d(dim)
+        self.relu = nn.ReLU(inplace=True)
+        self.mamba = _MambaSSM(dim, d_state=d_state, d_conv=d_conv, expand=expand)
 
     def forward(self, x):
-        if x.dtype == torch.float16:
-            x = x.float()
-        B, C, H, W = x.shape
-        assert C == self.dim, f"channel mismatch: {C} vs {self.dim}"
-        x_flat = x.reshape(B, C, H * W).transpose(1, 2)  # (B, H*W, C)
-        x_norm = self.norm(x_flat)
-        x_out = self.mamba(x_norm)
-        return x_out.transpose(1, 2).reshape(B, C, H, W)
+        B, C = x.shape[:2]
+        x = self.nin(x)
+        x = self.norm(x)
+        x = self.relu(x)
+        assert C == self.dim
+        n_tokens = x.shape[2:].numel()
+        img_dims = x.shape[2:]
+        x_flat = x.reshape(B, C, n_tokens).transpose(-1, -2)  # (B, N, C)
+        x_mamba = self.mamba(x_flat)
+        out = x_mamba.transpose(-1, -2).reshape(B, C, *img_dims)
+        return out
 
 
 # ---------------------------------------------------------------------------
-# nnU-Net-style conv blocks
+# ResNet BasicBlock (matching official nnMamba.py)
 # ---------------------------------------------------------------------------
 
-class _ConvDropoutNormNonlin(nn.Module):
-    """nnU-Net 默认值 conv 块: Conv2d - > Dropout2d - > InstanceNorm2d - > LeakyReLU。
-        nnU-Net default conv block: Conv2d -> Dropout2d -> InstanceNorm2d -> LeakyReLU."""
+class _BasicBlock(nn.Module):
+    """ResNet BasicBlock with optional MambaLayer.
 
-    def __init__(self, in_ch, out_ch, kernel_size=3, stride=1,
-                 dropout_p=0.0, neg_slope=1e-2):
+    conv3x3(stride) -> BN -> ReLU -> conv3x3 -> BN ->
+    (+ mamba_layer(x) if mamba) -> (+ identity/downsample) -> ReLU
+    """
+
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None,
+                 mamba_layer=None):
         super().__init__()
-        padding = kernel_size // 2
-        self.conv = nn.Conv2d(in_ch, out_ch, kernel_size,
-                              stride=stride, padding=padding, bias=True)
-        self.dropout = (nn.Dropout2d(p=dropout_p, inplace=True)
-                        if dropout_p > 0 else nn.Identity())
-        self.norm = nn.InstanceNorm2d(out_ch, affine=True)
-        self.nonlin = nn.LeakyReLU(negative_slope=neg_slope, inplace=True)
+        self.conv1 = _conv3x3(inplanes, planes, stride)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = _conv3x3(planes, planes)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.mamba_layer = mamba_layer
+        self.downsample = downsample
+        self.stride = stride
 
     def forward(self, x):
-        return self.nonlin(self.norm(self.dropout(self.conv(x))))
+        identity = x
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+        out = self.conv2(out)
+        out = self.bn2(out)
+        if self.mamba_layer is not None:
+            global_att = self.mamba_layer(x)
+            out += global_att
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        out += identity
+        out = self.relu(out)
+        return out
 
 
-class _StackedConvLayers(nn.Module):
-    """Two-conv nnU-Net 阶段; first conv carries the 步长。
-        Two-conv nnU-Net stage; first conv carries the stride."""
-
-    def __init__(self, in_ch, out_ch, num_convs=2, kernel_size=3,
-                 stride=1, dropout_p=0.0):
-        super().__init__()
-        layers = [_ConvDropoutNormNonlin(in_ch, out_ch, kernel_size,
-                                        stride=stride, dropout_p=dropout_p)]
-        for _ in range(num_convs - 1):
-            layers.append(_ConvDropoutNormNonlin(out_ch, out_ch, kernel_size,
-                                                stride=1, dropout_p=dropout_p))
-        self.blocks = nn.Sequential(*layers)
-
-    def forward(self, x):
-        return self.blocks(x)
+def _make_res_layer(inplanes, planes, blocks, stride=1, mamba_layer=None):
+    """Create a ResNet layer: downsample + BasicBlock(stride) + (blocks-1)*BasicBlock(mamba)."""
+    downsample = nn.Sequential(
+        _conv1x1(inplanes, planes, stride),
+        nn.BatchNorm2d(planes),
+    )
+    layers = [_BasicBlock(inplanes, planes, stride, downsample)]
+    for _ in range(1, blocks):
+        layers.append(_BasicBlock(planes, planes, mamba_layer=mamba_layer))
+    return nn.Sequential(*layers)
 
 
 # ---------------------------------------------------------------------------
-# nnMamba 2D
+# DoubleConv (matching official nnMamba.py)
+# ---------------------------------------------------------------------------
+
+class _DoubleConv(nn.Module):
+    """2x Conv-BN-ReLU (first conv carries the stride)."""
+
+    def __init__(self, in_ch, out_ch, stride=1, kernel_size=3):
+        super().__init__()
+        self.conv = nn.Sequential(
+            nn.Conv2d(in_ch, out_ch, kernel_size=kernel_size,
+                      stride=stride, padding=kernel_size // 2),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True),
+            nn.Conv2d(out_ch, out_ch, 3, padding=1, dilation=1),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(inplace=True),
+        )
+
+    def forward(self, x):
+        return self.conv(x)
+
+
+# ---------------------------------------------------------------------------
+# Attentionlayer (matching official nnMamba.py)
+# ---------------------------------------------------------------------------
+
+class _AttentionLayer(nn.Module):
+    """Channel attention: Linear -> ReLU -> Linear -> Sigmoid."""
+
+    def __init__(self, dim, r=16):
+        super().__init__()
+        self.layer1 = nn.Linear(dim, dim // r)
+        self.layer2 = nn.Linear(dim // r, dim)
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, inp):
+        # inp: (B, C) -> (B, C)
+        return self.sigmoid(self.layer2(self.relu(self.layer1(inp))))
+
+
+# ---------------------------------------------------------------------------
+# nnMambaSeg (2D adaptation)
 # ---------------------------------------------------------------------------
 
 class NnMamba2D(nn.Module):
-    """nnMamba 2D — nnU-Net encoder/decoder with patch-token Mamba between stages.
-        nnMamba 2D — nnU-Net 编码器。
+    """nnMambaSeg 2D — ResNet-Mamba encoder with attention skips + deep supervision.
+
+    Matches the official ``nnMambaSeg`` architecture:
+        * in_conv: DoubleConv(in -> channels, stride=2)
+        * 3 ResNet layers (channels -> channels*2 -> channels*4 -> channels*8),
+          each with MambaLayer inside BasicBlocks
+        * Channel-attention scale factors on skip connections
+        * 4-stage decoder: Upsample -> concat(attended_skip) -> DoubleConv
+        * Deep supervision: 3 auxiliary 1x1 conv outputs
 
     Args:
         in_channels: Input channel count.
-        num_classes: Output channel count (segmentation classes).
-        img_size: Spatial size of the input (used only to size the model; the
-            network actually accepts any size divisible by ``2**(num_stages-1)``).
-        base_features: Base channel count; doubled at each downsampling stage and
-            capped at ``max_features``.
-        num_stages: Number of encoder stages (stem + downsampling stages).
-        max_features: Channel cap for deeper stages (nnU-Net default 320).
-        num_convs_per_stage: Number of conv blocks per encoder/decoder stage.
-        mamba_d_state / mamba_d_conv / mamba_expand: Mamba SSM hyperparameters.
+        num_classes: Output channel count.
+        img_size: Spatial size (for documentation; accepts any size divisible
+            by 2^4 = 16).
+        channels: Base channel count (doubled at each encoder stage).
+        blocks: Number of BasicBlocks per ResNet layer.
+        deep_supervision: If True, returns a list of 4 outputs [main, ds1, ds2, ds3].
     """
 
-    def __init__(self,
-                 in_channels: int = 3,
-                 num_classes: int = 2,
-                 img_size: int = 224,
-                 base_features: int = 32,
-                 num_stages: int = 5,
-                 max_features: int = 320,
-                 num_convs_per_stage: int = 2,
-                 mamba_d_state: int = 16,
-                 mamba_d_conv: int = 4,
-                 mamba_expand: int = 2,
-                 **kwargs):
+    def __init__(self, in_channels=3, num_classes=2, img_size=224,
+                 channels=32, blocks=3, deep_supervision=False, **kwargs):
         super().__init__()
+        self.do_ds = deep_supervision
+        self.in_conv = _DoubleConv(in_channels, channels, stride=2, kernel_size=3)
+        self.pooling = nn.AdaptiveAvgPool2d((1, 1))
 
-        self.in_channels = in_channels
-        self.num_classes = num_classes
-        self.img_size = img_size
-        self.num_stages = num_stages
+        # Encoder: 3 ResNet layers with MambaLayer
+        self.att1 = _AttentionLayer(channels)
+        self.layer1 = _make_res_layer(
+            channels, channels * 2, blocks, stride=2,
+            mamba_layer=_MambaLayer(channels * 2))
 
-        features = [min(base_features * (2 ** i), max_features)
-                    for i in range(num_stages)]
-        self.features = features
+        self.att2 = _AttentionLayer(channels * 2)
+        self.layer2 = _make_res_layer(
+            channels * 2, channels * 4, blocks, stride=2,
+            mamba_layer=_MambaLayer(channels * 4))
 
-        # 编码器: 主干 阶段 ( 步长 1 ) + ( num _ 阶段 - 1 ) strided 阶段 / Encoder: stem stage (stride 1) + (num_stages-1) strided stages.
-        self.encoder_stages = nn.ModuleList()
-        self.encoder_mambas = nn.ModuleList()
+        self.att3 = _AttentionLayer(channels * 4)
+        self.layer3 = _make_res_layer(
+            channels * 4, channels * 8, blocks, stride=2,
+            mamba_layer=_MambaLayer(channels * 8))
 
-        prev_ch = in_channels
-        for s in range(num_stages):
-            stride = 1 if s == 0 else 2
-            self.encoder_stages.append(
-                _StackedConvLayers(prev_ch, features[s],
-                                  num_convs=num_convs_per_stage,
-                                  kernel_size=3, stride=stride))
-            prev_ch = features[s]
-            # Mamba SSM 块 inserted between 阶段 ( after each conv 阶段 ) / Mamba SSM block inserted between stages (after each conv stage).
-            self.encoder_mambas.append(
-                _MambaLayer(features[s],
-                           d_state=mamba_d_state,
-                           d_conv=mamba_d_conv,
-                           expand=mamba_expand))
+        # Decoder: 4 stages of Upsample -> concat(attended_skip) -> DoubleConv
+        self.up5 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.conv5 = _DoubleConv(channels * 12, channels * 4)
+        self.up6 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.conv6 = _DoubleConv(channels * 6, channels * 2)
+        self.up7 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.conv7 = _DoubleConv(channels * 3, channels)
+        self.up8 = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=False)
+        self.conv8 = _DoubleConv(channels, num_classes)
 
-        # Decoder: mirror with ConvTranspose2d + 跳跃连接 / Decoder: mirror with ConvTranspose2d + skip concat + stacked convs.
-        self.up_layers = nn.ModuleList()
-        self.decoder_stages = nn.ModuleList()
-        for s in range(num_stages - 1, 0, -1):
-            in_ch = features[s]
-            out_ch = features[s - 1]
-            self.up_layers.append(
-                nn.ConvTranspose2d(in_ch, out_ch,
-                                   kernel_size=2, stride=2, bias=True))
-            self.decoder_stages.append(
-                _StackedConvLayers(out_ch * 2, out_ch,
-                                  num_convs=num_convs_per_stage,
-                                  kernel_size=3, stride=1))
+        # Deep supervision
+        self.ds1_cls_conv = nn.Conv2d(channels, num_classes, kernel_size=1)
+        self.ds2_cls_conv = nn.Conv2d(channels * 2, num_classes, kernel_size=1)
+        self.ds3_cls_conv = nn.Conv2d(channels * 4, num_classes, kernel_size=1)
 
-        # Final 1x1 分割 头部 / Final 1x1 segmentation head.
-        self.seg_head = nn.Conv2d(features[0], num_classes, kernel_size=1)
+    def forward(self, x):
+        original_h, original_w = x.shape[-2], x.shape[-1]
 
-        self._init_weights()
+        # pad to multiple of 16 (4 stride-2 stages)
+        pH = ((x.shape[-2] + 15) // 16) * 16
+        pW = ((x.shape[-1] + 15) // 16) * 16
+        if pH != x.shape[-2] or pW != x.shape[-1]:
+            x = F.pad(x, [0, pW - x.shape[-1], 0, pH - x.shape[-2]],
+                      mode='reflect')
 
-    def _init_weights(self):
-        for m in self.modules():
-            if isinstance(m, (nn.Conv2d, nn.ConvTranspose2d)):
-                nn.init.kaiming_normal_(m.weight, a=1e-2, nonlinearity='leaky_relu')
-                if m.bias is not None:
-                    nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.InstanceNorm2d) and m.affine:
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
-            elif isinstance(m, nn.LayerNorm):
-                nn.init.ones_(m.weight)
-                nn.init.zeros_(m.bias)
+        # Encoder
+        c1 = self.in_conv(x)
+        scale_f1 = self.att1(
+            self.pooling(c1).reshape(c1.shape[0], c1.shape[1])
+        ).reshape(c1.shape[0], c1.shape[1], 1, 1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        in_h, in_w = x.shape[-2], x.shape[-1]
+        c2 = self.layer1(c1)
+        scale_f2 = self.att2(
+            self.pooling(c2).reshape(c2.shape[0], c2.shape[1])
+        ).reshape(c2.shape[0], c2.shape[1], 1, 1)
 
-        # 编码器 with inter-stage Mamba / Encoder with inter-stage Mamba.
-        skips = []
-        for stage, mamba in zip(self.encoder_stages, self.encoder_mambas):
-            x = stage(x)
-            x = mamba(x)
-            skips.append(x)
+        c3 = self.layer2(c2)
+        scale_f3 = self.att3(
+            self.pooling(c3).reshape(c3.shape[0], c3.shape[1])
+        ).reshape(c3.shape[0], c3.shape[1], 1, 1)
 
-        # Decoder with 跳跃连接 / Decoder with skip concatenation.
-        x = skips[-1]
-        for i, (up, dec) in enumerate(zip(self.up_layers, self.decoder_stages)):
-            x = up(x)
-            skip = skips[-(i + 2)]
-            # Defensive size-match in case of odd sizes.
-            if x.shape[-2:] != skip.shape[-2:]:
-                x = F.interpolate(x, size=skip.shape[-2:],
-                                  mode='bilinear', align_corners=False)
-            x = torch.cat([x, skip], dim=1)
-            x = dec(x)
+        c4 = self.layer3(c3)
 
-        out = self.seg_head(x)
-        if out.shape[-2:] != (in_h, in_w):
-            out = F.interpolate(out, size=(in_h, in_w),
-                                mode='bilinear', align_corners=False)
-        return out
+        # Decoder
+        up_5 = self.up5(c4)
+        if up_5.shape[-2:] != c3.shape[-2:]:
+            up_5 = F.interpolate(up_5, size=c3.shape[-2:],
+                                 mode='bilinear', align_corners=False)
+        merge5 = torch.cat([up_5, c3 * scale_f3], dim=1)
+        c5 = self.conv5(merge5)
+
+        up_6 = self.up6(c5)
+        if up_6.shape[-2:] != c2.shape[-2:]:
+            up_6 = F.interpolate(up_6, size=c2.shape[-2:],
+                                 mode='bilinear', align_corners=False)
+        merge6 = torch.cat([up_6, c2 * scale_f2], dim=1)
+        c6 = self.conv6(merge6)
+
+        up_7 = self.up7(c6)
+        if up_7.shape[-2:] != c1.shape[-2:]:
+            up_7 = F.interpolate(up_7, size=c1.shape[-2:],
+                                 mode='bilinear', align_corners=False)
+        merge7 = torch.cat([up_7, c1 * scale_f1], dim=1)
+        c7 = self.conv7(merge7)
+
+        up_8 = self.up8(c7)
+        c8 = self.conv8(up_8)
+
+        # interpolate main output to original resolution
+        if c8.shape[-2:] != (original_h, original_w):
+            c8 = F.interpolate(c8, size=(original_h, original_w),
+                               mode='bilinear', align_corners=False)
+
+        if self.do_ds:
+            logits = [c8,
+                      self.ds1_cls_conv(c7),
+                      self.ds2_cls_conv(c6),
+                      self.ds3_cls_conv(c5)]
+            return logits
+        else:
+            return c8
 
 
 __all__ = ['NnMamba2D']

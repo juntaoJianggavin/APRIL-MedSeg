@@ -1,6 +1,6 @@
 # CausalCLIPSeg (MICCAI 2024)
 # 参考: https: / / github. com / WUTCM-Lab / CausalCLIPSeg / Reference: https://github.com/WUTCM-Lab/CausalCLIPSeg
-# Paper: https://arxiv.org/abs/2407.16447
+# Paper: https://arxiv.org/abs/2503.15949
 # Implemented from paper formulas; not a copy of the official repo.
 """CausalCLIPSeg: a causal-intervention CLIP-based text-guided medical
     CausalCLIPSeg: a causal-intervention CLIP-based text-guided 医学的。

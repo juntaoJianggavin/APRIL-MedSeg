@@ -80,3 +80,18 @@ APRIL_MedSeg.zip
 
 # Test files (root level)
 test_text_guided.py
+
+# Diagnostic / profiling scripts (not part of the framework)
+profile_model.py
+run_gpu_tests.py
+
+# One-off source-fetching & extraction scripts (development only)
+fetch_*.py
+_extract_urls*.py
+_smoke_all_models.py
+scripts/_extract_pdf.py
+scripts/_read_pdf.py
+scripts/_pdf_*.txt
+
+# Downloaded papers / PDFs (local only)
+*.pdf

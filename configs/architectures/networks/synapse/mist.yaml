@@ -1,17 +1,19 @@
-# Source: NOT VERIFIED — model implementation not confirmed against an upstream repo; verify before training.
+# Source: https://github.com/Rahman-Motiur/MIST
 # Network: mist (complete architecture)
 # 完整网络：mist（完整架构）
 
 model:
   num_classes: 9
-  img_size: 224
+  img_size: 256
   architecture: mist
   encoder:
     in_channels: 3
-  arch_params: {}
+  arch_params:
+    model_scale: small
+    deep_supervision: true
 data:
   type: synapse
-  img_size: 224
+  img_size: 256
   train_dir: ./data/Synapse/train_npz
   test_dir: ./data/Synapse/test_vol_h5
   train_list: ./data/Synapse/lists/lists_Synapse/train.txt
@@ -21,13 +23,17 @@ training:
   batch_size: 16
   num_workers: 4
   loss:
-    name: compound
+    name: deep_supervision
     params:
-      losses:
-      - name: ce
-        weight: 0.4
-      - name: dice
-        weight: 0.6
+      base_loss:
+        name: compound
+        params:
+          losses:
+          - name: ce
+            weight: 0.3
+          - name: dice
+            weight: 0.7
+      aux_weight: 0.4
   optimizer:
     name: adamw
     lr: 0.0001

@@ -1,5 +1,7 @@
-# Weak supervision: affinity
-# 弱监督学习：affinity
+# Weak supervision: mctformer
+# 弱监督学习：MCTformer 多类别 Token Transformer
+# Reference: Xu et al., CVPR 2022 — Multi-Class Token Transformer
+# https://github.com/xulianuwa/MCTformer
 model:
   num_classes: 9
   img_size: 224
@@ -26,11 +28,10 @@ data:
     image_dir: ./data/test/images
     mask_dir: ./data/test/masks
 weak_supervision:
-  method: affinity
+  method: mctformer
   params:
-    affinity_weight: 1.0
-    propagation_steps: 3
-    temperature: 0.5
+    loss_weight: 0.1
+    num_cct: 1
 training:
   epochs: 150
   batch_size: 16
@@ -38,11 +39,10 @@ training:
   val_interval: 10
   save_interval: 30
   loss:
-    name: affinity_loss
+    name: mctformer_loss
     params:
-      affinity_weight: 1.0
-      propagation_steps: 3
-      temperature: 0.5
+      loss_weight: 0.1
+      num_cct: 1
   optimizer:
     name: adamw
     lr: 0.0002

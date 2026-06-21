@@ -153,8 +153,8 @@
 - [半监督方法](../paradigms/semi_supervised.md) — 所有 21 个半监督方法
 - [域适应](../paradigms/domain_adaptation.md) — 所有 18 个域适应方法
 - [蒸馏](../paradigms/distillation.md) — 所有 27 个蒸馏方法
-- [弱监督](../paradigms/weakly_supervised.md) — 所有 28 个弱监督方法
-- [文本引导](../paradigms/text_guided.md) — 所有 13 个文本引导模型 + MLLM 管线
+- [弱监督](../paradigms/weakly_supervised.md) — 所有 20 个弱监督方法
+- [文本引导](../paradigms/text_guided.md) — 所有 12 个文本引导模型 + MLLM 管线
 
 ---
 

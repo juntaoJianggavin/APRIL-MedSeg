@@ -98,7 +98,7 @@ General foundation models (DINOv2, CLIP) are pre-trained on natural images. Medi
 | Retinal | RETFound | 1.6M retinal images | Fundus/OCT patterns |
 | Radiology | Rad-DINO | Chest X-rays, CT scans | Anatomical structure |
 | Dermatology | PanDerm | 100K+ skin images | Lesion morphology |
-| Ultrasound | UltraDINO | Ultrasound images | Speckle patterns, echogenicity |
+| Ultrasound | UltraFedFM | Ultrasound images | Speckle patterns, echogenicity |
 
 **The transfer learning hierarchy**:
 
@@ -146,19 +146,19 @@ This reduces trainable parameters by 90%+ while allowing full-model adaptation. 
 
 ### 3.1 Medical Modalities — 9 Categories
 
-APRIL-MedSeg covers 35 foundation models across 9 medical modalities:
+APRIL-MedSeg covers 38 foundation models across 9 medical modalities:
 
 | Modality | Models | Key Application |
 |----------|--------|----------------|
-| General | DINOv2, DINO, CLIP, SAM | Cross-domain transfer |
-| Pathology | Phikon, UNI, PLIP, MUSK | Histology, WSI analysis |
-| Radiology | Rad-DINO, OmniRad, MedSigLIP | X-ray, CT, MRI |
-| Ophthalmology | RETFound, FLAIR, OphMAE | Retinal disease detection |
+| General | DINOv2, DINO, CLIP, SAM, DINOv3 | Cross-domain transfer |
+| Pathology | Phikon, UNI, PLIP, MUSK, Phikon-v2, KEEP | Histology, WSI analysis |
+| Radiology | Rad-DINO, OmniRad, BioViL, CheXZero | X-ray, CT, MRI |
+| Ophthalmology | RETFound, RETFound-DINOv2, FLAIR, OphMAE | Retinal disease detection |
 | Dermatology | DermCLIP, MoNet, PanDerm | Skin lesion segmentation |
-| Multimodal | BiomedCLIP, MedCLIP, KEEP | General biomedical |
+| General Medical | BiomedCLIP, MedCLIP, MedSigLIP | General biomedical |
 | MLLM Vision | Qwen-VL, MedGemma, LLaVA-Med | Vision-language reasoning |
-| Ultrasound | UltraDINO, UltraFedFM, US-FMAE | Ultrasound analysis |
-| Endoscopy | EndoViT | GI tract imaging |
+| Ultrasound | UltraFedFM, US-FMAE | Ultrasound analysis |
+| Endoscopy | EndoViT, Endo-FM, Surgical-SAM | GI tract imaging |
 
 ### 3.2 Foundation Encoder Output
 
@@ -260,7 +260,7 @@ On a pathology dataset, compare:
 
 ### Related Documentation
 
-- [Foundation Encoders](../models/encoders.md#foundation-models) -- All 35 foundation encoders across 9 modalities
+- [Foundation Encoders](../models/encoders.md#foundation-models) -- All 38 foundation encoders across 9 modalities
 - [Weight Management](../models/encoders.md#weight-management) -- Auto-download and cache system
 - [DPT Head](../models/encoders.md#dpt-head) -- Dense Prediction Transformer architecture details
 

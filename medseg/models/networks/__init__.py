@@ -12,6 +12,7 @@ Subcategories:
 
 # ── CNN ────────────────────────────────────────────────────────────────────────
 from .cnn import (
+    UNet,
     UNet3Plus, LVUNet, EGEUNet, MALUNet,
     LiteUNet, MKUNet, ULite,
     ACCUNet, CMUNeXt, MEWUNet,
@@ -23,7 +24,7 @@ from .cnn import (
     ResUNetPP, FRUNet, MedNeXt,
     NNUNet2D, R2UNet, KiUNet,
     AAUNet, CMUNet, DSCNet,
-    STUNet, DconnNet,
+    DconnNet,
     # Domain-specific ports (2024-2026)
     Polyper,
     # 病理学 ( CNN-based ) / Pathology (CNN-based)
@@ -43,10 +44,10 @@ from .mamba import (
 )
 
 # ── RWKV ───────────────────────────────────────────────────────────────────────
-from .rwkv import URWKV, RWKVUNet, MDRWKVUNet, RIRZigzag
+from .rwkv import URWKV, RWKVUNet, MDRWKVUNet, RIRZigzag, URWKVTIP
 
 # ── KAN / MLP / LSTM ──────────────────────────────────────────────────────────
-from .kan_mlp import UKAN, WavKANUNet
+from .kan_mlp import UKAN, WAUKAN
 from .kan_mlp.rolling_unet import RollingUNet, RollingUNet_M, RollingUNet_L
 from .kan_mlp.unext import UNeXt
 
@@ -101,12 +102,10 @@ from medseg.models.text_unet import (
 # Prompt-guided SAM wrappers (点/框 prompt，非文本引导)
 from medseg.models.networks.sam import SAMMed2DWrapper, LiteMedSAM
 
-# MLLM + 分割 paradigm ( LLM-as-decoder ), 前向传播 ( 图像, text = None ) / MLLM + segmentation paradigm (LLM-as-decoder), forward(image, text=None)
-from medseg.inference.mllm import MediSeeWrapper
-
 
 _SPECIAL_ARCHS = {
     # CNN
+    "unet": UNet,
     "rolling_unet": RollingUNet,
     "rolling_unet_s": RollingUNet,
     "rolling_unet_m": RollingUNet_M,
@@ -140,10 +139,11 @@ _SPECIAL_ARCHS = {
     "u_rwkv": URWKV,
     "rwkv_unet": RWKVUNet,
     "md_rwkv_unet": MDRWKVUNet,
+    "u_rwkv_tip": URWKVTIP,
     # KAN / MLP / LSTM
     "ukan": UKAN,
     "mew_unet": MEWUNet,
-    "wav_kan_unet": WavKANUNet,
+    "wa_ukan": WAUKAN,
     "xlstm_unet_bot": XLSTMUNetBot,
     "xlstm_unet_enc": XLSTMUNetEnc,
     # Transformer
@@ -208,7 +208,6 @@ _SPECIAL_ARCHS = {
     "rir_zigzag": RIRZigzag,
     # Newly added (SAM-style transformer / CNN / Mamba)
     "medsam": MedSAM,
-    "stu_net": STUNet,
     "polyp_mamba": PolypMamba,
     "dconnnet": DconnNet,
     "hc_mamba": HCMamba,
@@ -267,8 +266,6 @@ _TEXT_UNET_ARCHS = {
     "medclip_sam": MedCLIPSAM,
     "tp_drseg": TPDRSeg,
     "cxrclipseg": CXRCLIPSeg,
-    # MLLM + 分割 / MLLM + segmentation
-    "medisee": MediSeeWrapper,
 }
 
 # Prompt-guided (点/框 prompt) 走 _SPECIAL_ARCHS

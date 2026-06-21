@@ -3,8 +3,12 @@
 
 中文: U-RWKV (TIP)：基于 RWKV 的精确高效体素医学图像分割。
 
-2D adaptation of:
-  https://github.com/Yaziwel/Restore-RWKV  (IEEE TIP 2026)
+2D adaptation of the volumetric segmentation network in:
+  Cai et al., "U-RWKV: Accurate and Efficient Volumetric Medical Image
+  Segmentation via RWKV", IEEE TIP 2026.
+  Official code: https://github.com/hbyecoding/U-RWKV
+  RWKV building blocks (OmniShift, spatial/channel mixing) adapted from
+  Vision-RWKV / Restore-RWKV style 2D RWKV implementations.
 
 Architecture: Standard U-Net encoder-decoder with RWKV attention blocks
 applied after each convolutional encoder stage and at the bottleneck.
@@ -14,7 +18,7 @@ attention refinement on top of conventional conv feature extractors.
 
 WKV is computed by the unified dispatcher in :mod:`medseg.kernels.wkv`.
 """
-# Source: https://github.com/Yaziwel/Restore-RWKV
+# Source: https://github.com/hbyecoding/U-RWKV (IEEE TIP 2026)
 
 import math
 import torch

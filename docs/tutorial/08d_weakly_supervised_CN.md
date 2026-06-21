@@ -397,7 +397,7 @@ python train_weakly_supervised.py \
 
 ### 相关文档
 
-- [所有弱监督方法](../paradigms/weakly_supervised.md) — 完整方法目录（28 个方法）
+- [所有弱监督方法](../paradigms/weakly_supervised.md) — 完整方法目录（20 个方法）
 
 ---
 

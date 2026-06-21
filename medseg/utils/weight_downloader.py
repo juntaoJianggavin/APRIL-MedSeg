@@ -231,6 +231,33 @@ def _gdrive_folder_file(folder_id: str, filename: str) -> Callable:
     return _fetch
 
 
+def _gdrive_file(file_id: str) -> Callable:
+    """Download a single file from Google Drive by file ID.
+
+    Uses ``gdown`` for reliable large-file downloads with confirmation
+    token handling (handles the "virus scan" interstitial page that
+    ``torch.hub.load_state_dict_from_url`` cannot handle).
+    """
+    def _fetch(target: Path) -> None:
+        try:
+            import gdown
+        except ImportError:
+            raise RuntimeError(
+                "gdown is required for Google Drive downloads. "
+                "Install with: pip install gdown"
+            )
+        target.parent.mkdir(parents=True, exist_ok=True)
+        url = f"https://drive.google.com/uc?id={file_id}"
+        gdown.download(url, str(target), quiet=False)
+        if not target.exists():
+            raise RuntimeError(
+                f"gdown reported success but file not found at {target}"
+            )
+
+    _fetch.__name__ = f"gdrive_file:{file_id}"
+    return _fetch
+
+
 # ----------------------------------------------------------------------
 # 注册表 / Registry
 # ----------------------------------------------------------------------
@@ -566,7 +593,7 @@ register(WeightSource(
     name="cswin_tiny_224",
     filename="cswin_tiny_224.pth",
     sources=[
-        _http("https://github.com/microsoft/CSWin-Transformer/releases/download/v0.1.2/cswin_tiny_224.pth"),
+        _http("https://github.com/microsoft/CSWin-Transformer/releases/download/v0.1.0/cswin_tiny_224.pth"),
     ],
     manual_url="https://github.com/microsoft/CSWin-Transformer",
     manual_instructions=(
@@ -574,7 +601,7 @@ register(WeightSource(
         "Download cswin_tiny_224.pth from the Microsoft CSWin-Transformer "
         "releases page and place at the printed cache path."
     ),
-    size_mb=130,
+    size_mb=85,
 ))
 
 
@@ -626,6 +653,310 @@ register(WeightSource(
         "Res2Net-PretrainedModels repo and place at the printed cache path."
     ),
     size_mb=97,
+))
+
+
+# --- Foundation model encoders -------------------------------------------
+# Foundation encoders (in medseg/models/encoders/foundation/) auto-download
+# through HuggingFace ``transformers``/``open_clip``, ``timm``, or Google
+# Drive at runtime.  Registered here so ``python -m medseg.utils.weight_downloader
+# list`` enumerates *every* weight the project needs.  ``sources=[]`` means
+# the download is delegated to a third-party library (HF/timm); non-empty
+# ``sources`` are fetched by ``ensure_weight()`` directly.
+
+# ── General Medical ──────────────────────────────────────────────────────
+register(WeightSource(
+    name="biomedclip",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224",
+    manual_instructions="BiomedCLIP (Microsoft). Auto-downloaded via open_clip at runtime.",
+    size_mb=420,
+))
+
+register(WeightSource(
+    name="medsiglip",
+    filename="(HF auto-download, gated)",
+    sources=[],
+    manual_url="https://huggingface.co/google/medsiglip-448",
+    manual_instructions="MedSigLIP (Google). Auto-downloaded via transformers. Requires HF token (gated repo).",
+    size_mb=870,
+))
+
+register(WeightSource(
+    name="medclip",
+    filename="(GCS auto-download)",
+    sources=[],
+    manual_url="https://storage.googleapis.com/pytrial/medclip-vit-pretrained.zip",
+    manual_instructions="MedCLIP (Wang et al.). Auto-downloaded from GCS at runtime; extracts pytorch_model.bin from zip.",
+    size_mb=350,
+))
+
+# ── Pathology ────────────────────────────────────────────────────────────
+register(WeightSource(
+    name="phikon",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/owkin/phikon",
+    manual_instructions="Phikon (Owkin, pathology ViT-B/16). Auto-downloaded via transformers at runtime.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="phikon_v2",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/owkin/phikon-v2",
+    manual_instructions="Phikon-v2 (Owkin). Auto-downloaded via transformers at runtime.",
+    size_mb=600,
+))
+
+register(WeightSource(
+    name="plip",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/vinid/plip",
+    manual_instructions="PLIP (Stanford, pathology CLIP ViT-B/16). Auto-downloaded via transformers at runtime.",
+    size_mb=600,
+))
+
+register(WeightSource(
+    name="musk",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/xiangjx/musk",
+    manual_instructions="MUSK (pathology multimodal). Auto-downloaded via transformers at runtime.",
+    size_mb=1200,
+))
+
+register(WeightSource(
+    name="uni",
+    filename="(HF auto-download, gated)",
+    sources=[],
+    manual_url="https://huggingface.co/MahmoodLab/UNI",
+    manual_instructions="UNI (Mahmood Lab, pathology ViT-B/16). Auto-downloaded via transformers. Requires HF token (gated repo).",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="keep",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/Astaxanthin/KEEP",
+    manual_instructions="KEEP (pathology ViT). Auto-downloaded via hf_hub_download at runtime.",
+    size_mb=1660,
+))
+
+# ── Radiology ────────────────────────────────────────────────────────────
+register(WeightSource(
+    name="raddino",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/microsoft/rad-dino",
+    manual_instructions="RadDINO (Microsoft, chest X-ray ViT-B/16). Auto-downloaded via transformers at runtime.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="omnirad",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/Snarcy/OmniRad-base",
+    manual_instructions="OmniRad (radiology ViT). Auto-downloaded via transformers at runtime.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="chexzero",
+    filename="(timm auto-download)",
+    sources=[],
+    manual_url="https://github.com/rajpurkarlab/CheXzero",
+    manual_instructions="CheXzero (chest X-ray CLIP ViT-B/32). pretrained=True loads timm CLIP weights; for the actual CheXzero checkpoint download from GitHub and pass via pretrained_path.",
+    size_mb=350,
+))
+
+register(WeightSource(
+    name="biovil",
+    filename="(timm auto-download)",
+    sources=[],
+    manual_url="https://github.com/microsoft/hi-ml",
+    manual_instructions="BioViL (chest X-ray ResNet-50). pretrained=True loads timm ImageNet weights; for the actual BioViL checkpoint download from GitHub and pass via pretrained_path.",
+    size_mb=100,
+))
+
+# ── Ophthalmology ────────────────────────────────────────────────────────
+register(WeightSource(
+    name="retfound",
+    filename="(HF auto-download, gated)",
+    sources=[],
+    manual_url="https://huggingface.co/YukunZhou/RETFound_mae_natureCFP",
+    manual_instructions="RETFound (retinal ViT-L). Auto-downloaded via transformers. Requires HF token (gated repo).",
+    size_mb=1200,
+))
+
+register(WeightSource(
+    name="retfound_dinov2",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/YukunZhou/RETFound_dinov2_shanghai",
+    manual_instructions="RETFound-DINOv2 (retinal ViT-L). Auto-downloaded via transformers at runtime.",
+    size_mb=1200,
+))
+
+register(WeightSource(
+    name="flair",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/jusiro2/FLAIR",
+    manual_instructions="FLAIR (retinal ViT). Auto-downloaded via hf_hub_download at runtime.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="ophmae",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/OphMAE/OphMAE_ckpt",
+    manual_instructions="OphMAE (ophthalmology ViT). Auto-downloaded via transformers at runtime.",
+    size_mb=340,
+))
+
+# ── Dermatology ──────────────────────────────────────────────────────────
+register(WeightSource(
+    name="dermclip",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/redlessone/DermLIP_ViT-B-16",
+    manual_instructions="DermCLIP / DermLIP (dermatology CLIP ViT-B/16). Auto-downloaded via open_clip at runtime.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="monet",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/suinleelab/monet",
+    manual_instructions="MoNET (dermatology CLIP ViT-L/14). Auto-downloaded via transformers CLIPModel at runtime.",
+    size_mb=1700,
+))
+
+register(WeightSource(
+    name="panderm",
+    filename="panderm.pth",
+    sources=[],
+    manual_url="https://github.com/SiyuanYan1/PanDerm",
+    manual_instructions="PanDerm (dermatology ViT-L/16). No HF artifact — download from Google Drive (see GitHub README) and pass via pretrained_path.",
+    size_mb=1200,
+))
+
+# ── Endoscopy ────────────────────────────────────────────────────────────
+register(WeightSource(
+    name="endovit",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/egeozsoy/EndoViT",
+    manual_instructions="EndoViT (endoscopy ViT-B/16). Auto-downloaded via transformers at runtime.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="endo_fm",
+    filename="(timm auto-download)",
+    sources=[],
+    manual_url="https://github.com/med-air/Endo-FM",
+    manual_instructions="Endo-FM (endoscopy ViT-B/16). pretrained=True loads timm ImageNet weights; for the actual Endo-FM checkpoint download from GitHub and pass via pretrained_path.",
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="surgical_sam",
+    filename="(timm auto-download)",
+    sources=[],
+    manual_url="https://github.com/wenxi-yue/SurgicalSAM",
+    manual_instructions="SurgicalSAM (SAM ViT-H/14). pretrained=True loads timm weights; for SAM weights use sam_vit_h (already in WEIGHT_REGISTRY).",
+    size_mb=2560,
+))
+
+# ── Ultrasound ───────────────────────────────────────────────────────────
+register(WeightSource(
+    name="usfmae",
+    filename="usf_mae_vitb16_100ep.pth",
+    sources=[
+        _gdrive_file("1ZPu_7KhMEuaq-XdLhVp2EEgMgLJ4dKhr"),
+    ],
+    manual_url="https://drive.google.com/file/d/1ZPu_7KhMEuaq-XdLhVp2EEgMgLJ4dKhr/view",
+    manual_instructions=(
+        "USF-MAE (ultrasound foundation model, 100-ep ViT-B/16). "
+        "Auto-downloaded via gdown from Google Drive. "
+        "Requires 'pip install gdown'."
+    ),
+    size_mb=340,
+))
+
+register(WeightSource(
+    name="ultrafedfm",
+    filename="ultrafedfm.pth",
+    sources=[],
+    manual_url="https://github.com/yuncheng97/UltraFedFM",
+    manual_instructions="UltraFedFM (ultrasound federated model). Download from Baidu NetDisk (code: v74x) or GitHub and pass via pretrained_path.",
+    size_mb=340,
+))
+
+# ── MLLM Vision Towers ──────────────────────────────────────────────────
+# CLIP ViT-L/14-336 is shared by llava_med_vision, huatuogpt_vision,
+# and healthgpt_vision towers.
+register(WeightSource(
+    name="clip_vit_l_336",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/openai/clip-vit-large-patch14-336",
+    manual_instructions="OpenAI CLIP ViT-L/14-336 — vision tower shared by LLaVA-Med, HuatuoGPT-Vision, HealthGPT. Auto-downloaded via transformers at runtime.",
+    size_mb=1700,
+))
+
+register(WeightSource(
+    name="medgemma_vision",
+    filename="(HF auto-download, gated)",
+    sources=[],
+    manual_url="https://huggingface.co/google/medgemma-4b-pt",
+    manual_instructions="MedGemma-4B (Google, medical MLLM). Auto-downloaded via transformers. Requires HF token (gated repo).",
+    size_mb=8000,
+))
+
+register(WeightSource(
+    name="hulumed_vision",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/ZJU-AI4H/Hulu-Med-7B",
+    manual_instructions="HuLuMed (ZJU AI4H, medical MLLM). Auto-downloads full MLLM via transformers AutoModel and extracts vision tower.",
+    size_mb=14000,
+))
+
+register(WeightSource(
+    name="lingshu_vision",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/lingshu-medical-mllm/Lingshu-7B",
+    manual_instructions="LingShu (medical MLLM). Auto-downloads via transformers AutoModel and extracts vision tower.",
+    size_mb=14000,
+))
+
+register(WeightSource(
+    name="qwen25_vl_vision",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/Qwen/Qwen2.5-VL-7B-Instruct",
+    manual_instructions="Qwen2.5-VL-7B (Alibaba, general MLLM). Auto-downloads via transformers AutoModel and extracts vision tower.",
+    size_mb=15000,
+))
+
+register(WeightSource(
+    name="qwen3_vl_vision",
+    filename="(HF auto-download)",
+    sources=[],
+    manual_url="https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct",
+    manual_instructions="Qwen3-VL-8B (Alibaba, general MLLM). Auto-downloads via transformers AutoModel and extracts vision tower.",
+    size_mb=17000,
 ))
 
 

@@ -4,9 +4,10 @@ Uses CSWin self-attention (cross-shaped window) in a U-Net architecture
 for efficient medical image segmentation.
 
 Reference:
-    CSWin-UNet: Transformer UNet with Cross-Shaped Windows for Medical
-    Image Segmentation. arXiv 2024.
-    https://github.com/pgao-lab/CSWin-UNet
+    Liu et al., "CSWin-UNet: Transformer UNet with Cross-Shaped Windows
+    for Medical Image Segmentation", Information Fusion 2024.
+    arXiv: 2407.18070. DOI: 10.1016/j.inffus.2024.102634.
+    https://github.com/eatbeanss/CSWin-UNet
 
 Key components:
     - Cross-shaped window attention (horizontal + vertical strips)
@@ -22,29 +23,108 @@ from typing import List, Optional
 
 
 class _CrossWindowAttention(nn.Module):
-    """Cross-shaped 窗口 自注意力: horizontal + vertical strips。
-        Cross-shaped window self-attention: horizontal + vertical strips."""
+    """Cross-shaped window self-attention (CSWin).
+
+    Splits heads into two equal groups:
+    - First half: horizontal strips (``strip_size`` rows × full width)
+    - Second half: vertical strips (full height × ``strip_size`` columns)
+
+    Self-attention is computed independently within each strip, then the
+    horizontal and vertical outputs are concatenated along the head axis.
+    """
 
     def __init__(self, dim, num_heads=4, strip_size=7):
         super().__init__()
         self.dim = dim
         self.num_heads = num_heads
         self.strip_size = strip_size
-        self.scale = (dim // num_heads) ** -0.5
+        head_dim = dim // num_heads
+        self.scale = head_dim ** -0.5
         self.qkv = nn.Linear(dim, dim * 3)
         self.proj = nn.Linear(dim, dim)
 
-    def forward(self, x):
-        B, C, H, W = x.shape
-        tokens = x.flatten(2).transpose(1, 2)  # (B, HW, C)
-        qkv = self.qkv(tokens).reshape(B, -1, 3, self.num_heads, C // self.num_heads)
-        qkv = qkv.permute(2, 0, 3, 1, 4)
-        q, k, v = qkv.unbind(0)
+    def _strip_attention(self, q, k, v, strip_size):
+        """Compute attention within strips along the first spatial axis.
+
+        Args:
+            q, k, v: (B, nh, axis, other, head_dim)
+            strip_size: rows/cols per strip
+
+        Returns:
+            (B, nh, axis, other, head_dim)
+        """
+        B, nh, axis, other, hd = q.shape
+        # Pad axis to a multiple of strip_size
+        pad = (strip_size - axis % strip_size) % strip_size
+        if pad > 0:
+            q = F.pad(q, (0, 0, 0, 0, 0, pad))
+            k = F.pad(k, (0, 0, 0, 0, 0, pad))
+            v = F.pad(v, (0, 0, 0, 0, 0, pad))
+
+        axis_p = axis + pad
+        ns = axis_p // strip_size  # number of strips
+
+        # (B, nh, ns, strip_size, other, hd) → (B*nh*ns, strip_size*other, hd)
+        q = q.reshape(B, nh, ns, strip_size, other, hd).reshape(
+            B * nh * ns, strip_size * other, hd)
+        k = k.reshape(B, nh, ns, strip_size, other, hd).reshape(
+            B * nh * ns, strip_size * other, hd)
+        v = v.reshape(B, nh, ns, strip_size, other, hd).reshape(
+            B * nh * ns, strip_size * other, hd)
+
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
-        out = (attn @ v).transpose(1, 2).reshape(B, -1, C)
-        out = self.proj(out).transpose(1, 2).view(B, C, H, W)
+        out = attn @ v  # (B*nh*ns, strip_size*other, hd)
+
+        # Reshape back and remove padding
+        out = out.reshape(B, nh, ns, strip_size, other, hd).reshape(
+            B, nh, axis_p, other, hd)
+        if pad > 0:
+            out = out[:, :, :axis, :, :]
         return out
+
+    def forward(self, x):
+        B, C, H, W = x.shape
+        # (B, C, H, W) → (B, H, W, C)
+        x = x.permute(0, 2, 3, 1).contiguous()
+
+        # QKV projection
+        head_dim = C // self.num_heads
+        qkv = self.qkv(x).reshape(B, -1, 3, self.num_heads, head_dim)
+        qkv = qkv.permute(2, 0, 3, 1, 4)  # (3, B, nh, HW, hd)
+        q, k, v = qkv[0], qkv[1], qkv[2]  # (B, nh, HW, hd)
+
+        # Reshape to spatial: (B, nh, H, W, hd)
+        q = q.reshape(B, self.num_heads, H, W, head_dim)
+        k = k.reshape(B, self.num_heads, H, W, head_dim)
+        v = v.reshape(B, self.num_heads, H, W, head_dim)
+
+        # Split heads: first half for horizontal, second half for vertical
+        nh = self.num_heads // 2
+        q_h, q_v = q[:, :nh], q[:, nh:]
+        k_h, k_v = k[:, :nh], k[:, nh:]
+        v_h, v_v = v[:, :nh], v[:, nh:]
+
+        # Horizontal strips: strip along H (strip_size rows × W cols)
+        out_h = self._strip_attention(q_h, k_h, v_h, self.strip_size)
+
+        # Vertical strips: strip along W (H rows × strip_size cols)
+        # Swap H and W axes to reuse _strip_attention
+        q_v = q_v.permute(0, 1, 3, 2, 4)  # (B, nh, W, H, hd)
+        k_v = k_v.permute(0, 1, 3, 2, 4)
+        v_v = v_v.permute(0, 1, 3, 2, 4)
+        out_v = self._strip_attention(q_v, k_v, v_v, self.strip_size)
+        out_v = out_v.permute(0, 1, 3, 2, 4)  # back to (B, nh, H, W, hd)
+
+        # Concatenate along head dimension
+        out = torch.cat([out_h, out_v], dim=1)  # (B, num_heads, H, W, hd)
+
+        # Reshape to (B, H, W, C) and project
+        out = out.reshape(B, H, W, C)
+        out = self.proj(out)
+
+        # Back to (B, C, H, W)
+        return out.permute(0, 3, 1, 2).contiguous()
 
 
 class _CSWinBlock(nn.Module):
@@ -60,8 +140,10 @@ class _CSWinBlock(nn.Module):
 
     def forward(self, x):
         B, C, H, W = x.shape
-        tokens = x.flatten(2).transpose(1, 2)
-        tokens = tokens + self.attn(x).flatten(2).transpose(1, 2)
+        # Pre-norm: LayerNorm before attention
+        tokens = x.flatten(2).transpose(1, 2)            # (B, HW, C)
+        normed = self.norm1(tokens).transpose(1, 2).view(B, C, H, W)
+        tokens = tokens + self.attn(normed).flatten(2).transpose(1, 2)
         tokens = tokens + self.mlp(self.norm2(tokens))
         return tokens.transpose(1, 2).view(B, C, H, W)
 

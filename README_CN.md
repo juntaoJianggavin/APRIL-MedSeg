@@ -19,7 +19,7 @@
   </p>
 </div>
 
-> **132** 完整网络 · **178** 编码器 · **45** 解码器 · **89** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **921** YAML 配置 · 一行 YAML 完成切换
+> **132** 完整网络 · **176** 编码器 · **47** 解码器 · **81** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **918** YAML 配置 · 一行 YAML 完成切换
 
 ---
 <a id="更新日志"></a>
@@ -319,7 +319,12 @@ print(f"可训练参数量: {trainable / 1e6:.2f}M")
 | [05](docs/tutorial/05_encoders_CN.md) | 编码器进阶 | CNN / Transformer / Mamba / RWKV 对比、timm 封装器 |
 | [06](docs/tutorial/06_decoders_CN.md) | 解码器与跳跃连接 | CASCADE / EMCAD / Attention Gate、跳跃连接分类 |
 | [07](docs/tutorial/07_foundation_CN.md) | Foundation 模型 | DPT head、9 大医学模态、微调策略 |
-| [08](docs/tutorial/08_paradigms_CN.md) | 高级训练范式 | 半监督、域适应、知识蒸馏、弱监督 |
+| [08](docs/tutorial/08_paradigms_CN.md) | 高级训练范式 | 概述：半监督、域适应、知识蒸馏、弱监督 |
+| [08a](docs/tutorial/08a_semi_supervised_CN.md) | 半监督分割 | Mean Teacher, CPS, UniMatch, FixMatch, 一致性正则 |
+| [08b](docs/tutorial/08b_domain_adaptation_CN.md) | 域适应 | AdvEnt, DANN, TENT, FDA, MIC, HRDA, SePiCo |
+| [08c](docs/tutorial/08c_distillation_CN.md) | 知识蒸馏 | VanillaKD, DKD, CWD, MGD, DIST, ReviewKD, SimKD |
+| [08d](docs/tutorial/08d_weakly_supervised_CN.md) | 弱监督分割 | CAM, SEAM, PuzzleCAM, Box, Point, Scribble 标注 |
+| [08e](docs/tutorial/08e_text_guided_CN.md) | 文本引导分割 | CRIS, BiomedParse, LViT, CLIP 系, MLLM Pipeline |
 | [09](docs/tutorial/09_deployment_CN.md) | 部署与推理 | ONNX 导出、TTA、集成推理、MLLM Pipeline |
 
 [完整教程索引](docs/tutorial/README_CN.md)
@@ -332,33 +337,33 @@ print(f"可训练参数量: {trainable / 1e6:.2f}M")
 segmentation_tool/
 ├── medseg/                                      # 核心框架
 │   ├── models/                                  # 模型组件
-│   │   ├── encoders/                            #   178 个编码器 (93 原生 + 85 timm 预设 + 1000+ 通过 timm_ 前缀)
-│   │   │   ├── cnn/              (11 modules)   #     CNN: basic, DCSAU, CFA, MedNeXt, MEW, R2U, AttUNet, LV, MALU, EGE, HRNet
-│   │   │   ├── transformer/      (17 modules)   #     Transformer: TransUNet, SwinUNet, MISSFormer, DAEFormer, HiFormer, PVTv2, MaxViT, ...
+│   │   ├── encoders/                            #   176 个编码器 (91 原生 + 85 timm 预设 + 1000+ 通过 timm_ 前缀)
+│   │   │   ├── cnn/              (13 modules)   #     CNN: basic, DCSAU, CFA, MedNeXt, MEW, R2U, AttUNet, LV, MALU, EGE, ConvNeXt, EfficientNetV2, HRNet
+│   │   │   ├── transformer/      (18 modules)   #     Transformer: TransUNet, SwinUNet, MISSFormer, DAEFormer, HiFormer, PVTv2, MaxViT, ViT-Pyramid, ...
 │   │   │   ├── mamba/            (10 modules)   #     Mamba/SSM: VMUNet, UMamba, LKM, LoG-VMamba, UltraLight-VM, VMKLA, ...
 │   │   │   ├── rwkv/             (5 modules)    #     RWKV: RWKV-UNet, U-RWKV (MICCAI), U-RWKV (TIP), MD-RWKV, RIR-Zigzag
 │   │   │   ├── linear_attn/      (5 modules)    #     线性注意力: RetNet, Linformer, Performer, TTT, xLSTM
-│   │   │   ├── kan_mlp/          (4 modules)    #     KAN/MLP: UKAN, Rolling-UNet, UNeXt, Wav-KAN
-│   │   │   ├── foundation/       (35 modules)   #     Foundation 模型 (DPT head)
+│   │   │   ├── kan_mlp/          (4 modules)    #     KAN/MLP: UKAN, Rolling-UNet, UNeXt, WA-UKAN
+│   │   │   ├── foundation/       (38 modules)   #     Foundation 模型 (DPT head)
 │   │   │   │   ├── general/      (5)            #       DINOv2, DINOv3, DINO, CLIP-ViT, SAM-ViT
-│   │   │   │   ├── pathology/    (5)            #       Phikon, UNI, PLIP, MUSK, Phikon-v2
-│   │   │   │   ├── radiology/    (3)            #       Rad-DINO, OmniRad, MedSigLIP
+│   │   │   │   ├── pathology/    (6)            #       Phikon, Phikon-v2, UNI, PLIP, MUSK, KEEP
+│   │   │   │   ├── radiology/    (4)            #       Rad-DINO, OmniRad, BioViL, CheXZero
 │   │   │   │   ├── ophthalmology/(4)            #       RETFound-DINOv2, FLAIR, OphMAE, RETFound
 │   │   │   │   ├── dermatology/  (3)            #       PanDerm, DermCLIP, MonetDerm
-│   │   │   │   ├── multimodal_med/(3)           #       BiomedCLIP, MedCLIP, KEEP
+│   │   │   │   ├── general_medical/(3)          #       BiomedCLIP, MedCLIP, MedSigLIP
 │   │   │   │   ├── mllm_vision/  (8)            #       Qwen3-VL, MedGemma, LLaVA-Med, HuatuoGPT, ...
-│   │   │   │   ├── endoscopy/    (1)            #       EndoViT
-│   │   │   │   └── ultrasound/   (3)            #       UltraDINO, UltraFedFM, USF-MAE
+│   │   │   │   ├── endoscopy/    (3)            #       EndoViT, Endo-FM, Surgical-SAM
+│   │   │   │   └── ultrasound/   (2)            #       UltraFedFM, USF-MAE
 │   │   │   └── wrapper/          (1 module)     #     timm 动态 wrapper (85 预注册 + 1000+ 通过 timm_ 前缀)
-│   │   ├── decoders/                            #   45 个解码器
-│   │   │   ├── basic/            (4 registered) #     基础上采样: UNet, Bilinear, Deconv, DepthwiseSep
+│   │   ├── decoders/                            #   47 个解码器
+│   │   │   ├── basic/            (6 registered) #     基础上采样: deconv_upcat (unet), Bilinear, deconv_catup (deconv), DepthwiseSep + 2 别名
 │   │   │   ├── dense/            (2 registered) #     密集连接: UNet++, UNet3+
 │   │   │   ├── cascade/          (10 registered)#     CASCADE, EMCAD (2 变体), G-CASCADE (2 变体), CFM, MERIT (2 变体), EDLDNet
-│   │   │   ├── attention/        (5 registered) #     注意力门控, HAM, Lawin, OCRNet, CCNet
-│   │   │   ├── transformer/      (5 registered) #     DAEFormer, MTUNet, nnFormer, SwinUNet, UCTransNet
+│   │   │   ├── attention/        (6 registered) #     注意力门控, BANet, CCNet, Lawin, OCRNet, UCTransNet
+│   │   │   ├── transformer/      (5 registered) #     DAEFormer, MISSFormer, MTUNet, nnFormer, SwinUNet
 │   │   │   ├── mlp/              (2 registered) #     SegFormer MLP, MLP 解码器
-│   │   │   ├── specific/         (14 registered)#     TransUNet CUP, HiFormer, H2Former, MISSFormer, ScaleFormer, FAT-Net, MALUNet, EGE-UNet, BANet, FF-Parser, ...
-│   │   │   ├── pyramid/          (1 registered) #     金字塔: UPerNet
+│   │   │   ├── specific/         (13 registered)#     CFA-Net, DCSA-UNet, EGNet, FAT-Net, FF-Parser, H2Former, HAM, HiFormer, KI-UNet, MALUNet, RWKV-UNet, ScaleFormer, TransUNet
+│   │   │   ├── pyramid/          (2 registered) #     金字塔: UPerNet, DeepLabV3 (ASPP)
 │   │   │   └── mamba/            (1 registered) #     Mamba: VM-UNet
 │   │   ├── bottlenecks/          (17 modules)   #   17 个瓶颈层: none, basic, ASPP, DenseASPP, PPM, Transformer, SE, CBAM, ...
 │   │   ├── skip_connections/                    #   25 个跳跃连接
@@ -368,20 +373,20 @@ segmentation_tool/
 │   │   │   ├── mamba/            (1 module)     #     Mamba: SK-VM++
 │   │   │   └── fusion/           (6 modules)    #     CNN融合: BiFusion, Deformable, MultiScale, FeatureRefine, CCM, SDI
 │   │   ├── networks/                            #   132 个完整网络 (合并变体)
-│   │   │   ├── cnn/              (36 registered)#     CNN: UNet3+, UNet++, AttUNet, nnUNet, MedNeXt, STUNet, MEW-UNet, HRNet, ...
+│   │   │   ├── cnn/              (36 registered)#     CNN: UNet, UNet3+, UNet++, AttUNet, nnUNet, MedNeXt, MEW-UNet, ...
 │   │   │   ├── transformer/      (37 registered)#     Transformer: SegFormer, TransUNet, SwinUNet, DAEFormer, PolypPVT, CASCADE, ...
 │   │   │   ├── mamba/            (24 registered)#     Mamba: VMUNet, U-Mamba, SwinUMamba, SkinMamba, DermoMamba, SerpMamba, ...
 │   │   │   ├── sam/              (10 registered)#     SAM 家族: MedSAM, SAM-Med2D, SAM2, SAMUS, AutoSAM, MobileSAM, ...
 │   │   │   ├── rwkv/             (5 registered) #     RWKV: U-RWKV (MICCAI 2025), U-RWKV (TIP 2026), RWKV-UNet, MD-RWKV, RIR-Zigzag
-│   │   │   ├── kan_mlp/          (4 registered) #     KAN/MLP: RollingUNet, UNeXt, UKAN, Wav-KAN
+│   │   │   ├── kan_mlp/          (4 registered) #     KAN/MLP: RollingUNet, UNeXt, UKAN, WA-UKAN
 │   │   │   └── linear_attn/      (3 registered) #     线性注意力: TTT-UNet, U-VixLSTM, xLSTM-UNet
-│   │   └── text_unet/            (13 modules)   #   文本引导: CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
+│   │   └── text_unet/            (13 modules)   #   文本引导 (12 个模型): CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
 │   ├── training/                                # 训练范式
 │   │   ├── semi/                 (23 modules)   #   21 个半监督方法 + 2 个工具 (base, utils)
 │   │   │                                        #     MeanTeacher, CPS, UniMatch, FixMatch, SSL4MIS-U, CorrMatch, AllSpark, ...
 │   │   ├── domain_adaptation/    (18 modules)   #   18 个域适应: AdvEnt, DANN, TENT, FDA, MIC, HRDA, SePiCo, ...
 │   │   ├── distillation/         (28 modules)   #   27 个蒸馏: VanillaKD, DKD, MGD, DIST, CWD, ReviewKD, SimKD, NORM, ...
-│   │   └── weakly_supervised/    (28 modules)   #   28 个弱监督方法 (CAM, SEAM, PuzzleCAM, GatedCRF, TreeEnergy, ...)
+│   │   └── weakly_supervised/    (21 modules)   #   20 个弱监督方法 (CAM, SEAM, PuzzleCAM, TreeEnergy, ...)
 │   ├── inference/                               # 推理
 │   │   ├── ensemble.py                          #   集成推理（多模型投票）
 │   │   ├── tta.py                               #   测试时增强
@@ -389,11 +394,11 @@ segmentation_tool/
 │   │       │                                    #     Detector: GroundingDINO, Qwen2/2.5/3-VL, InternVL, LLaVA, MiniCPM-V, Phi3-V, CogVLM
 │   │       │                                    #     Segmenter: SAM2, MedSAM, SAM-Med2D, LiteMedSAM
 │   │       └── medisee/          (3 modules)    #     MediSee: LLM reasoning segmenter
-│   ├── losses/                   (15 modules)   # 89 个损失函数
+│   ├── losses/                   (15 modules)   # 81 个损失函数
 │   │                                            #   监督: CE, Dice, Focal, Tversky, Lovász, Boundary, Hausdorff, ...
 │   │                                            #   蒸馏: VanillaKD, DKD, CWD, MGD, DIST, AT, RKD, ...
 │   │                                            #   域适应: AdvEnt, DANN, FDA, MIC, TENT, ...
-│   │                                            #   弱监督: Box, CAM, Point, Scribble, TreeEnergy, GatedCRF, ...
+│   │                                            #   弱监督: Box, CAM, Point, Scribble, TreeEnergy, SEAM, ...
 │   ├── datasets/                 (10 modules)   # 数据加载: Synapse, ACDC, Generic, QaTa-COV19, MosMedData+, 24 种增强
 │   │   ├── advanced_aug.py                      #   24 种高级数据增强 (YAML 可配置)
 │   │   └── transforms.py                        #   基础变换 (Resize, ToTensor, Normalize)
@@ -420,22 +425,21 @@ segmentation_tool/
 │   └── test_dummy/                              #   虚拟测试数据
 ├── figs/                                        # 图片与 logo
 │   └── logo.png                                 #   项目 logo
-├── configs/                      (921 yamls)    # YAML 配置
-│   ├── architectures/            (791 yamls)    #   网络结构配置
-│   │   ├── networks/             (307 yamls)    #     完整网络 (132 arch across general/acdc/synapse)
-│   │   ├── combinations/         (171 yamls)    #     encoder+decoder 自由组合
-│   │   ├── decoder_study/        (133 yamls)    #     Decoder 消融 (3 enc × 45 dec)
+├── configs/                      (918 yamls)    # YAML 配置
+│   ├── architectures/            (783 yamls)    #   网络结构配置
+│   │   ├── networks/             (302 yamls)    #     完整网络 (132 arch across general/acdc/synapse)
+│   │   ├── combinations/         (169 yamls)    #     encoder+decoder 自由组合
+│   │   ├── decoder_study/        (133 yamls)    #     Decoder 消融 (3 enc × 44 dec + 1)
 │   │   ├── skip_study/           (75 yamls)     #     skip 消融 (3 enc × 25 skip)
 │   │   ├── bottleneck_study/     (51 yamls)     #     bottleneck 消融 (3 enc × 17 bn)
-│   │   └── foundation/           (54 yamls)     #     Foundation 模型 (9 模态 × 35 编码器)
-│   ├── training_paradigms/       (100 yamls)    #   训练范式配置
+│   │   └── foundation/           (53 yamls)     #     Foundation 模型 (9 模态 × 38 编码器)
+│   ├── training_paradigms/       (105 yamls)    #   训练范式配置
 │   │   ├── semi_supervision/     (21 yamls)     #     半监督 (21 方法)
 │   │   ├── domain_adaptation/    (18 yamls)     #     域适应 (18 方法)
-│   │   ├── distillation/         (22 yamls)     #     蒸馏 (27 方法)
-│   │   ├── text_guided/          (19 yamls)     #     文本引导 (13 模型 + pipeline)
-│   │   └── weak_supervision/     (20 yamls)     #     弱监督 (28 方法)
-│   ├── intro_to_datasets/        (27 yamls)     #   27 个数据集介绍 + 示例配置
-│   └── experiments/                             #   实验配置
+│   │   ├── distillation/         (29 yamls)     #     蒸馏 (27 方法)
+│   │   ├── text_guided/          (17 yamls)     #     文本引导 (12 模型 + pipeline)
+│   │   └── weak_supervision/     (20 yamls)     #     弱监督 (20 方法)
+│   └── intro_to_datasets/        (27 yamls)     #   27 个数据集介绍 + 示例配置
 ├── scripts/                                     # 工具 + 实验脚本
 │   ├── experiments/              (14 scripts)   #   实验 bash 脚本
 │   │   ├── run_sota_benchmark.sh                #     通用 SOTA 架构对比 (11 模型 × 7 数据集)
@@ -459,19 +463,19 @@ segmentation_tool/
 │   ├── gen_standalone_yamls.py                  #   生成独立模型 YAML 配置
 │   ├── prepare_qata_mosmed.py                   #   QaTa-COV19 / MosMedData+ 数据集验证
 │   └── visualize.py                             #   预测可视化 (input + pred + overlay)
-├── docs/                         (51 docs)      # 详细文档
-│   ├── tutorial/                 (21 files)     #   系列教程 (01-09, 中英文, README, complete_guide)
+├── docs/                         (61 docs)      # 详细文档
+│   ├── tutorial/                 (31 files)     #   系列教程 (01-09, 08a-08e 子章节, 中英文, README, complete_guide)
 │   ├── models/                                  #   模型文档: 总览, 网络, 编码器, 解码器, skip, bottleneck
 │   ├── paradigms/                               #   范式文档: 基础设施, 半监督, 弱监督, 域适应, 蒸馏, 文本引导
 │   ├── deployment/                              #   部署文档: ONNX, FLOPs, 参数量, FPS
-│   ├── data/                                    #   数据文档: 26 个数据集, 5 种类型, 4 种划分
+│   ├── data/                                    #   数据文档: 25 个数据集, 5 种类型, 4 种划分
 │   └── research_guide.md                        #   研究建议: 8 个研究方向 + 14 个实验脚本
 ├── train.py                                     # 监督训练 (AMP + DDP + DataParallel + Logger + Warmup)
 ├── semi_train.py                                # 半监督训练 (21 方法)
-├── train_weakly_supervised.py                   # 弱监督训练 (28 方法)
+├── train_weakly_supervised.py                   # 弱监督训练 (20 方法)
 ├── train_domain_adaptation.py                   # 域适应训练 (18 方法)
 ├── train_distillation.py                        # 知识蒸馏训练 (27 方法)
-├── train_text_guided.py                         # 文本引导训练 (13 模型)
+├── train_text_guided.py                         # 文本引导训练 (12 模型)
 ├── test_text_guided.py                          # 文本引导推理 (可训练 + pipeline)
 ├── test.py                                      # 推理 / 测试
 ├── profile_model.py                             # FLOPs / 参数量 / FPS 分析
@@ -489,36 +493,36 @@ segmentation_tool/
 
 | 类别 | 数量 | 代表模型 |
 |---|---|---|
-| CNN | 36 | UNet3+, UNet++, Attention-UNet, nnU-Net, MedNeXt, STUNet, MEW-UNet, HRNet |
+| CNN | 36 | UNet, UNet3+, UNet++, Attention-UNet, nnU-Net, MedNeXt, MEW-UNet, DCSAU-Net |
 | Transformer | 37 | SegFormer, TransUNet, Swin-UNet, DAEFormer, MISSFormer, HiFormer, PolypPVT, CASCADE |
 | Mamba / SSM | 24 | VM-UNet, U-Mamba, Swin-UMamba, LKM-UNet, LoG-VMamba, HC-Mamba |
 | SAM 家族 | 10 | MedSAM, SAM-Med2D, SAM2, SAMUS, AutoSAM, MobileSAM, LiteMedSAM |
-| KAN / MLP | 4 | RollingUNet, UNeXt, U-KAN, Wav-KAN |
+| KAN / MLP | 4 | RollingUNet, UNeXt, U-KAN, WA-UKAN |
 | 线性注意力 | 3 | TTT-UNet, U-VixLSTM, xLSTM-UNet |
 | RWKV | 5 | U-RWKV (MICCAI 2025), U-RWKV (TIP 2026), RWKV-UNet, MD-RWKV-UNet, RIR-Zigzag |
-| 文本引导 | 13 | CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg |
+| 文本引导 | 12 | CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg |
 
 > 详细列表: [docs/models/networks.md](docs/models/networks.md)
 
 > **U-RWKV 名称说明：** 两个不同的网络共享 "U-RWKV" 名称：
 > - `u_rwkv` — **MICCAI 2025**：方向自适应 RWKV 模块 (DARM) + 阶段自适应挤压激励 (SASE)，轻量级设计，RWKV 嵌入卷积阶段内。源码：[hbyecoding/U-RWKV](https://github.com/hbyecoding/U-RWKV)
-> - `u_rwkv_tip` — **IEEE TIP 2026**：标准 U-Net + 卷积后 RWKV 注意力块，配合 OmniShift 多尺度卷积，最初用于体素分割。源码：[Yaziwel/Restore-RWKV](https://github.com/Yaziwel/Restore-RWKV)
+> - `u_rwkv_tip` — **IEEE TIP 2026**：标准 U-Net + 卷积后 RWKV 注意力块，配合 OmniShift 多尺度卷积，最初用于体素分割。源码：[hbyecoding/U-RWKV](https://github.com/hbyecoding/U-RWKV)
 
-### 编码器 — 178 个
+### 编码器 — 176 个
 
-**亮点：35 个 Foundation 模型编码器，覆盖 9 个医学模态**
+**亮点：38 个 Foundation 模型编码器，覆盖 9 个医学模态**
 
 | 模态 | 数量 | 模型 |
 |---|---|---|
 | 通用 | 5 | DINOv2, DINOv3, DINO, CLIP-ViT, SAM-ViT |
-| 病理 | 5 | Phikon, Phikon-v2, UNI, PLIP, MUSK |
-| 放射 | 3 | Rad-DINO, OmniRad, MedSigLIP |
+| 病理 | 6 | Phikon, Phikon-v2, UNI, PLIP, MUSK, KEEP |
+| 放射 | 4 | Rad-DINO, OmniRad, BioViL, CheXZero |
 | 眼科 | 4 | RETFound-DINOv2, RETFound, FLAIR, OphMAE |
 | 皮肤 | 3 | DermCLIP, MoNet, PanDerm |
-| 多模态医学 | 3 | BiomedCLIP, MedCLIP, KEEP |
+| 通用医学 | 3 | BiomedCLIP, MedCLIP, MedSigLIP |
 | MLLM视觉 | 8 | Qwen2.5-VL, Qwen3-VL, MedGemma, LLaVA-Med, HuatuoGPT, HealthGPT, HuLuMed, LingShu |
-| 超声 | 3 | UltraDINO, UltraFedFM, US-FMAE |
-| 内窥镜 | 1 | Endo-ViT |
+| 超声 | 2 | UltraFedFM, US-FMAE |
+| 内窥镜 | 3 | EndoViT, Endo-FM, Surgical-SAM |
 
 所有 Foundation ViT 使用 **DPT head**（从不同深度 block 提取多尺度特征），而非简单的 FPN-from-tokens。
 
@@ -532,19 +536,19 @@ encoder:
 
 > 详细列表: [docs/models/encoders.md](docs/models/encoders.md)
 
-### 解码器 — 45 个
+### 解码器 — 47 个
 
 | 类别 | 数量 | 代表模型 |
 |---|---|---|
-| 基础上采样 | 4 | UNet, Bilinear, Deconv, DepthwiseSep |
+| 基础上采样 | 6 | deconv_upcat (unet), Bilinear, deconv_catup (deconv), DepthwiseSep + 2 别名 |
 | 密集连接 | 2 | UNet++, UNet3+ |
 | 级联 | 10 | CASCADE, EMCAD (2 变体), G-CASCADE (2 变体), CFM, MERIT (2 变体), EDLDNet |
-| 注意力 | 5 | Attention Gate, HAM, Lawin, OCRNet, CCNet |
-| Transformer | 5 | DAEFormer, MTUNet, SwinUNet, nnFormer, UCTransNet |
+| 注意力 | 6 | Attention Gate, BANet, CCNet, Lawin, OCRNet, UCTransNet |
+| Transformer | 5 | DAEFormer, MISSFormer, MTUNet, SwinUNet, nnFormer |
 | MLP | 2 | SegFormer MLP, MLP 解码器 |
-| 网络专属 | 15 | TransUNet CUP, HiFormer, H2Former, MISSFormer, ScaleFormer, FAT-Net, MALUNet, EGE-UNet, DeepLabV3, BANet, FF-Parser, ... |
+| 网络专属 | 13 | CFA-Net, DCSA-UNet, EGNet, FAT-Net, FF-Parser, H2Former, HAM, HiFormer, KI-UNet, MALUNet, RWKV-UNet, ScaleFormer, TransUNet |
 | Mamba | 1 | VM-UNet |
-| 金字塔 | 1 | UPerNet |
+| 金字塔 | 2 | UPerNet, DeepLabV3 (ASPP) |
 
 > 详细列表: [docs/models/decoders.md](docs/models/decoders.md)
 
@@ -641,15 +645,17 @@ Vanilla KD · FitNets · AT · FSP · NST · RKD · VID · DKD · MGD · DIST ·
 
 > 详细: [docs/paradigms/distillation.md](docs/paradigms/distillation.md)
 
-### 弱监督 — 29 个方法
+### 弱监督 — 20 个方法
 
-Box · CAM · MIL · EM · Point · Scribble · GatedCRF · Affinity · TreeEnergy · SEAM · PuzzleCAM · AdvCAM · MCTformer · SAMGuidedWeak · fBRS · iSeg · ClickSupervision · EPS · BoxInst · ReCAM · ToCo · LPCAM · MARS · BACoN · WPGSeg · DuPL · MoRe · PSDPM · SemPLeS
+Box · CAM · MIL · Point · Scribble · TreeEnergy · SEAM · PuzzleCAM · AdvCAM · MCTformer · EPS · BoxInst · ReCAM · ToCo · LPCAM · MARS · DuPL · MoRe · PSDPM · SemPLeS
 
 > 详细: [docs/paradigms/weakly_supervised.md](docs/paradigms/weakly_supervised.md)
 
-### 文本引导 — 13 个模型 + 推理 Pipeline
+### 文本引导 — 12 个可训练模型 + 推理 Pipeline
 
-**可训练模型**: CRIS · BiomedParse · LanGuideMedSeg · LViT · TGANet · TPRO · CausalCLIPSeg · CLIP-Universal · CXR-CLIP-Seg · TP-DRSeg · MedCLIP-SAM · SaLIP · MediSee
+**可训练模型**: CRIS · BiomedParse · LanGuideMedSeg · LViT · TGANet · TPRO · CausalCLIPSeg · CLIP-Universal · CXR-CLIP-Seg · TP-DRSeg · MedCLIP-SAM · SaLIP
+
+**推理专用**: MediSee（需要厂商模型权重，见下方推理 Pipeline）
 
 **推理 Pipeline** (9 detector × 4 segmenter = 36 种组合):
 - Detector: GroundingDINO · Qwen2-VL · Qwen2.5-VL · Qwen3-VL · InternVL · LLaVA · MiniCPM-V · Phi3-V · CogVLM

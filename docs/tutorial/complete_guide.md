@@ -34,12 +34,12 @@
 **APRIL-MedSeg** is a modular 2D medical image segmentation toolbox built on PyTorch. It provides:
 
 - **132** complete network architectures (CNN, Transformer, Mamba, RWKV, KAN, SAM family, etc.)
-- **178** encoders (including 35 foundation models across 9 medical modalities + dynamic timm wrapper)
-- **45** decoders (cascade, attention, transformer, MLP, etc.)
-- **89** loss functions (supervised, distillation, domain adaptation, weakly supervised)
+- **176** encoders (including 38 foundation models across 9 medical modalities + dynamic timm wrapper)
+- **47** decoders (cascade, attention, transformer, MLP, etc.)
+- **81** loss functions (supervised, distillation, domain adaptation, weakly supervised)
 - **25** skip connection types
 - **6** training paradigms (supervised, semi-supervised, domain adaptation, distillation, weakly supervised, text-guided)
-- **921** ready-to-use YAML configs
+- **918** ready-to-use YAML configs
 - **24** augmentation methods configurable via YAML
 
 **Why use this framework?**
@@ -145,27 +145,27 @@ python -m medseg.utils.weight_downloader check
 APRIL-MedSeg/
 ├── medseg/                    # Core framework (pip installable)
 │   ├── models/
-│   │   ├── encoders/          # 178 encoders (CNN, Transformer, Mamba, RWKV, timm, foundation)
-│   │   ├── decoders/          # 45 decoders
+│   │   ├── encoders/          # 176 encoders (CNN, Transformer, Mamba, RWKV, timm, foundation)
+│   │   ├── decoders/          # 47 decoders
 │   │   ├── skip_connections/  # 25 skip connection types
 │   │   ├── bottlenecks/       # 17 bottlenecks
 │   │   ├── networks/          # 132 complete pre-assembled architectures
-│   │   └── text_unet/         # 13 text-guided models
+│   │   └── text_unet/         # 12 text-guided models
 │   ├── training/              # Training paradigm implementations
 │   │   ├── semi/              # 21 semi-supervised methods
 │   │   ├── domain_adaptation/ # 18 domain adaptation methods
 │   │   ├── distillation/      # 27 distillation methods
-│   │   └── weakly_supervised/ # 28 weakly supervised methods
+│   │   └── weakly_supervised/ # 20 weakly supervised methods
 │   ├── inference/             # Inference utilities
 │   │   ├── ensemble.py        # Multi-model ensemble
 │   │   ├── tta.py             # Test-Time Augmentation
 │   │   └── mllm/              # MLLM grounding+segmentation pipeline
-│   ├── losses/                # 89 loss functions
+│   ├── losses/                # 81 loss functions
 │   ├── datasets/              # Dataset classes and augmentations
 │   ├── utils/                 # Config, AMP/DDP, logger, warmup, metrics, etc.
 │   ├── model_builder.py       # YAML → model assembler
 │   └── registry.py            # Component registries
-├── configs/                   # 921 YAML configs
+├── configs/                   # 918 YAML configs
 ├── scripts/                   # Utility scripts (ONNX export, visualization, etc.)
 ├── train.py                   # Supervised training entry point
 ├── semi_train.py              # Semi-supervised training
@@ -186,7 +186,7 @@ APRIL-MedSeg/
 | `semi_train.py` | Semi-supervised training (21 methods) |
 | `train_domain_adaptation.py` | Domain adaptation (18 methods) |
 | `train_distillation.py` | Knowledge distillation (27 methods) |
-| `train_weakly_supervised.py` | Weakly supervised (28 methods) |
+| `train_weakly_supervised.py` | Weakly supervised (20 methods) |
 | `train_text_guided.py` | Text-guided segmentation |
 | `test.py` | Evaluation / inference (single, ensemble, TTA) |
 | `profile_model.py` | FLOPs, params, and FPS profiling |
@@ -818,10 +818,10 @@ The project includes pre-built ablation configs:
 
 ```
 configs/architectures/
-├── decoder_study/      # 3 encoders × 45 decoders = 133 configs
+├── decoder_study/      # 3 encoders × 44 decoders + 1 augmented = 133 configs
 ├── skip_study/         # 3 encoders × 25 skips = 75 configs
 ├── bottleneck_study/   # 3 encoders × 17 bottlenecks = 51 configs
-└── combinations/       # Free encoder+decoder combos = 167 configs
+└── combinations/       # Free encoder+decoder combos = 169 configs
 ```
 
 Run experiment scripts for batch ablation:
@@ -836,21 +836,21 @@ bash scripts/experiments/run_bottleneck_study.sh
 
 ## 11. Using Foundation Models (Transfer Learning)
 
-The framework includes 35 foundation model encoders covering 9 medical modalities.
+The framework includes 38 foundation model encoders covering 9 medical modalities.
 
 ### 11.1 Available Foundation Models
 
 | Modality | Models |
 |----------|--------|
 | General | DINOv2, DINOv3, DINO, CLIP-ViT, SAM-ViT |
-| Pathology | Phikon, Phikon-v2, UNI, PLIP, MUSK |
-| Radiology | Rad-DINO, OmniRad, MedSigLIP |
+| Pathology | Phikon, Phikon-v2, UNI, PLIP, MUSK, KEEP |
+| Radiology | Rad-DINO, OmniRad, BioViL, CheXZero |
 | Ophthalmology | RETFound-DINOv2, RETFound, FLAIR, OphMAE |
 | Dermatology | DermCLIP, MoNet, PanDerm |
-| Multimodal Medical | BiomedCLIP, MedCLIP, KEEP |
+| General Medical | BiomedCLIP, MedCLIP, MedSigLIP |
 | MLLM Vision | Qwen2.5-VL, Qwen3-VL, MedGemma, LLaVA-Med, HuatuoGPT, HealthGPT, HuLuMed, LingShu |
-| Ultrasound | UltraDINO, UltraFedFM, US-FMAE |
-| Endoscopy | Endo-ViT |
+| Ultrasound | UltraFedFM, US-FMAE |
+| Endoscopy | Endo-ViT, Endo-FM, Surgical-SAM |
 
 ### 11.2 Using a Foundation Model
 
@@ -893,7 +893,7 @@ configs/architectures/foundation/
 ├── multimodal_med/   # BiomedCLIP, MedCLIP
 ├── mllm_vision/      # Qwen-VL, MedGemma
 ├── endoscopy/        # EndoViT
-└── ultrasound/       # UltraDINO, UltraFedFM
+└── ultrasound/       # UltraFedFM
 ```
 
 ---
@@ -1127,9 +1127,9 @@ python train_distillation.py \
 
 When only weak annotations are available (bounding boxes, image-level labels, scribbles).
 
-### 15.1 Available Methods (28)
+### 15.1 Available Methods (20)
 
-Box, CAM, Point, Scribble, MIL, EM, GatedCRF, TreeEnergy, SEAM, PuzzleCAM, AdvCAM, EPS, BoxInst, ReCAM, ToCo, LPCAM, MARS, BACoN, WPGSeg, DuPL, MoRe, PSDPM, SemPLeS
+Box, CAM, Point, Scribble, MIL, TreeEnergy, SEAM, PuzzleCAM, AdvCAM, MCTformer, EPS, BoxInst, ReCAM, ToCo, LPCAM, MARS, DuPL, MoRe, PSDPM, SemPLeS
 
 ### 15.2 Box-Supervised Training
 
@@ -1165,9 +1165,9 @@ python train_weakly_supervised.py \
 
 Use natural language descriptions to guide segmentation.
 
-### 16.1 Available Models (13)
+### 16.1 Available Models (12)
 
-CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg, CLIP-Universal, CXR-CLIP-Seg, TP-DRSeg, MedCLIP-SAM, SaLIP, MediSee
+CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, CausalCLIPSeg, CLIP-Universal, CXR-CLIP-Seg, TP-DRSeg, MedCLIP-SAM, SaLIP
 
 ### 16.2 Training
 

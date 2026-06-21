@@ -1,4 +1,4 @@
-# Bottlenecks (`medseg/bottlenecks/`)
+# Bottlenecks (`medseg/models/bottlenecks/`)
 
 [中文文档](README_CN.md)
 

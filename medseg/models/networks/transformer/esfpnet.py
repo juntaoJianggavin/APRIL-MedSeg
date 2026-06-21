@@ -21,7 +21,7 @@ still produce a usable random-init model rather than crashing.
 
 Public class: ``ESFPNet``.
 """
-# Source: https://github.com/dumyCq/ESFPNet
+# Source: https://github.com/zengjixiangnfft/ESFPNet
 
 from __future__ import annotations
 

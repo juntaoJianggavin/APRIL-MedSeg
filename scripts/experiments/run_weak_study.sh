@@ -10,7 +10,7 @@ set -e
 BASE_OUT="output/weak_study"
 CFG_DIR="configs/training_paradigms/weak_supervision"
 
-METHODS=(box_supervised cam point gated_crf tree_energy eps)
+METHODS=(box_supervised cam point tree_energy seam eps)
 
 for method in "${METHODS[@]}"; do
     cfg="${CFG_DIR}/${method}.yaml"

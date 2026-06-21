@@ -13,7 +13,7 @@ Each level:
 WKV is dispatched through :func:`medseg.kernels.wkv.run_wkv` (CUDA op on GPU,
 pure-PyTorch fallback on CPU).
 """
-# Source: https://github.com/Yaziwel/Restore-RWKV
+# Source: https://github.com/hbyecoding/U-RWKV (IEEE TIP 2026)
 
 import math
 from typing import List

@@ -17,13 +17,13 @@
 | `languide` | LanGuideMedSeg | Zhong et al. | MICCAI 2023 | [Junelin2333/LanGuideMedSeg-MICCAI2023](https://github.com/Junelin2333/LanGuideMedSeg-MICCAI2023) | [mosmed_plus_languide.yaml](../../configs/training_paradigms/text_guided/mosmed_plus_languide.yaml), [qata_covid19_languide.yaml](../../configs/training_paradigms/text_guided/qata_covid19_languide.yaml) |
 | `clip_universal` | CLIP-Driven Universal Model | Liu et al. | ICCV 2023 | [ljwztc/CLIP-Driven-Universal-Model](https://github.com/ljwztc/CLIP-Driven-Universal-Model) | - |
 | `cris` | CRIS | Wang et al. | CVPR 2022 | [DerrickWang005/CRIS.pytorch](https://github.com/DerrickWang005/CRIS.pytorch) | - |
-| `biomedparse` | BiomedParse | Zhao et al. | Nature Methods 2024 | [microsoft/BiomedParse](https://github.com/microsoft/BiomedParse) | - |
-| `tpro` | TPRO | Zhang et al. | MICCAI 2023 | [shijun18/TPRO](https://github.com/shijun18/TPRO) | - |
-| `salip` | SaLIP | Aleem et al. | BMVC 2024 | [aleemsidra/SaLIP](https://github.com/aleemsidra/SaLIP) | - |
+| `biomedparse` | BiomedParse | Zhao et al. | Nature Methods 2025 | [microsoft/BiomedParse](https://github.com/microsoft/BiomedParse) | - |
+| `tpro` | TPRO | Zhang et al. | MICCAI 2023 | [zhangst431/TPRO](https://github.com/zhangst431/TPRO) | - |
+| `salip` | SaLIP | Aleem et al. | CVPRW 2024 | [aleemsidra/SaLIP](https://github.com/aleemsidra/SaLIP) | - |
 | `causal_clipseg` | CausalCLIPSeg | Chen et al. | MICCAI 2024 | [WUTCM-Lab/CausalCLIPSeg](https://github.com/WUTCM-Lab/CausalCLIPSeg) | - |
 | `medclip_sam` | MedCLIP-SAM | Koleilat et al. | MICCAI 2024 | [HealthX-Lab/MedCLIP-SAM](https://github.com/HealthX-Lab/MedCLIP-SAM) | - |
-| `tp_drseg` | TPDRSeg | - | - | - | - |
-| `cxrclipseg` | CXRCLIPSeg | - | - | - | - |
+| `tp_drseg` | TP-DRSeg | Li et al. | MICCAI 2024 | [wxliii/TP-DRSeg](https://github.com/wxliii/TP-DRSeg) *(已失效)* | - |
+| `cxrclipseg` | CXR-CLIPSeg | You et al. | MICCAI 2023 | [Soombit-ai/cxr-clip](https://github.com/Soombit-ai/cxr-clip) | - |
 
 ### 文本输入格式
 
@@ -140,7 +140,7 @@ python test_text_guided.py --config ... --checkpoint ... --save_pred
 
 检测-再分割：检测器定位 + 分割器生成掩码。
 
-### 检测器 (5)
+### 检测器 (9)
 
 | 检测器 | 类型 | 来源 |
 |--------|------|------|
@@ -149,6 +149,10 @@ python test_text_guided.py --config ... --checkpoint ... --save_pred
 | Qwen2.5-VL | MLLM 定位 | [QwenLM/Qwen2.5-VL](https://github.com/QwenLM/Qwen2.5-VL) |
 | Qwen3-VL | MLLM 定位 | [QwenLM/Qwen3-VL](https://github.com/QwenLM/Qwen3-VL) |
 | InternVL | MLLM 定位 | [OpenGVLab/InternVL](https://github.com/OpenGVLab/InternVL) |
+| LLaVA | MLLM 定位 | [LLaVA-VL/LLaVA-NeXT](https://github.com/LLaVA-VL/LLaVA-NeXT) |
+| MiniCPM-V | MLLM 定位 | [OpenBMB/MiniCPM-V](https://github.com/OpenBMB/MiniCPM-V) |
+| Phi3-V | MLLM 定位 | [microsoft/Phi-3-vision](https://huggingface.co/microsoft/Phi-3-vision-128k-instruct) |
+| CogVLM | MLLM 定位 | [THUDM/CogVLM](https://github.com/THUDM/CogVLM) |
 
 ### 分割器 (4)
 

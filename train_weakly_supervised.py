@@ -44,7 +44,6 @@ from medseg.training.weakly_supervised import (
     BoxSupervisedLoss,
     CAMLoss,
     MILLoss,
-    EMPseudoLabelLoss,
     CAMGenerator
 )
 from medseg.registry import LOSS_REGISTRY
@@ -180,7 +179,10 @@ def build_loss(supervision_type, cfg):
         return out
 
     if supervision_type == 'box':
-        defaults = {'box_penalty': cfg.get('box_penalty', 0.1)}
+        defaults = {
+            'mask_type': cfg.get('mask_type', 'ellipse'),
+            'outside_penalty': cfg.get('outside_penalty', 0.1),
+        }
         return BoxSupervisedLoss(**_merged(defaults))
     elif supervision_type == 'cam':
         defaults = {'cam_threshold': cfg.get('cam_threshold', 0.5)}
@@ -188,9 +190,6 @@ def build_loss(supervision_type, cfg):
     elif supervision_type == 'mil':
         defaults = {'patch_size': cfg.get('patch_size', 32)}
         return MILLoss(**_merged(defaults))
-    elif supervision_type == 'em':
-        defaults = {'num_iterations': cfg.get('num_iterations', 5)}
-        return EMPseudoLabelLoss(**_merged(defaults))
     elif supervision_type == 'image_label':
         # Image-level multi-label CE — MIL with patch_size=image-size effectively.
         defaults = {'patch_size': cfg.get('patch_size', 32)}
@@ -198,7 +197,7 @@ def build_loss(supervision_type, cfg):
     else:
         raise ValueError(
             f"Unknown supervision type: {supervision_type}. "
-            f"Either set --supervision_type ∈ {{box, cam, mil, em, image_label}} "
+            f"Either set --supervision_type ∈ {{box, cam, mil, image_label}} "
             f"or set training.loss.name to a registered LOSS_REGISTRY key."
         )
 
@@ -241,11 +240,17 @@ def train_one_epoch_weakly(
             # Dispatch based on actual loss type
             loss_name = cfg.get('training', {}).get('loss', {}).get('name', '')
             if loss_name == 'boxinst':
-                # BoxInstLoss: (predictions, images, boxes, labeled_loss)
-                loss = criterion(predictions, batch['image'].to(device), boxes)
+                # BoxInstLoss: (predictions, images=, boxes=)
+                loss = criterion(predictions, images=images, boxes=boxes)
             else:
-                # BoxSupervisedLoss: (predictions, boxes, box_classes, image_labels, target)
-                loss = criterion(predictions, boxes, box_classes, image_labels, target)
+                # BoxSupervisedLoss: keyword arguments
+                loss = criterion(
+                    predictions,
+                    boxes=boxes,
+                    box_classes=box_classes,
+                    image_labels=image_labels,
+                    target=target,
+                )
             
         elif supervision_type == 'cam':
             if cam_generator is not None:
@@ -265,14 +270,6 @@ def train_one_epoch_weakly(
         elif supervision_type == 'mil':
             image_labels = batch['image_labels'].to(device)
             loss = criterion(predictions, image_labels)
-        
-        elif supervision_type == 'em':
-            weak_labels = batch.get('boxes', batch.get('image_labels', None))
-            target = batch.get('label', None)
-            if target is not None:
-                target = target.to(device)
-
-            loss = criterion(predictions, weak_labels, target)
 
         else:
             # Generic dispatch for losses chosen via training.loss.name from
@@ -287,17 +284,7 @@ def train_one_epoch_weakly(
                     ctx[k] = v.to(device)
 
             try:
-                if loss_name == 'affinity_loss':
-                    features = ctx.pop('features', predictions)
-                    loss = criterion(predictions, features)
-                elif loss_name == 'gated_crf':
-                    loss = criterion(predictions, batch['image'].to(device))
-                elif loss_name == 'bacon':
-                    features = ctx.pop('features', predictions)
-                    cam_logits = ctx.pop('cam_logits', predictions)
-                    image_labels = ctx.pop('image_labels', None)
-                    loss = criterion(features, cam_logits, image_labels)
-                elif loss_name == 'dupl':
+                if loss_name == 'dupl':
                     seg_a = predictions
                     seg_b = predictions
                     cam_a = ctx.pop('cam_a', predictions)

@@ -478,7 +478,7 @@ The trained model should outperform zero-shot by 10–20% Dice, but requires tra
 
 ### Related Documentation
 
-- [All Text-Guided Models](../paradigms/text_guided.md) — Complete model catalog (13 models + MLLM pipeline)
+- [All Text-Guided Models](../paradigms/text_guided.md) — Complete model catalog (12 models + MLLM pipeline)
 - [MLLM Inference Guide](../deployment/mllm_inference.md) — Detailed MLLM pipeline documentation
 
 ---

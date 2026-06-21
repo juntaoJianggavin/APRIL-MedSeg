@@ -1,4 +1,4 @@
-# SaLIP (BMVC 2024)
+# SaLIP (CVPRW 2024)
 # 参考: https: / / github. com / aleemsidra / SaLIP / Reference: https://github.com/aleemsidra/SaLIP
 # Paper: https://arxiv.org/abs/2404.06362
 # Implemented from paper formulas; not a copy of the official repo.

@@ -26,9 +26,17 @@ class DeconvBlock(nn.Module):
 
 
 @DECODER_REGISTRY.register("deconv")
+@DECODER_REGISTRY.register("deconv_catup")
 class DeconvDecoder(nn.Module):
     """Standard transposed-convolution UNet 解码器。
-        Standard transposed-convolution UNet decoder."""
+        Standard transposed-convolution UNet decoder.
+
+    Registered as ``deconv`` (legacy) and ``deconv_catup`` (descriptive alias:
+    deconv with **cat**-then-**up**sample order — concatenate the skip feature
+    *before* the transposed convolution, the opposite of ``deconv_upcat``).
+        注册名 ``deconv``（旧名）与 ``deconv_catup``（描述性别名：
+        转置卷积，先**拼接**后**上采样**——先拼接跳跃特征再做转置卷积，
+        与 ``deconv_upcat`` 顺序相反）。"""
 
     def __init__(self, encoder_channels: List[int], bottleneck_channels: int,
                  skip_connection=None, **kwargs):

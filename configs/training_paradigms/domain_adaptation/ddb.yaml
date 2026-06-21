@@ -1,8 +1,8 @@
-# DDB: Dual-domain Decoupled Bridging (Du et al., CVPR 2023)
-# DDB：双域解耦桥接 + 双向 KL 蒸馏
+# DDB: Deliberated Domain Bridging (Du et al., NeurIPS 2022 Spotlight)
+# DDB：审慎域桥接 + 双向 KL 蒸馏
 #
-# Reference: https://github.com/xinyuelll/DDB
-# Paper:     https://arxiv.org/abs/2304.05285
+# Reference: https://github.com/xiaoachen98/DDB
+# Paper:     https://arxiv.org/abs/2209.07695
 #
 # 训练流程 / Algorithm:
 #   逐样本采样 lambda ~ Beta(a, a)，在 logit 空间做 mixup：

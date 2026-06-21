@@ -1,6 +1,6 @@
 """CBMT: Class-Balanced Mean Teacher for source-free domain adaptation.
 
-# Paper: https://arxiv.org/abs/2405.16860
+# Paper: https://arxiv.org/abs/2307.09973
 # Reference: https://github.com/whq-xxh/ADA4MIA
 
 Algorithm summary (from the benchmark description):

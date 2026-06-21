@@ -3,7 +3,7 @@
 Supports multiple semi-supervised methods:
   - Mean Teacher (Tarvainen & Valpola, NeurIPS 2017)
   - Cross Pseudo Supervision / CPS (Chen et al., CVPR 2021)
-  - Cross Consistency Training / CCT (Ouali et al., BMVC 2020)
+  - Cross Consistency Training / CCT (Ouali et al., CVPR 2020)
   - UniMatch (Yang et al., CVPR 2023)
 
 Usage:

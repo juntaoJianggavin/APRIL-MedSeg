@@ -1,9 +1,9 @@
 # Reference: https://github.com/yassouali/CCT
-# Paper:     https://arxiv.org/abs/2003.09082
+# Paper:     https://arxiv.org/abs/2003.09005
 """Cross Consistency Training (CCT) semi-supervised segmentation.
 
-Ouali et al., "Semi-Supervised Semantic Segmentation Needs Strong,
-Varied Perturbations", BMVC 2020.
+Ouali et al., "Semi-Supervised Semantic Segmentation with
+Cross-Consistency Training", CVPR 2020.
 
 Main decoder produces predictions; auxiliary decoders with different
 perturbations enforce consistency on unlabeled data.

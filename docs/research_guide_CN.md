@@ -35,7 +35,7 @@
 | RIR-Zigzag | RWKV | TMI 2025 | `rir_zigzag` |
 | Rolling-UNet | MLP | AAAI 2024 | `rolling_unet` |
 | U-KAN | KAN | AAAI 2025 | `ukan` |
-| Mobile-U-ViT | 轻量 Transformer | — | `mobile_u_vit` |
+| Mobile-U-ViT | 轻量 Transformer | ACM MM 2025 | `mobile_u_vit` |
 | UNet (basic) | CNN 基线 | Ronneberger 2015 | encoder `basic` + decoder `unet` |
 | UNet++ | CNN Dense | Zhou 2018 | `unetpp` |
 | Attention Unet | CNN 注意力 | Oktay 2018 | `attention_unet` |
@@ -63,7 +63,7 @@ python train.py --config configs/architectures/networks/general/transunet.yaml \
 
 ### 实验设计
 
-**3 个代表性编码器** × **全部 45 个解码器**：
+**3 个代表性编码器** × **44 个解码器**：
 
 | 编码器 | 类型 | 选择理由 |
 |--------|------|----------|
@@ -106,7 +106,7 @@ python train.py --config configs/architectures/decoder_study/general/resnet50_em
 
 ### 可用 YAML
 
-`configs/architectures/decoder_study/general/` 包含 133 个 YAML（3 个编码器 × 45 个解码器）。
+`configs/architectures/decoder_study/general/` 包含 133 个 YAML（3 个编码器 × 44 个解码器 + 1 个增强变体）。
 
 ---
 
@@ -268,7 +268,7 @@ bash scripts/experiments/run_lightweight_skin.sh
 ### 弱监督学习
 
 **数据集**：BUSI（框标注）/ Kvasir-SEG（点标注）
-**方法**：BoxSup / PointSup / CAM / GatedCRF / TreeEnergy
+**方法**：BoxSup / PointSup / CAM / SEAM / TreeEnergy
 
 ```bash
 bash scripts/experiments/run_semi_study.sh
@@ -285,7 +285,7 @@ bash scripts/experiments/run_weak_study.sh
 
 ### 可训练模型对比
 
-在 QaTa-COV19 和 MosMedData+ 上比较 LanGuideMedSeg / LViT / MediSee 等方法（需要逐图像文本输入的方法）。
+在 QaTa-COV19 和 MosMedData+ 上比较 LanGuideMedSeg / LViT / TGANet 等方法（需要逐图像文本输入的方法）。
 
 ### 推理 Pipeline 对比
 
@@ -400,16 +400,16 @@ UNet / Attention-UNet / UNet++ / ResNet50+UNet。SAM 家族模型被排除
 | UNet++ | 密集嵌套跳跃 | `unetpp` | Zhou 2018 |
 | ResNet50+UNet | ImageNet 预训练 | `encoder: timm_resnet50` + `decoder: unet` | — |
 | **领域专用** | | | |
-| SEPNet | MAP(RFB) + CRC 渐进式细化 | `sepnet` | — |
-| CTNet | SMIM 多尺度 + CIM 跨层融合 | `ctnet` | — |
+| SEPNet | MAP(RFB) + CRC 渐进式细化 | `sepnet` | IEEE TCSVT 2024 |
+| CTNet | SMIM 多尺度 + CIM 跨层融合 | `ctnet` | IEEE TCYB 2024 |
 | Polyper | Swin-T 双分支（区域+边界）+ BGM | `polyper` | — |
-| PolypPVT | PVTv2 + CFM + 级联注意力 | `polyp_pvt` | AAAI 2023 |
+| PolypPVT | PVTv2 + CFM + 级联注意力 | `polyp_pvt` | CAAI AIR 2023 |
 | CASCADE | 级联注意力解码器 | `cascade` | MICCAI 2023 |
 | HSNet | PVTv2 + 级联 CSA | `hsnet` | 2023 |
 | SSFormer | MiT-B2 + PLD 解码器 | `ssformer` | 2023 |
 | LDNet | 病变感知动态核 | `ldnet` | 2022 |
 | ESFPNet | 高效稀疏 FPN | `esfpnet` | 2023 |
-| MIST | 多任务分割 Transformer | `mist` | 2023 |
+| MIST | 医学图像分割 Transformer (CAM 解码器) | `mist` | 2024 |
 | FCBFormer | FCN + Transformer 融合 | `fcbformer` | 2022 |
 | TransNetR | Transformer + 残差 | `transnetr` | 2022 |
 

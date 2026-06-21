@@ -300,9 +300,9 @@ Test CASCADE with different numbers of stages:
 
 ### Related Documentation
 
-- [Decoder Reference](../models/decoders.md) -- All 45 decoders with architecture details
-- [Skip Connections](../models/skips.md) -- All 25 skip connection methods
-- [Architecture Guide](../models/architectures.md) -- Full network assembly guide
+- [Decoder Reference](../models/decoders.md) -- All 47 decoders with architecture details
+- [Skip Connections](../models/skip_connections.md) -- All 25 skip connection methods
+- [Architecture Guide](../models/networks.md) -- Full network assembly guide
 
 ---
 

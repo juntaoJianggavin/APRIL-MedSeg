@@ -26,3 +26,5 @@ from . import malunet_encoder
 _sys.modules['medseg.models.encoders.malunet_encoder'] = malunet_encoder
 from . import ege_unet_encoder
 _sys.modules['medseg.models.encoders.ege_unet_encoder'] = ege_unet_encoder
+from . import hrnet_encoder
+_sys.modules['medseg.models.encoders.hrnet_encoder'] = hrnet_encoder

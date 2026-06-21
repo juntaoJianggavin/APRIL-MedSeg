@@ -2,7 +2,7 @@
 
 [中文文档](encoders_CN.md)
 
-This project provides 178 registered encoders in two usage modes.
+This project provides 176 registered encoders in two usage modes.
 
 ## Two Encoder Modes
 
@@ -10,6 +10,7 @@ This project provides 178 registered encoders in two usage modes.
 
 Use the registered name directly (e.g., `timm_resnet50`, `dinov2`, `biomedclip`).
 
+<a id="timm-wrapper"></a>
 ### 2. Dynamic timm Encoder
 
 Use the `timm_` prefix + any timm model name to automatically create an encoder. Even if not pre-registered, you can use 1000+ models from the timm library.
@@ -23,8 +24,10 @@ model:
 
 ---
 
+<a id="foundation-models"></a>
 ## Foundation Model Encoders
 
+<a id="dpt-head"></a>
 Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to extract multi-scale features from different ViT blocks (shallow=texture, deep=semantics), building a genuine multi-level semantic pyramid compatible with any decoder.
 
 ### General
@@ -46,6 +49,7 @@ Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to
 | `plip` | PLIP: A Visual-Language Foundation Model for Pathology | Nature Med 2023 | `vinid/plip` | [plip.yaml](../../configs/architectures/foundation/pathology/plip.yaml) |
 | `musk` | MUSK: Multi-task Self-supervised Pathology | 2024 | - | [musk.yaml](../../configs/architectures/foundation/pathology/musk.yaml) |
 | `phikon_v2` | Phikon-v2 | 2024 | `owkin/phikon-v2` | [phikon_v2_cascade_full.yaml](../../configs/architectures/combinations/general/phikon_v2_cascade_full.yaml) |
+| `keep` | KEEP | 2024 | - | [keep.yaml](../../configs/architectures/foundation/multimodal_med/keep.yaml) |
 
 ### Radiology
 
@@ -53,7 +57,8 @@ Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to
 |---|---|---|---|---|
 | `raddino` | RAD-DINO: Scalable Medical Image Encoders Beyond Text Supervision | 2024 | `microsoft/rad-dino` | [raddino_cascade_full.yaml](../../configs/architectures/combinations/general/raddino_cascade_full.yaml) |
 | `omnirad` | OmniRad | 2024 | - | [omnirad_cascade_full.yaml](../../configs/architectures/combinations/general/omnirad_cascade_full.yaml) |
-| `medsiglip` | MedSigLIP | 2024 | - | not provided |
+| `biovil` | BioViL: Multi-Modal Vision-Language Pre-Training | ECCV 2022 | - | not provided |
+| `chexzero` | CheXzero: Expert-level disease detection | Nat Mach Intel 2023 | - | not provided |
 
 ### Ophthalmology
 
@@ -77,21 +82,22 @@ Foundation model encoders use the **DPT head** (Dense Prediction Transformer) to
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
 | `endo_vit` | EndoViT | 2024 | - | [endo_vit.yaml](../../configs/architectures/foundation/endoscopy/endo_vit.yaml) |
+| `endo_fm` | Endo-FM | 2024 | - | not provided |
+| `surgical_sam` | Surgical-SAM | 2024 | - | not provided |
 
-### Multimodal Medical
+### General Medical
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
 | `biomedclip` | BiomedCLIP | NeurIPS 2023 | `microsoft/BiomedCLIP-PubMedBERT_256-vit_base_patch16_224` | [biomedclip_cascade_full.yaml](../../configs/architectures/combinations/general/biomedclip_cascade_full.yaml), [biomedclip_emcad.yaml](../../configs/architectures/combinations/general/biomedclip_emcad.yaml) |
 | `medclip` | MedCLIP | EMNLP 2022 | - | [medclip.yaml](../../configs/architectures/foundation/multimodal_med/medclip.yaml) |
-| `keep` | KEEP | 2024 | - | [keep.yaml](../../configs/architectures/foundation/multimodal_med/keep.yaml) |
+| `medsiglip` | MedSigLIP | 2024 | - | not provided |
 
 ### Ultrasound
 
 | Name | Paper | Year | HF Repo | YAML |
 |---|---|---|---|---|
 | `usfmae` | USF-MAE | 2024 | - | [usfmae.yaml](../../configs/architectures/foundation/ultrasound/usfmae.yaml) |
-| `ultradino` | UltraDINO | 2024 | - | [ultradino_cascade_full.yaml](../../configs/architectures/combinations/general/ultradino_cascade_full.yaml) |
 | `ultrafedfm` | UltraFedFM | 2024 | - | [ultrafedfm_cascade_full.yaml](../../configs/architectures/combinations/general/ultrafedfm_cascade_full.yaml) |
 
 ### MLLM Vision Encoders
@@ -139,6 +145,7 @@ The following are pre-registered and tested timm encoders (partial list):
 
 ---
 
+<a id="weight-management"></a>
 ## YAML Usage Examples
 
 ### Foundation Encoder + Free Combination

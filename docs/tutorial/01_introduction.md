@@ -121,8 +121,8 @@ Each module is independently swappable via a single YAML line:
 
 | Module | Registry Count | Examples |
 |--------|---------------|----------|
-| Encoder | 178 | `basic`, `timm_resnet50`, `timm_swin_tiny_patch4_window7_224`, `dinov2`, `dino` |
-| Decoder | 45 | `bilinear`, `deconv`, `emcad`, `cascade_full`, `unetpp` |
+| Encoder | 176 | `basic`, `timm_resnet50`, `timm_swin_tiny_patch4_window7_224`, `dinov2`, `dino` |
+| Decoder | 47 | `bilinear`, `deconv`, `emcad`, `cascade_full`, `unetpp` |
 | Skip Connection | 25 | `concat`, `add`, `cab`, `scse`, `gating` |
 | Bottleneck | 17 | `none`, `aspp`, `dense_aspp`, `mamba`, `transformer` |
 | Complete Network | 132 | `unet`, `transunet`, `swinunet`, `attention_unet`, `vmunet` |
@@ -164,9 +164,9 @@ APRIL-MedSeg/
 ├── train_distillation.py       # Knowledge distillation
 ├── train_weakly_supervised.py  # Weakly supervised
 ├── train_text_guided.py        # Text-guided segmentation
-├── configs/                    # 921 YAML configs
+├── configs/                    # 918 YAML configs
 ├── medseg/                     # Core library
-│   ├── models/                 # 178 encoders, 45 decoders, 132 networks
+│   ├── models/                 # 176 encoders, 47 decoders, 132 networks
 │   ├── losses/                 # 15 loss functions
 │   ├── datasets/               # 6 dataset classes
 │   ├── training/               # Advanced training paradigms
@@ -263,9 +263,9 @@ python test.py --config configs/architectures/combinations/general/unet_basic.ya
 
 ### Related Documentation
 
-- [Encoder Guide](../models/encoders.md) -- All 178 encoders with HuggingFace model paths
-- [Decoder Guide](../models/decoders.md) -- 45 decoders with design rationale
-- [Loss Functions](../models/README.md) -- 15 loss function implementations
+- [Encoder Guide](../models/encoders.md) -- All 176 encoders with HuggingFace model paths
+- [Decoder Guide](../models/decoders.md) -- 47 decoders with design rationale
+- [Loss Functions](../paradigms/README.md) -- 81 registered losses across 15 implementation files
 - [Data Guide](../data/README.md) -- 25 built-in datasets and augmentation pipeline
 - [Research Guide](../research_guide.md) -- Ablation study design and benchmarking protocols
 

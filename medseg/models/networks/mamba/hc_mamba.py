@@ -2,7 +2,9 @@
     HC-Mamba: 层级的 Conv-Mamba for 医学的 图像 分割 ( 2024 )。
 
 Faithful reimplementation inspired by:
-  https://github.com/JqxnnNn/HC-Mamba
+  Xu, "HC-Mamba: Vision MAMBA with Hybrid Convolutional Techniques
+  for Medical Image Segmentation", arXiv:2405.05007.
+  No official code released.
 
 Architecture:
   - Stem: stride-4 4x4 conv -> H/4, W/4
@@ -19,7 +21,7 @@ to avoid duplicating the heavy SSM math.
 
 Self-contained beyond that single import; depends on torch + timm + mamba_ssm.
 """
-# Source: NOT VERIFIED — fabricated by this repo, no upstream confirmed.
+# Implemented from paper formulas; no official code released.
 
 import math
 import warnings

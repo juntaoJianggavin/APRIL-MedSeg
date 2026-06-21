@@ -291,9 +291,9 @@ Test the same encoder at different input resolutions:
 
 ### Related Documentation
 
-- [Encoder Guide](../models/encoders.md) -- All 178 encoders with model paths
+- [Encoder Guide](../models/encoders.md) -- All 176 encoders with model paths
 - [timm Wrapper](../models/encoders.md#timm-wrapper) -- Dynamic encoder wrapper usage
-- [Foundation Models](../models/encoders.md#foundation-models) -- 35 foundation encoders across 9 modalities
+- [Foundation Models](../models/encoders.md#foundation-models) -- 38 foundation encoders across 9 modalities
 
 ---
 

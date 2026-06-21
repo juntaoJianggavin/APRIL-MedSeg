@@ -1,7 +1,7 @@
 # MICDrop: Masking Image and Depth Features via Complementary Dropout (Hoyer et al., ECCV 2024)
 # MICDrop：互补掩码 + 通道 dropout 的双视图一致性
 #
-# Reference: https://github.com/lhoyer/MICDrop
+# Reference: https://github.com/lhoyer/HRDA
 # Paper:     https://arxiv.org/abs/2408.16478
 #
 # 训练流程 / Algorithm:

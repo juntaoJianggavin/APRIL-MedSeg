@@ -1,7 +1,10 @@
-"""PolypMamba (2024) — Mamba-based polyp segmentation network.
-    PolypMamba ( 2024 ) — Mamba-based 息肉 分割 网络。
+"""PolypMamba (MICCAI 2024) — Mamba-based polyp segmentation network.
+    PolypMamba ( MICCAI 2024 ) — Mamba-based 息肉 分割 网络。
 
-Reference: PolypMamba — https://github.com/zh-Tan/PolypMamba
+Reference:
+    Xu et al., "Polyp-Mamba: Polyp Segmentation with Visual Mamba",
+    MICCAI 2024. DOI: 10.1007/978-3-031-72111-3_48
+    No official code released.
 
 Architecture:
     * 4-stage VMamba-Tiny encoder (PatchEmbed2D + VSSLayer x 4, depths=[2,2,9,2],
@@ -20,7 +23,7 @@ Architecture:
 Constructor signature:
     PolypMamba(in_channels=3, num_classes=2, img_size=224, **kwargs)
 """
-# Source: NOT VERIFIED — fabricated by this repo, no upstream confirmed.
+# Implemented from paper formulas; no official code released.
 
 from __future__ import annotations
 

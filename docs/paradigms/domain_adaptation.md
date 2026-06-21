@@ -21,10 +21,10 @@
 | `daformer_fd` | Hoyer et al. | CVPR 2022 | [lhoyer/DAFormer](https://github.com/lhoyer/DAFormer) | Feature distance + rare class sampling | [daformer_fd.yaml](../../configs/training_paradigms/domain_adaptation/daformer_fd.yaml) |
 | `hrda` | Hoyer et al. | ECCV 2022 | [lhoyer/HRDA](https://github.com/lhoyer/HRDA) | Multi-resolution scale attention | [hrda.yaml](../../configs/training_paradigms/domain_adaptation/hrda.yaml) |
 | `pipa` | Chen et al. | ACM MM 2023 | [chen742/PiPa](https://github.com/chen742/PiPa) | Pixel + patch InfoNCE | [pipa.yaml](../../configs/training_paradigms/domain_adaptation/pipa.yaml) |
-| `ddb` | Du et al. | CVPR 2023 | [xinyuelll/DDB](https://github.com/xinyuelll/DDB) | Dual-domain decoupled bridging | [ddb.yaml](../../configs/training_paradigms/domain_adaptation/ddb.yaml) |
+| `ddb` | Du et al. | NeurIPS 2022 | [xiaoachen98/DDB](https://github.com/xiaoachen98/DDB) | Deliberated domain bridging | [ddb.yaml](../../configs/training_paradigms/domain_adaptation/ddb.yaml) |
 | `sepico` | Xie et al. | TPAMI 2023 | [BIT-DA/SePiCo](https://github.com/BIT-DA/SePiCo) | Semantic pixel contrast + KL | [sepico.yaml](../../configs/training_paradigms/domain_adaptation/sepico.yaml) |
 | `diga` | Shen et al. | CVPR 2023 | [BIT-DA/DiGA](https://github.com/BIT-DA/DiGA) | Distillation-guided adaptation | [diga.yaml](../../configs/training_paradigms/domain_adaptation/diga.yaml) |
-| `micdrop` | Hoyer et al. | ECCV 2024 | [lhoyer/MICDrop](https://github.com/lhoyer/MICDrop) | MIC + complementary feature dropout | [micdrop.yaml](../../configs/training_paradigms/domain_adaptation/micdrop.yaml) |
+| `micdrop` | Hoyer et al. | ECCV 2024 | [lhoyer/HRDA](https://github.com/lhoyer/HRDA) | MIC + complementary feature dropout | [micdrop.yaml](../../configs/training_paradigms/domain_adaptation/micdrop.yaml) |
 | `semivl_da` | Karazija et al. | ECCV 2024 | [google-research/semivl](https://github.com/google-research/semivl) | Vision-language guided self-training | [semivl.yaml](../../configs/training_paradigms/domain_adaptation/semivl.yaml) |
 
 ## YAML Config

@@ -6,8 +6,8 @@
 # ============================================================================
 # 论文 / Paper:
 #   Ouali et al., "Semi-Supervised Semantic Segmentation with
-#   Cross-Consistency Training", BMVC 2020
-#   https://arxiv.org/abs/2003.09082
+#   Cross-Consistency Training", CVPR 2020
+#   https://arxiv.org/abs/2003.09005
 #
 # 算法概述 / Algorithm:
 #   - 共享编码器 + 两个不同解码器 (主解码器 + 辅助解码器)

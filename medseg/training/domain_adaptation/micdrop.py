@@ -1,5 +1,5 @@
 # MICDrop: Masking Image and Depth Features via Complementary Dropout for DA-SS (ECCV 2024)
-# Reference: https://github.com/lhoyer/MICDrop
+# Reference: https://github.com/lhoyer/HRDA
 # Paper: https://arxiv.org/abs/2408.16478
 # Implemented from paper formulas; not a copy of the official repo.
 """MICDrop extends MIC with a **complementary feature-dropout** branch so
@@ -45,7 +45,7 @@ class MICDropLoss(nn.Module):
     """Masked Image Consistency with complementary feature dropout.
 
     Hoyer et al., ECCV 2024.
-    Reference (not copied): https://github.com/lhoyer/MICDrop
+    Reference (not copied): https://github.com/lhoyer/HRDA
 
     Args:
         mask_ratio: fraction of patches kept *unmasked* on the mask branch

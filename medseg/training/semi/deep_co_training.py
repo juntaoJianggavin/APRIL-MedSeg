@@ -1,7 +1,8 @@
 """Deep Co-Training with dual networks and VAT perturbations.
 
 Qiao et al., ECCV 2018.
-Reference: https://github.com/qiaoyu1002/DeepCoTraining
+Paper: https://arxiv.org/abs/1803.05984
+Unofficial implementation: https://github.com/AlanChou/Deep-Co-Training-for-Semi-Supervised-Image-Recognition
 """
 
 import copy
@@ -48,9 +49,9 @@ class DeepCoTraining(BaseSemiMethod):
             vat_loss = KL(f(x) || f(x + d))
 
     Reference:
-        Qiao et al., "DeepCoTraining: Semi-Supervised Image Recognition
-        with CNNs", ECCV 2018.
-        Official: https://github.com/qiaoyu1002/DeepCoTraining
+        Qiao et al., "Deep Co-Training for Semi-Supervised Image
+        Recognition", ECCV 2018.  arXiv: 1803.05984
+        No official public repo; implemented from paper description.
 
     Args:
         confidence_threshold: Minimum confidence for pseudo-labels.

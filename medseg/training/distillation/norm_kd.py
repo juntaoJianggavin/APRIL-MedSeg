@@ -1,6 +1,6 @@
-# NORM: Normalized Knowledge Distillation (ICLR 2023)
-# Reference: https://github.com/xyliu7/NORM
-# Paper: https://arxiv.org/abs/2305.00367
+# NORM: Normalized Knowledge Distillation
+# Reference: https://github.com/xyliu7/NORM  (no longer available)
+# Paper: https://arxiv.org/abs/2308.00520
 # Implemented from paper formulas; not a copy of the official repo.
 """NORM: L2-normalise logits before the temperature-softmax KL.
 

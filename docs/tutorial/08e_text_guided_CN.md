@@ -478,7 +478,7 @@ python test.py --config configs/training_paradigms/text_guided/synapse_clip.yaml
 
 ### 相关文档
 
-- [所有文本引导模型](../paradigms/text_guided.md) — 完整模型目录（13 个模型 + MLLM 管线）
+- [所有文本引导模型](../paradigms/text_guided.md) — 完整模型目录（12 个模型 + MLLM 管线）
 - [MLLM 推理指南](../deployment/mllm_inference.md) — 详细 MLLM 管线文档
 
 ---

@@ -8,7 +8,7 @@ Key innovations:
   - GLMBP: Global-Local Mamba Block with bidirectional Mamba scan + DW conv.
   - Learnable skip scale parameter.
 """
-# Source: https://github.com/wurenkai/UltraLight-VM-UNet
+# Source: https://github.com/LinLinLin-X/UltraLBM-UNet
 
 import math
 import torch
@@ -121,13 +121,13 @@ class GLMBP(nn.Module):
         x_norm = self.norm(x_flat)
         x1, x2, x3, x4 = torch.chunk(x_norm, 4, dim=2)
 
-        # 分支 1 - 2: bidirectional Mamba / Branch 1-2: bidirectional Mamba
+        # 分支 1 - 2: bidirectional Mamba (flip along feature dim=2, matching official)
         x1_fwd = self.mamba(x1)
-        x1_bwd = torch.flip(self.mamba(torch.flip(x1, dims=[1])), dims=[1])
+        x1_bwd = torch.flip(self.mamba(torch.flip(x1, dims=[2])), dims=[2])
         x_proc1 = x1_fwd + x1_bwd + self.skip_scale * x1
 
         x2_fwd = self.mamba(x2)
-        x2_bwd = torch.flip(self.mamba(torch.flip(x2, dims=[1])), dims=[1])
+        x2_bwd = torch.flip(self.mamba(torch.flip(x2, dims=[2])), dims=[2])
         x_proc2 = x2_fwd + x2_bwd + self.skip_scale * x2
 
         # 分支 3: DW sep conv / Branch 3: DW sep conv

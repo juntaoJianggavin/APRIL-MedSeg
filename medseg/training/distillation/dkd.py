@@ -91,7 +91,7 @@ class DKDLoss(nn.Module):
         log_pred_student = torch.log(pred_student.clamp(min=1e-8))
 
         tckd_loss = (
-            F.kl_div(log_pred_student, pred_teacher, reduction='sum')
+            F.kl_div(log_pred_student, pred_teacher, reduction='batchmean')
             * (T * T)
             / target.shape[0]
         )
@@ -102,7 +102,7 @@ class DKDLoss(nn.Module):
             logits_student / T - 1000.0 * gt_mask.float(), dim=1
         )
         nckd_loss = (
-            F.kl_div(log_pred_student_part2, pred_teacher_part2, reduction='sum')
+            F.kl_div(log_pred_student_part2, pred_teacher_part2, reduction='batchmean')
             * (T * T)
             / target.shape[0]
         )

@@ -7,9 +7,10 @@ conv downsample after its blocks. Multi-scale features are returned with the
 deepest map LAST, following the framework convention.
 
 Reference:
-    CSWin-UNet: Transformer UNet with Cross-Shaped Windows for Medical
-    Image Segmentation. arXiv 2024.
-    https://github.com/pgao-lab/CSWin-UNet
+    Liu et al., "CSWin-UNet: Transformer UNet with Cross-Shaped Windows
+    for Medical Image Segmentation", Information Fusion 2024.
+    arXiv: 2407.18070. DOI: 10.1016/j.inffus.2024.102634.
+    https://github.com/eatbeanss/CSWin-UNet
 """
 # Source: https://github.com/eatbeanss/CSWin-UNet
 

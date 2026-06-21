@@ -1,12 +1,12 @@
-# TP-DRSeg (AAAI 2025)
-# 参考: https: / / github. com / HUANGLIZI / TP-DRSeg / Reference: https://github.com/HUANGLIZI/TP-DRSeg
-# Paper: https://arxiv.org/abs/2312.17191
+# TP-DRSeg (MICCAI 2024)
+# 参考: https: / / github. com / wxliii / TP-DRSeg / Reference: https://github.com/wxliii/TP-DRSeg *(no longer available)*
+# Paper: https://arxiv.org/abs/2406.15764
 # Implemented from paper formulas; not a copy of the official repo.
-"""TP-DRSeg: Text-Prompted Dual-Branch Region Selection for 2D Medical Segmentation.
-    TP-DRSeg: Text-Prompted Dual-Branch 区域 Selection for 2D 医学的 分割。
+"""TP-DRSeg: Improving Diabetic Retinopathy Lesion Segmentation with Explicit Text-Prompts Assisted SAM.
+    TP-DRSeg: 基于显式文本提示辅助 SAM 的糖尿病视网膜病变分割。
 
-Li et al., "TP-DRSeg: Improving Zero-Shot Panoptic Segmentation with
-Text-Point Prompted Dual-branch Region Selection", AAAI 2025.
+Li et al., "TP-DRSeg: Improving Diabetic Retinopathy Lesion Segmentation
+with Explicit Text-Prompts Assisted SAM", MICCAI 2024.
 
 Algorithm (from paper Sec. 3):
     1. CLIP text encoder produces per-class text embeddings t_c.

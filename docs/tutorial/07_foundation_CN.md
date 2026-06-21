@@ -98,7 +98,7 @@ $$\mathcal{L}_{\text{recon}} = \frac{1}{|M|} \sum_{i \in M} \| x_i - f_\theta(x_
 | 视网膜 | RETFound | 160 万张视网膜图像 | 眼底/OCT 模式 |
 | 放射 | Rad-DINO | 胸部 X 光、CT 扫描 | 解剖结构 |
 | 皮肤 | PanDerm | 100K+ 张皮肤图像 | 病变形态 |
-| 超声 | UltraDINO | 超声图像 | 斑点模式、回声特性 |
+| 超声 | UltraFedFM | 超声图像 | 斑点模式、回声特性 |
 
 **迁移学习层次**：
 
@@ -146,19 +146,19 @@ $$W' = W + \Delta W = W + BA, \quad B \in \mathbb{R}^{d \times r}, A \in \mathbb
 
 ### 3.1 医学模态——9 大类别
 
-APRIL-MedSeg 涵盖 9 个医学模态的 35 个 Foundation 模型：
+APRIL-MedSeg 涵盖 9 个医学模态的 38 个 Foundation 模型：
 
 | 模态 | 模型 | 关键应用 |
 |------|------|----------|
-| 通用 | DINOv2, DINO, CLIP, SAM | 跨域迁移 |
-| 病理 | Phikon, UNI, PLIP, MUSK | 组织学、WSI 分析 |
-| 放射 | Rad-DINO, OmniRad, MedSigLIP | X 光、CT、MRI |
-| 眼科 | RETFound, FLAIR, OphMAE | 视网膜疾病检测 |
+| 通用 | DINOv2, DINO, CLIP, SAM, DINOv3 | 跨域迁移 |
+| 病理 | Phikon, UNI, PLIP, MUSK, Phikon-v2, KEEP | 组织学、WSI 分析 |
+| 放射 | Rad-DINO, OmniRad, BioViL, CheXZero | X 光、CT、MRI |
+| 眼科 | RETFound, RETFound-DINOv2, FLAIR, OphMAE | 视网膜疾病检测 |
 | 皮肤 | DermCLIP, MoNet, PanDerm | 皮肤病变分割 |
-| 多模态 | BiomedCLIP, MedCLIP, KEEP | 通用生物医学 |
+| 通用医学 | BiomedCLIP, MedCLIP, MedSigLIP | 通用生物医学 |
 | MLLM 视觉 | Qwen-VL, MedGemma, LLaVA-Med | 视觉语言推理 |
-| 超声 | UltraDINO, UltraFedFM, US-FMAE | 超声分析 |
-| 内窥镜 | EndoViT | 消化道成像 |
+| 超声 | UltraFedFM, US-FMAE | 超声分析 |
+| 内窥镜 | EndoViT, Endo-FM, Surgical-SAM | 消化道成像 |
 
 ### 3.2 Foundation 编码器输出
 
@@ -260,7 +260,7 @@ model:
 
 ### 相关文档
 
-- [Foundation 编码器](../models/encoders.md#foundation-models) — 9 个模态的所有 35 个 Foundation 编码器
+- [Foundation 编码器](../models/encoders.md#foundation-models) — 9 个模态的所有 38 个 Foundation 编码器
 - [权重管理](../models/encoders.md#weight-management) — 自动下载和缓存系统
 - [DPT Head](../models/encoders.md#dpt-head) — Dense Prediction Transformer 架构细节
 

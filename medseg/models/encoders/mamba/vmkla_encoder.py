@@ -1,28 +1,30 @@
 """VMKLA-UNet encoder.
     VMKLA-UNet 编码器。
 
-Stride-4 patch-embed stem followed by 4 hierarchical stages of Mamba-style
-SSM + KAN linear-attention blocks. Stages 0/1/2 are each followed by a
-strided 3x3 downsample (stride-2), producing a 4-level feature pyramid at
-strides 4 / 8 / 16 / 32.
+Stride-4 patch-embed stem followed by 4 hierarchical stages of VSS blocks
+(SS2D 2D selective scan). Stages 0/1/2 are each followed by a strided 3x3
+downsample (stride-2), producing a 4-level feature pyramid at strides
+4 / 8 / 16 / 32.
 
 Reference:
     VMKLA-UNet: Vision Mamba with KAN Linear Attention U-Net for
-    Medical Image Segmentation. PMC 2025.
+    Medical Image Segmentation. Nature Scientific Reports 2025.
+    DOI: 10.1038/s41598-025-97397-2
 """
-# Source: NOT VERIFIED — fabricated by this repo, no upstream confirmed.
+# Implemented from paper formulas; no official code released.
 
 from typing import List, Optional
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from medseg.registry import ENCODER_REGISTRY
+from medseg.models.encoders.vmunet_encoder import SS2D
 
 
 def _load_with_ssl_fallback(load_fn, *args, **kwargs):
-    """Try a download / 加载, falling back to unverified SSL, then random init。
-        Try a download/load, falling back to unverified SSL, then random init."""
+    """Try a download/load, falling back to unverified SSL, then random init."""
     import ssl
     import warnings
     try:
@@ -39,57 +41,36 @@ def _load_with_ssl_fallback(load_fn, *args, **kwargs):
             ssl._create_default_https_context = prev
 
 
-class _KANLinearAttention(nn.Module):
-    """KAN-inspired linear attention for 跳跃连接。
-        KAN-inspired linear attention for skip-feature refinement."""
+class VSSBlock(nn.Module):
+    """Visual State Space block with SS2D selective scan (Eq. 5).
 
-    def __init__(self, dim, num_basis=5):
+    E=Linear(x) -> E1=SiLU(Conv3x3(E)) -> S1=LayerNorm(SS2D(E1))
+    -> S2=SiLU(E) -> Y=S1*S2
+    """
+
+    def __init__(self, dim, d_state=16, d_conv=3, expand=2):
         super().__init__()
-        self.basis_weights = nn.Parameter(torch.randn(num_basis, dim, dim) * 0.02)
-        self.basis_bias = nn.Parameter(torch.zeros(dim))
+        self.linear = nn.Linear(dim, dim)
+        self.conv3x3 = nn.Conv2d(dim, dim, 3, padding=1, groups=dim)
         self.act = nn.SiLU()
+        self.ss2d = SS2D(dim, d_state=d_state, d_conv=d_conv, expand=expand)
         self.norm = nn.LayerNorm(dim)
 
     def forward(self, x):
+        """x: (B, C, H, W) -> (B, C, H, W)"""
         B, C, H, W = x.shape
-        tokens = x.flatten(2).transpose(1, 2)  # (B, HW, C)
-        tokens = self.norm(tokens)
-        out = torch.zeros_like(tokens)
-        for i in range(self.basis_weights.shape[0]):
-            out = out + self.act(tokens @ self.basis_weights[i])
-        out = out + self.basis_bias
-        return out.transpose(1, 2).view(B, C, H, W)
+        x_bhwc = x.permute(0, 2, 3, 1)
 
+        E = self.linear(x_bhwc)
+        E_bchw = E.permute(0, 3, 1, 2)
+        E1 = self.act(self.conv3x3(E_bchw))
+        E1_bhwc = E1.permute(0, 2, 3, 1)
 
-class _MambaKANBlock(nn.Module):
-    """块 combining a 轻量级 SSM-style gate with KAN linear 注意力。
-        Block combining a lightweight SSM-style gate with KAN linear attention."""
+        S1 = self.norm(self.ss2d(E1_bhwc))
+        S2 = self.act(E)
+        Y = S1 * S2
 
-    def __init__(self, dim, d_state=16):
-        super().__init__()
-        self.norm1 = nn.LayerNorm(dim)
-        self.ssm_proj = nn.Linear(dim, dim * 2)
-        self.ssm_gate = nn.Sigmoid()
-        self.ssm_out = nn.Linear(dim, dim)
-        self.kan = _KANLinearAttention(dim)
-        self.norm2 = nn.LayerNorm(dim)
-        self.ffn = nn.Sequential(
-            nn.Linear(dim, dim * 4), nn.GELU(), nn.Linear(dim * 4, dim)
-        )
-
-    def forward(self, x):
-        B, C, H, W = x.shape
-        res = x
-        tokens = x.flatten(2).transpose(1, 2)
-        kv = self.ssm_proj(self.norm1(tokens))
-        k, v = kv.chunk(2, dim=-1)
-        ssm_out = self.ssm_out(self.ssm_gate(k) * v)
-        ssm_feat = ssm_out.transpose(1, 2).view(B, C, H, W)
-        kan_feat = self.kan(x)
-        out = ssm_feat + kan_feat + res
-        tokens = out.flatten(2).transpose(1, 2)
-        tokens = tokens + self.ffn(self.norm2(tokens))
-        return tokens.transpose(1, 2).view(B, C, H, W)
+        return Y.permute(0, 3, 1, 2).contiguous()
 
 
 @ENCODER_REGISTRY.register("vmkla")
@@ -156,7 +137,7 @@ class VMKLAUNetEncoder(nn.Module):
         self.downs = nn.ModuleList()
         for i in range(len(depths)):
             self.enc.append(
-                nn.Sequential(*[_MambaKANBlock(dims[i]) for _ in range(depths[i])])
+                nn.Sequential(*[VSSBlock(dims[i]) for _ in range(depths[i])])
             )
             if i < len(depths) - 1:
                 self.downs.append(nn.Conv2d(dims[i], dims[i + 1], 3, 2, 1))

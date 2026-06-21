@@ -1,4 +1,4 @@
-# 瓶颈层 (`medseg/bottlenecks/`)
+# 瓶颈层 (`medseg/models/bottlenecks/`)
 
 [English](README.md)
 

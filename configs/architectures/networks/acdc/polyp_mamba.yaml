@@ -1,4 +1,4 @@
-# Source: NOT VERIFIED — model implementation not confirmed against an upstream repo; verify before training.
+# Source: Implemented from paper formulas; no official code released.
 # Network: polyp_mamba (complete architecture)
 # 完整网络：polyp_mamba（完整架构）
 

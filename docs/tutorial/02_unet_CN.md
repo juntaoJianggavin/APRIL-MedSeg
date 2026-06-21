@@ -326,8 +326,8 @@ python train.py --config configs/intro_to_datasets/busi.yaml
 ### 相关文档
 
 - [网络指南](../models/networks_CN.md) -- 132 个完整网络架构
-- [编码器指南](../models/encoders_CN.md) -- 178 个编码器（含 U-Net 变体）
-- [解码器指南](../models/decoders_CN.md) -- 45 个解码器及设计理念
+- [编码器指南](../models/encoders_CN.md) -- 176 个编码器（含 U-Net 变体）
+- [解码器指南](../models/decoders_CN.md) -- 47 个解码器及设计理念
 - [跳跃连接](../models/skip_connections_CN.md) -- 25 种跳跃连接实现
 - [瓶颈层](../models/bottlenecks_CN.md) -- 17 个瓶颈层模块
 

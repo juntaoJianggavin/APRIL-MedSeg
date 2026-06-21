@@ -1,7 +1,7 @@
 """内窥镜 foundation encoders。
     Endoscopy foundation encoders."""
 import sys as _sys
-for _stem in ('endo_vit_encoder',):
+for _stem in ('endo_vit_encoder', 'endo_fm_encoder', 'surgical_sam_encoder'):
     try:
         _mod = __import__(f'medseg.models.encoders.foundation.endoscopy.{_stem}', fromlist=[_stem])
         _sys.modules[f'medseg.models.encoders.foundation.{_stem}'] = _mod

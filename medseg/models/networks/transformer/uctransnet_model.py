@@ -401,10 +401,18 @@ class UCTransNetEnc(nn.Module):
         self.n_classes = num_classes
         # 配置 for CTrans / Config for CTrans
         # 特征 sizes: x1 = img _ 大小, x2 = img _ 大小 / 2, x3 = img _ 大小 / 4, x4 = img _ 大小 / 8 / Feature sizes: x1=img_size, x2=img_size/2, x3=img_size/4, x4=img_size/8
-        # 图块 sizes must divide 特征 sizes evenly and produce square 数量 图块 / Patch sizes must divide feature sizes evenly and produce square number of patches
-        # Using 图块 sizes: img / 16, img / 32, img / 64, img / 128 ( rounded to int ) / Using patch sizes: img/16, img/32, img/64, img/128 (rounded to int)
-        patch_sizes = [max(1, img_size // 16), max(1, img_size // 32),
-                       max(1, img_size // 64), max(1, img_size // 128)]
+        # 图块 sizes must divide 特征 sizes evenly AND produce the same token
+        # count at every scale, because _Block concatenates multi-scale
+        # embeddings along the channel dim (dim=2) which requires matching
+        # token counts (dim=1).
+        # We pick n = patches per dimension, then patch_size[i] = feat_size[i] // n.
+        feat_sizes = [img_size, img_size // 2, img_size // 4, img_size // 8]
+        n = 1
+        for cand in range(min(feat_sizes[-1], 8), 3, -1):
+            if all(fs % cand == 0 for fs in feat_sizes):
+                n = cand
+                break
+        patch_sizes = [max(1, fs // n) for fs in feat_sizes]
         config = _UCTConfig(img_size, base_channel, patch_sizes)
         # 编码器 / Encoder
         self.inc = _ConvBatchNorm(in_channels, base_channel)

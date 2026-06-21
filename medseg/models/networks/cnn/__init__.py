@@ -14,9 +14,8 @@ from .mew_unet import MEWUNet
 # 注意: ultralbm _ unet was moved to.. / mamba / ( its 架构 is Mamba-based ) / Note: ultralbm_unet was moved to ../mamba/ (its architecture is Mamba-based);
 # it is no longer re-exported from this CNN subpackage.
 
-# Re-export: DoubleUNet's canonical home is CNN (file lives under transformer/
-# for historical reasons but architecturally it is CNN-based).
-from medseg.models.networks.transformer.double_unet import DoubleUNet
+from .unet import UNet
+from .double_unet import DoubleUNet
 
 # Self-contained ports from GitHub (all building blocks inline)
 from .dcsaunet_model import DCSAUNet
@@ -40,7 +39,6 @@ from .kiunet import KiUNet
 from .aau_net import AAUNet
 from .cmu_net import CMUNet
 from .dscnet import DSCNet
-from .stu_net import STUNet
 from .dconnnet import DconnNet
 
 # Domain-specific ports (2024-2026)
@@ -48,6 +46,7 @@ from .polyper import Polyper
 from .hovernet_lite import HoverNetLite
 
 __all__ = [
+    "UNet",
     "UNet3Plus", "LVUNet", "EGEUNet", "MALUNet",
     "LiteUNet", "MKUNet", "ULite",
     "ACCUNet", "CMUNeXt",
@@ -59,7 +58,7 @@ __all__ = [
     "ResUNetPP", "FRUNet", "MedNeXt",
     "NNUNet2D", "R2UNet", "KiUNet",
     "AAUNet", "CMUNet", "DSCNet",
-    "STUNet", "DconnNet",
+    "DconnNet",
     # Domain-specific ports (2024-2026)
     "Polyper",
 ]

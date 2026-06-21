@@ -5,7 +5,7 @@ Reference:
     Chen et al., "TransAttUnet: Multi-level Attention-guided U-Net with
     Transformer for Medical Image Segmentation." Expert Systems with
     Applications, 2023.
-    Repo: https://github.com/McGregorWwww/TransAttUnet
+    Repo: https://github.com/YishuLiu/TransAttUnet
 
 Architecture:
     * Standard U-Net backbone with (Conv-BN-ReLU)x2 ConvBlocks
@@ -25,7 +25,7 @@ Standard interface:
     model = TransAttUNet(in_channels=3, num_classes=2, img_size=224)
     y = model(torch.randn(1, 3, 224, 224))   # -> (1, 2, 224, 224)
 """
-# Source: https://github.com/McGregorWwww/TransAttUnet
+# Source: https://github.com/YishuLiu/TransAttUnet
 
 from __future__ import annotations
 

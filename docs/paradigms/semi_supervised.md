@@ -10,7 +10,7 @@
 |--------|-------|-------|--------|-------------|------|
 | `mean_teacher` | Tarvainen & Valpola | NeurIPS 2017 | [CuriousAI/mean-teacher](https://github.com/CuriousAI/mean-teacher) | EMA teacher consistency | [mean_teacher.yaml](../../configs/training_paradigms/semi_supervision/mean_teacher.yaml) |
 | `cps` | Chen et al. | CVPR 2021 | [charlesCXK/TorchSemiSeg](https://github.com/charlesCXK/TorchSemiSeg) | Cross pseudo supervision | [cps.yaml](../../configs/training_paradigms/semi_supervision/cps.yaml) |
-| `cct` | Ouali et al. | BMVC 2020 | [yassouali/CCT](https://github.com/yassouali/CCT) | Cross-consistency training | [cct.yaml](../../configs/training_paradigms/semi_supervision/cct.yaml) |
+| `cct` | Ouali et al. | CVPR 2020 | [yassouali/CCT](https://github.com/yassouali/CCT) | Cross-consistency training | [cct.yaml](../../configs/training_paradigms/semi_supervision/cct.yaml) |
 | `unimatch` | Yang et al. | CVPR 2023 | [LiheYoung/UniMatch](https://github.com/LiheYoung/UniMatch) | Unified dual-stream matching | [unimatch.yaml](../../configs/training_paradigms/semi_supervision/unimatch.yaml) |
 | `fixmatch` | Sohn et al. | NeurIPS 2020 | [HiLab-git/SSL4MIS](https://github.com/HiLab-git/SSL4MIS) | Pseudo label + strong aug | [fixmatch.yaml](../../configs/training_paradigms/semi_supervision/fixmatch.yaml) |
 | `urpc` | Luo et al. | MIA 2022 | [HiLab-git/SSL4MIS](https://github.com/HiLab-git/SSL4MIS) | Uncertainty rectified PL | [urpc.yaml](../../configs/training_paradigms/semi_supervision/urpc.yaml) |
@@ -26,13 +26,9 @@
 | `ict` | Verma et al. | IJCAI 2019 | [vikasverma1077/ICT](https://github.com/vikasverma1077/ICT) | Interpolation consistency | [ict.yaml](../../configs/training_paradigms/semi_supervision/ict.yaml) |
 | `r_drop` | Wu et al. | NeurIPS 2021 | [dropreg/R-Drop](https://github.com/dropreg/R-Drop) | Regularized dropout | [r_drop.yaml](../../configs/training_paradigms/semi_supervision/r_drop.yaml) |
 | `cross_teaching` | Luo et al. | MIDL 2022 | [HiLab-git/SSL4MIS](https://github.com/HiLab-git/SSL4MIS) | CNN-Transformer cross teach | [cross_teaching.yaml](../../configs/training_paradigms/semi_supervision/cross_teaching.yaml) |
-| `augseg` | Zhao et al. | CVPR 2023 | [ZhenZHAO/AugSeg](https://github.com/ZhenZHAO/AugSeg) | Augmentation matters | - |
 | `corrmatch` | Sun et al. | CVPR 2024 | [BBBBchan/CorrMatch](https://github.com/BBBBchan/CorrMatch) | Correlation matching | [corrmatch.yaml](../../configs/training_paradigms/semi_supervision/corrmatch.yaml) |
 | `allspark` | Wang et al. | CVPR 2024 | [xmed-lab/AllSpark](https://github.com/xmed-lab/AllSpark) | Reborn labeled tokens | [allspark.yaml](../../configs/training_paradigms/semi_supervision/allspark.yaml) |
-| `ddfp` | Wang et al. | CVPR 2024 | [Cuzyoung/DDFP](https://github.com/Cuzyoung/DDFP) | Diffusion-denoised PLs | - |
 | `diffrect` | Liu et al. | MICCAI 2024 | [CUHK-AIM-Group/DiffRect](https://github.com/CUHK-AIM-Group/DiffRect) | Latent diffusion PL rectification | [diffrect.yaml](../../configs/training_paradigms/semi_supervision/diffrect.yaml) |
-| `ad_mt` | Zhao et al. | ECCV 2024 | [ZhenZHAO/AD-MT](https://github.com/ZhenZHAO/AD-MT) | Alternate diverse teaching | - |
-| `pmt` | Gao et al. | ECCV 2024 | [Axi404/PMT](https://github.com/Axi404/PMT) | Progressive mean teacher | - |
 
 ## YAML Config
 

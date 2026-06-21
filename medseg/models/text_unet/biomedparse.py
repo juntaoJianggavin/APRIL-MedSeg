@@ -1,4 +1,4 @@
-# BiomedParse (Nature Methods 2024)
+# BiomedParse (Nature Methods 2025)
 # 参考: https: / / github. com / microsoft / BiomedParse / Reference: https://github.com/microsoft/BiomedParse
 # Paper: https://arxiv.org/abs/2405.12971
 # Implemented from paper formulas; not a copy of the official repo.
