@@ -465,7 +465,7 @@ segmentation_tool/
 │   ├── paradigms/                               #   Paradigm docs: infrastructure, semi, weak, DA, distillation, text-guided
 │   ├── deployment/                              #   Deployment docs: ONNX, FLOPs, params, FPS
 │   ├── data/                                    #   Data docs: 25 datasets, 5 types, 4 split modes
-│   └── research_guide.md                        #   Research guide: 8 directions + 14 experiment scripts
+│   └── research_guide.md                        #   Research guide: 9 directions + 14 experiment scripts
 ├── train.py                                     # Supervised training (AMP + DDP + DataParallel + Logger + Warmup)
 ├── semi_train.py                                # Semi-supervised training (21 methods)
 ├── train_weakly_supervised.py                   # Weakly supervised training (20 methods)
@@ -635,7 +635,7 @@ Source Only · AdvEnt · DANN · TENT · DPL · CBMT · FDA · CRST · PixMatch 
 
 ### Knowledge Distillation — 27 Methods
 
-Vanilla KD · FitNets · AT · FSP · NST · RKD · VID · DKD · MGD · DIST · CIRKD · CWD · ReviewKD · SimKD · NORM · SDD · AICSD · LSKD · TTM · CTKD · MLKD + 4 medical-specific
+Vanilla KD · UNet-Distillation · FitNets · Attention Mimicry · AT · FSP · NST · RKD · VID · DKD · MGD · DIST · CIRKD · CWD · ReviewKD · SimKD · NORM · SDD · AICSD · LSKD · TTM · CTKD · MLKD + 4 medical-specific
 
 > Details: [docs/paradigms/distillation.md](docs/paradigms/distillation.md)
 
@@ -720,7 +720,7 @@ data:
   fold_idx: 0
 ```
 
-### Included Datasets (26)
+### Included Datasets (25)
 
 **CT**: Synapse, COVID CT Seg, MosMedData+
 

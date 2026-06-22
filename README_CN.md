@@ -469,7 +469,7 @@ segmentation_tool/
 │   ├── paradigms/                               #   范式文档: 基础设施, 半监督, 弱监督, 域适应, 蒸馏, 文本引导
 │   ├── deployment/                              #   部署文档: ONNX, FLOPs, 参数量, FPS
 │   ├── data/                                    #   数据文档: 25 个数据集, 5 种类型, 4 种划分
-│   └── research_guide.md                        #   研究建议: 8 个研究方向 + 14 个实验脚本
+│   └── research_guide.md                        #   研究建议: 9 个研究方向 + 14 个实验脚本
 ├── train.py                                     # 监督训练 (AMP + DDP + DataParallel + Logger + Warmup)
 ├── semi_train.py                                # 半监督训练 (21 方法)
 ├── train_weakly_supervised.py                   # 弱监督训练 (20 方法)
@@ -641,7 +641,7 @@ Source Only · AdvEnt · DANN · TENT · DPL · CBMT · FDA · CRST · PixMatch 
 
 ### 知识蒸馏 — 27 个方法
 
-Vanilla KD · FitNets · AT · FSP · NST · RKD · VID · DKD · MGD · DIST · CIRKD · CWD · ReviewKD · SimKD · NORM · SDD · AICSD · LSKD · TTM · CTKD · MLKD + 4 个医学专用
+Vanilla KD · UNet-Distillation · FitNets · Attention Mimicry · AT · FSP · NST · RKD · VID · DKD · MGD · DIST · CIRKD · CWD · ReviewKD · SimKD · NORM · SDD · AICSD · LSKD · TTM · CTKD · MLKD + 4 个医学专用
 
 > 详细: [docs/paradigms/distillation.md](docs/paradigms/distillation.md)
 
@@ -728,7 +728,7 @@ data:
   fold_idx: 0
 ```
 
-### 已收录数据集 (26 个)
+### 已收录数据集 (25 个)
 
 **CT**: Synapse, COVID CT Seg, MosMedData+
 
