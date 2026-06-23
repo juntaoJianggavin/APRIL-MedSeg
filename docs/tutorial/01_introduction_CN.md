@@ -164,7 +164,7 @@ APRIL-MedSeg/
 ├── train_distillation.py       # 知识蒸馏
 ├── train_weakly_supervised.py  # 弱监督
 ├── train_text_guided.py        # 文本引导分割
-├── configs/                    # 918 个 YAML 配置
+├── configs/                    # 917 个 YAML 配置
 ├── medseg/                     # 核心库
 │   ├── models/                 # 177 编码器, 45 解码器, 133 完整网络
 │   ├── losses/                 # 15 个损失函数

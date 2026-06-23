@@ -4,7 +4,7 @@
 
 ## Loss Functions
 
-The framework registers **81** losses via `LOSS_REGISTRY` (supervised + distillation + domain adaptation + weakly supervised). An additional **21** semi-supervised loss terms are integrated directly in the training loop (not via `LOSS_REGISTRY`):
+The framework registers **81** losses via `LOSS_REGISTRY` (supervised + distillation + domain adaptation + weakly supervised). An additional **20** semi-supervised loss terms are integrated directly in the training loop (not via `LOSS_REGISTRY`):
 
 ### Supervised Losses (16)
 
@@ -27,7 +27,7 @@ The framework registers **81** losses via `LOSS_REGISTRY` (supervised + distilla
 | `compound` | Compound (weighted combination) | [compound_loss.py](../../medseg/losses/compound_loss.py) |
 | `deep_supervision` | Deep Supervision wrapper | [deep_supervision_loss.py](../../medseg/losses/deep_supervision_loss.py) |
 
-### Semi-Supervised Losses (21)
+### Semi-Supervised Losses (20)
 
 Semi-supervised losses are integrated in `medseg/training/semi/`, not as standalone criterion classes. See [semi_supervised.md](semi_supervised.md).
 

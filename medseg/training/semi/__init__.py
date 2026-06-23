@@ -28,8 +28,9 @@ Active methods:
                            https://github.com/microsoft/Semi-supervised-learning
     - ua_mt                Yu et al., MICCAI 2019 (MC-Dropout uncertainty)
                            https://github.com/yulequan/UA-MT
-    - ssl4mis_u            SSL4MIS uncertainty (MC-Dropout) variant
-                           https://github.com/HiLab-git/SSL4MIS
+                           (also re-implemented in SSL4MIS as "Uncertainty
+                           Aware Mean Teacher"; the former ``ssl4mis_u`` entry
+                           was the same method and has been merged here.)
     - pi_model             Laine & Aila, ICLR 2017 (Π-model)
                            https://github.com/smlaine2/tempens
     - temporal_ensembling  Laine & Aila, ICLR 2017 (per-sample EMA target)
@@ -62,7 +63,6 @@ from .flexmatch import FlexMatch
 from .softmatch import SoftMatch
 from .freematch import FreeMatch
 from .ua_mt import UncertaintyAwareMeanTeacher
-from .ssl4mis_u import SSL4MISUncertainty
 from .pi_model import PiModel
 from .temporal_ensembling import TemporalEnsembling
 from .pseudo_label import PseudoLabel
@@ -86,7 +86,6 @@ _SEMI_METHODS = {
     "softmatch": SoftMatch,
     "freematch": FreeMatch,
     "ua_mt": UncertaintyAwareMeanTeacher,
-    "ssl4mis_u": SSL4MISUncertainty,
     "pi_model": PiModel,
     "temporal_ensembling": TemporalEnsembling,
     "pseudo_label": PseudoLabel,
@@ -112,7 +111,6 @@ __all__ = [
     "SoftMatch",
     "FreeMatch",
     "UncertaintyAwareMeanTeacher",
-    "SSL4MISUncertainty",
     "PiModel",
     "TemporalEnsembling",
     "PseudoLabel",

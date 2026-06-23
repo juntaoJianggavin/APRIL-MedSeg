@@ -2,7 +2,7 @@
 
 [English](semi_supervised.md)
 
-本框架内置 **21** 种半监督方法，位于 `medseg/training/semi/`。
+本框架内置 **20** 种半监督方法，位于 `medseg/training/semi/`。
 
 ## 方法列表
 
@@ -19,7 +19,6 @@
 | `softmatch` | Chen et al. | ICLR 2023 | [microsoft/Semi-supervised-learning](https://github.com/microsoft/Semi-supervised-learning) | 软阈值 | [softmatch.yaml](../../configs/training_paradigms/semi_supervision/softmatch.yaml) |
 | `freematch` | Wang et al. | ICLR 2023 | [microsoft/Semi-supervised-learning](https://github.com/microsoft/Semi-supervised-learning) | 自适应阈值 | [freematch.yaml](../../configs/training_paradigms/semi_supervision/freematch.yaml) |
 | `ua_mt` | Yu et al. | MICCAI 2019 | [yulequan/UA-MT](https://github.com/yulequan/UA-MT) | 不确定性感知均值教师 | [ua_mt.yaml](../../configs/training_paradigms/semi_supervision/ua_mt.yaml) |
-| `ssl4mis_u` | SSL4MIS 不确定性 | - | [HiLab-git/SSL4MIS](https://github.com/HiLab-git/SSL4MIS) | MC-Dropout 不确定性 | [ssl4mis_u.yaml](../../configs/training_paradigms/semi_supervision/ssl4mis_u.yaml) |
 | `pi_model` | Laine & Aila | ICLR 2017 | [smlaine2/tempens](https://github.com/smlaine2/tempens) | 随机扰动 | [pi_model.yaml](../../configs/training_paradigms/semi_supervision/pi_model.yaml) |
 | `temporal_ensembling` | Laine & Aila | ICLR 2017 | [smlaine2/tempens](https://github.com/smlaine2/tempens) | 逐样本 EMA 目标 | [temporal_ensembling.yaml](../../configs/training_paradigms/semi_supervision/temporal_ensembling.yaml) |
 | `pseudo_label` | Lee | ICML-W 2013 | [iBelieveCJM/pseudo_label](https://github.com/iBelieveCJM/pseudo_label-pytorch) | 硬伪标签 | [pseudo_label.yaml](../../configs/training_paradigms/semi_supervision/pseudo_label.yaml) |

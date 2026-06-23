@@ -150,7 +150,7 @@ Do you have pixel-level masks for all training data?
 
 ## Related Documentation
 
-- [Semi-Supervised Methods](../paradigms/semi_supervised.md) — All 21 semi-supervised methods
+- [Semi-Supervised Methods](../paradigms/semi_supervised.md) — All 20 semi-supervised methods
 - [Domain Adaptation](../paradigms/domain_adaptation.md) — All 18 domain adaptation methods
 - [Distillation](../paradigms/distillation.md) — All 27 distillation methods
 - [Weakly Supervised](../paradigms/weakly_supervised.md) — All 20 weakly supervised methods

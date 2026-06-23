@@ -4,7 +4,7 @@
 
 ## 损失函数
 
-本框架通过 `LOSS_REGISTRY` 注册了 **81 个** loss（监督 + 蒸馏 + 域适应 + 弱监督）。另有 **21 个** 半监督损失直接集成在训练循环中（非 `LOSS_REGISTRY` 注册）：
+本框架通过 `LOSS_REGISTRY` 注册了 **81 个** loss（监督 + 蒸馏 + 域适应 + 弱监督）。另有 **20 个** 半监督损失直接集成在训练循环中（非 `LOSS_REGISTRY` 注册）：
 
 ### 监督损失 (16)
 
@@ -27,7 +27,7 @@
 | `compound` | 组合损失 (加权组合) | [compound_loss.py](../../medseg/losses/compound_loss.py) |
 | `deep_supervision` | 深度监督包装器 | [deep_supervision_loss.py](../../medseg/losses/deep_supervision_loss.py) |
 
-### 半监督损失 (21)
+### 半监督损失 (20)
 
 半监督损失集成在 `medseg/training/semi/` 中，非独立损失类。详见 [semi_supervised.md](semi_supervised.md)。
 

@@ -18,7 +18,7 @@
   </p>
 </div>
 
-> **133** networks · **177** encoders · **45** decoders · **81** losses · **25** skip connections · **17** bottlenecks · **6** training paradigms · **24** augmentations · **918** YAML configs · switch anything with one line of YAML
+> **133** networks · **177** encoders · **45** decoders · **81** losses · **25** skip connections · **17** bottlenecks · **6** training paradigms · **24** augmentations · **917** YAML configs · switch anything with one line of YAML
 
 ---
 <a id="updates"></a>
@@ -378,8 +378,8 @@ segmentation_tool/
 │   │   │   └── linear_attn/      (3 registered) #     Linear attention: TTT-UNet, U-VixLSTM, xLSTM-UNet
 │   │   └── text_unet/            (13 modules)   #   Text-guided (12 models): CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
 │   ├── training/                                # Training paradigms
-│   │   ├── semi/                 (23 modules)   #   21 semi-supervised methods + 2 utils (base, utils)
-│   │   │                                        #     MeanTeacher, CPS, UniMatch, FixMatch, SSL4MIS-U, CorrMatch, AllSpark, ...
+│   │   ├── semi/                 (22 modules)   #   20 semi-supervised methods + 2 utils (base, utils)
+│   │   │                                        #     MeanTeacher, CPS, UniMatch, FixMatch, UA-MT, CorrMatch, AllSpark, ...
 │   │   ├── domain_adaptation/    (18 modules)   #   18 domain adaptation: AdvEnt, DANN, TENT, FDA, MIC, HRDA, SePiCo, ...
 │   │   ├── distillation/         (28 modules)   #   27 distillation: VanillaKD, DKD, MGD, DIST, CWD, ReviewKD, SimKD, NORM, ...
 │   │   └── weakly_supervised/    (21 modules)   #   20 weakly supervised methods (CAM, SEAM, PuzzleCAM, TreeEnergy, ...)
@@ -421,7 +421,7 @@ segmentation_tool/
 │   └── test_dummy/                              #   Dummy test data
 ├── figs/                                        # Figures & logos
 │   └── logo.png                                 #   Project logo
-├── configs/                      (918 yamls)    # YAML configs
+├── configs/                      (917 yamls)    # YAML configs
 │   ├── architectures/            (783 yamls)    #   Network architecture configs
 │   │   ├── networks/             (302 yamls)    #     Complete networks (133 arch across general/acdc/synapse)
 │   │   ├── combinations/         (169 yamls)    #     Encoder+decoder free combinations
@@ -429,8 +429,8 @@ segmentation_tool/
 │   │   ├── skip_study/           (75 yamls)     #     Skip ablation (3 enc × 25 skip)
 │   │   ├── bottleneck_study/     (51 yamls)     #     Bottleneck ablation (3 enc × 17 bn)
 │   │   └── foundation/           (53 yamls)     #     Foundation models (9 modalities × 39 encoders)
-│   ├── training_paradigms/       (105 yamls)    #   Training paradigm configs
-│   │   ├── semi_supervision/     (21 yamls)     #     Semi-supervised (21 methods)
+│   ├── training_paradigms/       (104 yamls)    #   Training paradigm configs
+│   │   ├── semi_supervision/     (20 yamls)     #     Semi-supervised (20 methods)
 │   │   ├── domain_adaptation/    (18 yamls)     #     Domain adaptation (18 methods)
 │   │   ├── distillation/         (29 yamls)     #     Distillation (27 methods)
 │   │   ├── text_guided/          (17 yamls)     #     Text-guided (12 models + pipeline)
@@ -467,7 +467,7 @@ segmentation_tool/
 │   ├── data/                                    #   Data docs: 25 datasets, 5 types, 4 split modes
 │   └── research_guide.md                        #   Research guide: 9 directions + 14 experiment scripts
 ├── train.py                                     # Supervised training (AMP + DDP + DataParallel + Logger + Warmup)
-├── semi_train.py                                # Semi-supervised training (21 methods)
+├── semi_train.py                                # Semi-supervised training (20 methods)
 ├── train_weakly_supervised.py                   # Weakly supervised training (20 methods)
 ├── train_domain_adaptation.py                   # Domain adaptation training (18 methods)
 ├── train_distillation.py                        # Knowledge distillation training (27 methods)
@@ -621,9 +621,9 @@ training:
 > Full parameter docs for each method: [docs/data/README.md](docs/data/README.md#augmentation-pipeline--24-methods)
 > Full config example: [resnet50_unet_advanced_aug.yaml](configs/architectures/decoder_study/general/resnet50_unet_advanced_aug.yaml)
 
-### Semi-Supervised — 21 Methods
+### Semi-Supervised — 20 Methods
 
-Mean Teacher · CPS · CCT · UniMatch · FixMatch · FlexMatch · FreeMatch · SoftMatch · UA-MT · URPC · Deep Co-Training · Pi-Model · Temporal Ensembling · Pseudo-Label · ICT · R-Drop · Cross-Teaching · CorrMatch · AllSpark · DiffRect · SSL4MIS-U
+Mean Teacher · CPS · CCT · UniMatch · FixMatch · FlexMatch · FreeMatch · SoftMatch · UA-MT · URPC · Deep Co-Training · Pi-Model · Temporal Ensembling · Pseudo-Label · ICT · R-Drop · Cross-Teaching · CorrMatch · AllSpark · DiffRect
 
 > Details: [docs/paradigms/semi_supervised.md](docs/paradigms/semi_supervised.md)
 

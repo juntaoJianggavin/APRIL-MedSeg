@@ -164,7 +164,7 @@ APRIL-MedSeg/
 ├── train_distillation.py       # Knowledge distillation
 ├── train_weakly_supervised.py  # Weakly supervised
 ├── train_text_guided.py        # Text-guided segmentation
-├── configs/                    # 918 YAML configs
+├── configs/                    # 917 YAML configs
 ├── medseg/                     # Core library
 │   ├── models/                 # 177 encoders, 45 decoders, 133 networks
 │   ├── losses/                 # 15 loss functions

@@ -39,7 +39,7 @@
 - **81** loss functions (supervised, distillation, domain adaptation, weakly supervised)
 - **25** skip connection types
 - **6** training paradigms (supervised, semi-supervised, domain adaptation, distillation, weakly supervised, text-guided)
-- **918** ready-to-use YAML configs
+- **917** ready-to-use YAML configs
 - **24** augmentation methods configurable via YAML
 
 **Why use this framework?**
@@ -152,7 +152,7 @@ APRIL-MedSeg/
 │   │   ├── networks/          # 133 complete pre-assembled architectures
 │   │   └── text_unet/         # 12 text-guided models
 │   ├── training/              # Training paradigm implementations
-│   │   ├── semi/              # 21 semi-supervised methods
+│   │   ├── semi/              # 20 semi-supervised methods
 │   │   ├── domain_adaptation/ # 18 domain adaptation methods
 │   │   ├── distillation/      # 27 distillation methods
 │   │   └── weakly_supervised/ # 20 weakly supervised methods
@@ -165,7 +165,7 @@ APRIL-MedSeg/
 │   ├── utils/                 # Config, AMP/DDP, logger, warmup, metrics, etc.
 │   ├── model_builder.py       # YAML → model assembler
 │   └── registry.py            # Component registries
-├── configs/                   # 918 YAML configs
+├── configs/                   # 917 YAML configs
 ├── scripts/                   # Utility scripts (ONNX export, visualization, etc.)
 ├── train.py                   # Supervised training entry point
 ├── semi_train.py              # Semi-supervised training
@@ -183,7 +183,7 @@ APRIL-MedSeg/
 | Script | Purpose |
 |--------|---------|
 | `train.py` | Standard supervised training (AMP + DDP + Logger) |
-| `semi_train.py` | Semi-supervised training (21 methods) |
+| `semi_train.py` | Semi-supervised training (20 methods) |
 | `train_domain_adaptation.py` | Domain adaptation (18 methods) |
 | `train_distillation.py` | Knowledge distillation (27 methods) |
 | `train_weakly_supervised.py` | Weakly supervised (20 methods) |
@@ -902,9 +902,9 @@ configs/architectures/foundation/
 
 When you have abundant unlabeled data but limited annotations, semi-supervised training leverages both.
 
-### 12.1 Available Methods (21)
+### 12.1 Available Methods (20)
 
-Mean Teacher, CPS, CCT, UniMatch, FixMatch, FlexMatch, FreeMatch, SoftMatch, UA-MT, URPC, Deep Co-Training, Pi-Model, Temporal Ensembling, Pseudo-Label, ICT, R-Drop, Cross-Teaching, CorrMatch, AllSpark, DiffRect, SSL4MIS-U
+Mean Teacher, CPS, CCT, UniMatch, FixMatch, FlexMatch, FreeMatch, SoftMatch, UA-MT, URPC, Deep Co-Training, Pi-Model, Temporal Ensembling, Pseudo-Label, ICT, R-Drop, Cross-Teaching, CorrMatch, AllSpark, DiffRect
 
 ### 12.2 Dataset Setup
 

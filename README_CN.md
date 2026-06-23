@@ -19,7 +19,7 @@
   </p>
 </div>
 
-> **133** 完整网络 · **177** 编码器 · **45** 解码器 · **81** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **918** YAML 配置 · 一行 YAML 完成切换
+> **133** 完整网络 · **177** 编码器 · **45** 解码器 · **81** 损失函数 · **25** 跳跃连接 · **17** 瓶颈层 · **6** 大训练范式 · **24** 种数据增强 · **917** YAML 配置 · 一行 YAML 完成切换
 
 ---
 <a id="更新日志"></a>
@@ -382,8 +382,8 @@ segmentation_tool/
 │   │   │   └── linear_attn/      (3 registered) #     线性注意力: TTT-UNet, U-VixLSTM, xLSTM-UNet
 │   │   └── text_unet/            (13 modules)   #   文本引导 (12 个模型): CRIS, BiomedParse, LanGuideMedSeg, LViT, TGANet, TPRO, ...
 │   ├── training/                                # 训练范式
-│   │   ├── semi/                 (23 modules)   #   21 个半监督方法 + 2 个工具 (base, utils)
-│   │   │                                        #     MeanTeacher, CPS, UniMatch, FixMatch, SSL4MIS-U, CorrMatch, AllSpark, ...
+│   │   ├── semi/                 (22 modules)   #   20 个半监督方法 + 2 个工具 (base, utils)
+│   │   │                                        #     MeanTeacher, CPS, UniMatch, FixMatch, UA-MT, CorrMatch, AllSpark, ...
 │   │   ├── domain_adaptation/    (18 modules)   #   18 个域适应: AdvEnt, DANN, TENT, FDA, MIC, HRDA, SePiCo, ...
 │   │   ├── distillation/         (28 modules)   #   27 个蒸馏: VanillaKD, DKD, MGD, DIST, CWD, ReviewKD, SimKD, NORM, ...
 │   │   └── weakly_supervised/    (21 modules)   #   20 个弱监督方法 (CAM, SEAM, PuzzleCAM, TreeEnergy, ...)
@@ -425,7 +425,7 @@ segmentation_tool/
 │   └── test_dummy/                              #   虚拟测试数据
 ├── figs/                                        # 图片与 logo
 │   └── logo.png                                 #   项目 logo
-├── configs/                      (918 yamls)    # YAML 配置
+├── configs/                      (917 yamls)    # YAML 配置
 │   ├── architectures/            (783 yamls)    #   网络结构配置
 │   │   ├── networks/             (302 yamls)    #     完整网络 (133 arch across general/acdc/synapse)
 │   │   ├── combinations/         (169 yamls)    #     encoder+decoder 自由组合
@@ -433,8 +433,8 @@ segmentation_tool/
 │   │   ├── skip_study/           (75 yamls)     #     skip 消融 (3 enc × 25 skip)
 │   │   ├── bottleneck_study/     (51 yamls)     #     bottleneck 消融 (3 enc × 17 bn)
 │   │   └── foundation/           (53 yamls)     #     Foundation 模型 (9 模态 × 39 编码器)
-│   ├── training_paradigms/       (105 yamls)    #   训练范式配置
-│   │   ├── semi_supervision/     (21 yamls)     #     半监督 (21 方法)
+│   ├── training_paradigms/       (104 yamls)    #   训练范式配置
+│   │   ├── semi_supervision/     (20 yamls)     #     半监督 (20 方法)
 │   │   ├── domain_adaptation/    (18 yamls)     #     域适应 (18 方法)
 │   │   ├── distillation/         (29 yamls)     #     蒸馏 (27 方法)
 │   │   ├── text_guided/          (17 yamls)     #     文本引导 (12 模型 + pipeline)
@@ -471,7 +471,7 @@ segmentation_tool/
 │   ├── data/                                    #   数据文档: 25 个数据集, 5 种类型, 4 种划分
 │   └── research_guide.md                        #   研究建议: 9 个研究方向 + 14 个实验脚本
 ├── train.py                                     # 监督训练 (AMP + DDP + DataParallel + Logger + Warmup)
-├── semi_train.py                                # 半监督训练 (21 方法)
+├── semi_train.py                                # 半监督训练 (20 方法)
 ├── train_weakly_supervised.py                   # 弱监督训练 (20 方法)
 ├── train_domain_adaptation.py                   # 域适应训练 (18 方法)
 ├── train_distillation.py                        # 知识蒸馏训练 (27 方法)
@@ -627,9 +627,9 @@ training:
 > 每个增强方法的完整参数说明: [docs/data/README_CN.md](docs/data/README_CN.md#数据增强管线--augmentation-pipeline--24-种方法)
 > 完整配置示例: [resnet50_unet_advanced_aug.yaml](configs/architectures/decoder_study/general/resnet50_unet_advanced_aug.yaml)
 
-### 半监督 — 21 个方法
+### 半监督 — 20 个方法
 
-Mean Teacher · CPS · CCT · UniMatch · FixMatch · FlexMatch · FreeMatch · SoftMatch · UA-MT · URPC · Deep Co-Training · Pi-Model · Temporal Ensembling · Pseudo-Label · ICT · R-Drop · Cross-Teaching · CorrMatch · AllSpark · DiffRect · SSL4MIS-U
+Mean Teacher · CPS · CCT · UniMatch · FixMatch · FlexMatch · FreeMatch · SoftMatch · UA-MT · URPC · Deep Co-Training · Pi-Model · Temporal Ensembling · Pseudo-Label · ICT · R-Drop · Cross-Teaching · CorrMatch · AllSpark · DiffRect
 
 > 详细: [docs/paradigms/semi_supervised.md](docs/paradigms/semi_supervised.md)
 
