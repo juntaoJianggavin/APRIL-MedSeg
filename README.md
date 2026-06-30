@@ -2,7 +2,7 @@
   <img src="figs/logo.png" alt="APRIL-MedSeg Logo" width="500"/>
   <p>
     <a href="LICENSE"><img src="https://img.shields.io/badge/License-Apache_2.0-blue.svg" alt="License: Apache 2.0"/></a>
-    <a href=""><img src="https://img.shields.io/badge/arXiv-Paper-b31b1b.svg" alt="arXiv"/></a>
+    <a href="https://arxiv.org/abs/2606.30577"><img src="https://img.shields.io/badge/arXiv-Paper-b31b1b.svg" alt="arXiv"/></a>
   </p>
   <p>
     <strong>Juntao Jiang</strong>,
