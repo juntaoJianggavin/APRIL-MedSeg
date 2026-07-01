@@ -73,15 +73,23 @@ def build_test_dataset(data_cfg):
             img_size=img_size,
         )
     elif dataset_type in ('image_mask', 'binary', 'generic'):
+        n_splits = data_cfg.get('n_splits', 0)
         if 'val_dir' in data_cfg and 'test_dir' not in data_cfg:
             split = 'val'
             root = data_cfg['val_dir']
+            kfold_mode = 'val'
         elif 'test_dir' in data_cfg:
             split = 'test'
             root = data_cfg['test_dir']
+            kfold_mode = 'val'
+        elif n_splits > 1:
+            split = 'val'
+            root = data_cfg.get('root_dir')
+            kfold_mode = 'val'
         else:
             split = data_cfg.get('eval_split', 'test')
             root = data_cfg.get('root_dir')
+            kfold_mode = split if split in ('train', 'val') else 'val'
         return GenericDataset(
             root_dir=root,
             split=split,
@@ -92,6 +100,9 @@ def build_test_dataset(data_cfg):
             train_ratio=data_cfg.get('train_ratio', 0.7),
             val_ratio=data_cfg.get('val_ratio', 0.15),
             random_state=data_cfg.get('random_state', 42),
+            n_splits=n_splits,
+            fold_idx=data_cfg.get('fold_idx', 0),
+            kfold_mode=kfold_mode,
             file_list=data_cfg.get('test_list', None),
         )
     elif dataset_type in ('synapse', 'acdc'):

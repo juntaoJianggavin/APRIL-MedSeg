@@ -119,6 +119,22 @@ def build_dataset(data_cfg, split='train', cfg=None):
         raise ValueError(f"Unknown dataset type: {dataset_type}")
 
 
+def uses_inline_generic_val(data_cfg) -> bool:
+    """Whether validation can be built from root_dir (K-fold or ratio split).
+
+    When True, call ``build_dataset(data_cfg, 'val', cfg)`` — no ``val_dir`` needed.
+    """
+    if 'val_dir' in data_cfg or 'test_dir' in data_cfg:
+        return False
+    if data_cfg.get('type', 'synapse') not in ('image_mask', 'binary', 'generic'):
+        return False
+    if not data_cfg.get('root_dir'):
+        return False
+    if data_cfg.get('n_splits', 0) > 1:
+        return True
+    return data_cfg.get('val_ratio', 0.15) > 0
+
+
 def build_optimizer(params, opt_cfg):
     """Build optimizer from config."""
     name = opt_cfg.get('name', 'adamw')
@@ -325,6 +341,9 @@ def main():
     if 'val_dir' in data_cfg or 'test_dir' in data_cfg:
         val_key = 'val' if 'val_dir' in data_cfg else 'test'
         val_dataset = build_dataset(data_cfg, val_key, cfg=cfg)
+    elif uses_inline_generic_val(data_cfg):
+        val_dataset = build_dataset(data_cfg, 'val', cfg=cfg)
+    if val_dataset is not None:
         val_loader = DataLoader(
             val_dataset,
             batch_size=cfg.get('training', {}).get('batch_size', 8),
