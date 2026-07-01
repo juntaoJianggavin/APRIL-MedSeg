@@ -14,7 +14,7 @@
 #   test:  20 例
 #
 # 下载:
-#   TransUNet 预处理版: https://drive.google.com/drive/folders/1ACJEoTp-uqfFJ73qS3eUObQh52nGuzCd
+#   TransUNet 预处理版: https://drive.google.com/drive/folders/1KQcrci7aKsYZi1hQoZ3T3QUtcy7b--n4
 #   或官方: https://www.creatis.insa-lyon.fr/Challenge/acdc/databases.html
 #   下载后目录结构 (TransUNet 格式):
 #     data/ACDC/
