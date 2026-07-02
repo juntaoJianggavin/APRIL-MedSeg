@@ -41,6 +41,9 @@ from .training import semi
 from .training import domain_adaptation
 from .training import distillation
 from .training import weakly_supervised
-from .models import text_unet
+try:
+    from .models import text_unet
+except Exception:
+    pass
 
 __version__ = "0.1.0"

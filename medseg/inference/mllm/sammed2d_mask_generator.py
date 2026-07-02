@@ -52,8 +52,19 @@ class SAMMed2DMaskGenerator:
         self.model = None
         self.mock_mode = False
 
-        # 加载 SAM-Med2D 权重 / Load SAM-Med2D weights
-        from segment_anything import sam_model_registry, SamPredictor
+        # Load SAM-Med2D weights
+        # SAM-Med2D fine-tunes at image_size=256 (not the default 1024), so we
+        # must construct the Sam model with img_size=256 for the checkpoint
+        # state_dict to load without size mismatches.
+        from functools import partial
+
+        import torch.nn as nn
+        from segment_anything import SamPredictor
+        from segment_anything.modeling.image_encoder import ImageEncoderViT
+        from segment_anything.modeling.mask_decoder import MaskDecoder
+        from segment_anything.modeling.prompt_encoder import PromptEncoder
+        from segment_anything.modeling.sam import Sam
+        from segment_anything.modeling.transformer import TwoWayTransformer
 
         if not checkpoint:
             from medseg.utils.weight_downloader import ensure_weight
@@ -65,10 +76,65 @@ class SAMMed2DMaskGenerator:
                 f"Download from https://github.com/OpenGVLab/SAM-Med2D"
             )
 
-        sam = sam_model_registry[model_type](checkpoint=checkpoint)
+        _ENCODER_CONFIGS = {
+            "vit_b": dict(embed_dim=768, depth=12, num_heads=12,
+                          global_attn_indexes=[2, 5, 8, 11]),
+            "vit_l": dict(embed_dim=1024, depth=24, num_heads=16,
+                          global_attn_indexes=[7, 15, 23, 31]),
+            "vit_h": dict(embed_dim=1280, depth=32, num_heads=16,
+                          global_attn_indexes=[7, 15, 23, 31]),
+        }
+
+        enc_cfg = _ENCODER_CONFIGS[model_type]
+        prompt_embed_dim = 256
+        vit_patch_size = 16
+        img_embedding_size = image_size // vit_patch_size
+
+        sam = Sam(
+            image_encoder=ImageEncoderViT(
+                depth=enc_cfg["depth"],
+                embed_dim=enc_cfg["embed_dim"],
+                img_size=image_size,
+                mlp_ratio=4,
+                norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                num_heads=enc_cfg["num_heads"],
+                patch_size=vit_patch_size,
+                qkv_bias=True,
+                use_rel_pos=True,
+                global_attn_indexes=enc_cfg["global_attn_indexes"],
+                window_size=14,
+                out_chans=prompt_embed_dim,
+            ),
+            prompt_encoder=PromptEncoder(
+                embed_dim=prompt_embed_dim,
+                image_embedding_size=(img_embedding_size, img_embedding_size),
+                input_image_size=(image_size, image_size),
+                mask_in_chans=16,
+            ),
+            mask_decoder=MaskDecoder(
+                num_multimask_outputs=3,
+                transformer=TwoWayTransformer(
+                    depth=2,
+                    embedding_dim=prompt_embed_dim,
+                    mlp_dim=2048,
+                    num_heads=8,
+                ),
+                transformer_dim=prompt_embed_dim,
+                iou_head_depth=3,
+                iou_head_hidden_dim=256,
+            ),
+            pixel_mean=[123.675, 116.28, 103.53],
+            pixel_std=[58.395, 57.12, 57.375],
+        )
+        sam.eval()
+
+        ckpt = torch.load(checkpoint, map_location="cpu")
+        if isinstance(ckpt, dict) and "model" in ckpt:
+            ckpt = ckpt["model"]
+        sam.load_state_dict(ckpt, strict=False)
         sam = sam.to(device).eval()
         self.predictor = SamPredictor(sam)
-        logger.info(f"SAM-Med2D loaded: {model_type} from {checkpoint} on {device}")
+        logger.info(f"SAM-Med2D loaded: {model_type} from {checkpoint} on {device} (image_size={image_size})")
 
     def predict_from_boxes(
         self,

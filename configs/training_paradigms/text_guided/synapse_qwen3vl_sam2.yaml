@@ -31,7 +31,7 @@ mllm:
   - aorta
   grounder:
     type: qwen3vl
-    model_id: Qwen/Qwen3-VL-7B-Instruct
+    model_id: Qwen/Qwen3-VL-8B-Instruct
     device: cuda
     dtype: bfloat16
     use_flash_attn: true
