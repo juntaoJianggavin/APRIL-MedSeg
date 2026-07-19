@@ -1006,6 +1006,9 @@ REQUIRES_PRETRAINED: set = {
     "sam_l",                  # SAM ViT-Large
     "mobile_sam",             # MobileSAM (distilled)
     "sam2",                   # SAM 2
+    "sam3",                   # SAM 3
+    "medsam2",                # MedSAM2 (2D variant)
+    "medsam3",                # MedSAM3 (2D variant)
     "sam_med2d",              # SAM-Med2D
     "samed",                  # SAMed (LoRA fine-tune)
     "sammed2d_wrapper",       # SAM-Med2D wrapper variant

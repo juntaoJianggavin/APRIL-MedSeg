@@ -5,6 +5,9 @@ from .sam_b import SAMViTBase
 from .sam_l import SAMViTLarge
 from .mobile_sam import MobileSAM
 from .sam2 import SAM2
+from .sam3 import SAM3
+from .medsam2 import MedSAM2
+from .medsam3 import MedSAM3
 from .sam_med2d import SAMMed2D
 from .medical_sam_adapter import MedicalSAMAdapter
 from .samed import SAMed
@@ -18,7 +21,8 @@ from .lite_medsam import LiteMedSAM
 __all__ = [
     "SAMBase", "load_with_ssl_fallback",
     "MedSAM", "SAMUS",
-    "SAMViTBase", "SAMViTLarge", "MobileSAM", "SAM2",
+    "SAMViTBase", "SAMViTLarge", "MobileSAM", "SAM2", "SAM3",
+    "MedSAM2", "MedSAM3",
     "SAMMed2D", "MedicalSAMAdapter", "SAMed", "AutoSAM",
     "SAMMed2DWrapper", "LiteMedSAM",
 ]

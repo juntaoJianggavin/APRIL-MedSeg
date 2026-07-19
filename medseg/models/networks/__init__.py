@@ -71,7 +71,8 @@ from .transformer import (
 # ── SAM family ─────────────────────────────────────────────────────────────
 from .sam import (
     MedSAM, SAMUS,
-    SAMViTBase, SAMViTLarge, MobileSAM, SAM2,
+    SAMViTBase, SAMViTLarge, MobileSAM, SAM2, SAM3,
+    MedSAM2, MedSAM3,
     SAMMed2D, MedicalSAMAdapter, SAMed, AutoSAM,
 )
 
@@ -216,6 +217,9 @@ _SPECIAL_ARCHS = {
     "sam_l": SAMViTLarge,
     "mobile_sam": MobileSAM,
     "sam2": SAM2,
+    "sam3": SAM3,
+    "medsam2": MedSAM2,
+    "medsam3": MedSAM3,
     "sam_med2d": SAMMed2D,
     "medical_sam_adapter": MedicalSAMAdapter,
     "samed": SAMed,

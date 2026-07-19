@@ -62,13 +62,14 @@ class _HieraEncoder(nn.Module):
     ``.strides`` (the per-stage downsampling factors).
     """
 
-    def __init__(self, in_channels: int, img_size: int, pretrained: bool):
+    def __init__(self, in_channels: int, img_size: int, pretrained: bool,
+                 backbone: str = _HIERA_MODEL):
         super().__init__()
         import timm
 
         def _create(pretrained: bool):
             return timm.create_model(
-                _HIERA_MODEL,
+                backbone,
                 pretrained=pretrained,
                 features_only=True,
                 img_size=img_size,
@@ -87,7 +88,7 @@ class _HieraEncoder(nn.Module):
         if blocks is None:
             blocks = nn.ModuleList()
         self.blocks = blocks
-        self._backbone_name = _HIERA_MODEL
+        self._backbone_name = backbone
 
     # ------------------------------------------------------------------
     def forward(self, x: torch.Tensor) -> List[torch.Tensor]:
@@ -215,6 +216,7 @@ class SAM2(SAMBase):
     """
 
     PROJ_DIM = 256
+    _BACKBONE = _HIERA_MODEL
 
     def __init__(
         self,
@@ -252,6 +254,7 @@ class SAM2(SAMBase):
             in_channels=in_channels,
             img_size=self._backbone_size,
             pretrained=self._pretrained,
+            backbone=self._BACKBONE,
         )
         # SAM2 here is prompt-free; expose None so 应用 _ freeze is uniform / SAM2 here is prompt-free; expose None so apply_freeze is uniform.
         self.prompt_encoder = None
