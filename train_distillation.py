@@ -116,6 +116,7 @@ def build_dataset(data_cfg, split='train'):
             fold_idx=data_cfg.get('fold_idx', 0),
             kfold_mode=split if split in ('train', 'val') else 'val',
             file_list=list_file,
+            no_split=(root_dir is not None and root_dir != data_cfg.get('root_dir')),
         )
     else:
         raise ValueError(f"Unknown dataset type: {dataset_type}")

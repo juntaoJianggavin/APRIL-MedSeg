@@ -24,6 +24,7 @@
 <a id="updates"></a>
 ## 📰 Updates
 
+- **2026.07.20** — **Bug fix:** Fixed a critical data split issue in `GenericDataset` that caused incorrect train/val/test sample counts. All training/evaluation scripts updated.
 - **2026.06.15** — The project has been officially renamed to **APRIL-MedSeg**, named after the [APRIL Lab](https://april.zju.edu.cn/) at Zhejiang University (led by Prof. Yong Liu).
 - **2026.06.11** — **UltimateMedSeg** is officially released!
 

@@ -90,6 +90,8 @@ class GenericDataset(Dataset):
         kfold_mode: str = 'train',
         # Explicit file list
         file_list: str = None,
+        # Skip auto-split (use all files in the directory)
+        no_split: bool = False,
     ):
         super().__init__()
         self.transform = transform
@@ -114,6 +116,9 @@ class GenericDataset(Dataset):
             with open(file_list, 'r', encoding='utf-8') as f:
                 listed = set(line.strip() for line in f if line.strip())
             bases = [b for b in all_bases if b in listed]
+        elif no_split:
+            # External split: use all files in the directory as-is
+            bases = all_bases
         elif n_splits > 1:
             # K-fold cross-validation mode
             bases = self._kfold_select(all_bases, n_splits, fold_idx, kfold_mode, random_state)

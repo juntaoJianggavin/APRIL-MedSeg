@@ -80,6 +80,7 @@ def build_dataset(data_cfg, split='train', cfg=None):
             fold_idx=data_cfg.get('fold_idx', 0),
             kfold_mode=split if split in ('train', 'val') else 'val',
             file_list=data_cfg.get(f'{split}_list', None),
+            no_split=(f'{split}_dir' in data_cfg),
         )
     elif dataset_type in ('synapse', 'acdc'):
         # ACDC uses the same dataset class as Synapse

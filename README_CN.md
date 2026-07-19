@@ -25,6 +25,7 @@
 <a id="更新日志"></a>
 ## 📰 更新日志
 
+- **2026.07.20** — **Bug 修复：** 修复了 `GenericDataset` 数据划分中的严重问题，导致 train/val/test 样本数量不正确。所有训练/评估脚本已更新。
 - **2026.06.15** — 项目正式更名为 **APRIL-MedSeg**，取自浙江大学 [APRIL 实验室](https://april.zju.edu.cn/)（刘勇教授团队）。
 - **2026.06.11** — **UltimateMedSeg** 正式发布！
 

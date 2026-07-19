@@ -74,14 +74,17 @@ def build_test_dataset(data_cfg):
         )
     elif dataset_type in ('image_mask', 'binary', 'generic'):
         n_splits = data_cfg.get('n_splits', 0)
+        no_split = False
         if 'val_dir' in data_cfg and 'test_dir' not in data_cfg:
             split = 'val'
             root = data_cfg['val_dir']
             kfold_mode = 'val'
+            no_split = True
         elif 'test_dir' in data_cfg:
             split = 'test'
             root = data_cfg['test_dir']
             kfold_mode = 'val'
+            no_split = True
         elif n_splits > 1:
             split = 'val'
             root = data_cfg.get('root_dir')
@@ -104,6 +107,7 @@ def build_test_dataset(data_cfg):
             fold_idx=data_cfg.get('fold_idx', 0),
             kfold_mode=kfold_mode,
             file_list=data_cfg.get('test_list', None),
+            no_split=no_split,
         )
     elif dataset_type in ('synapse', 'acdc'):
         return SynapseDataset(

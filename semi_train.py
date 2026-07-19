@@ -96,6 +96,7 @@ def build_labeled_dataset(data_cfg, split='train'):
             split=split,
             transform=transform,
             img_size=img_size,
+            no_split=('labeled_dir' in data_cfg and data_cfg['labeled_dir']),
             **{k: v for k, v in data_cfg.items()
                if k in ('train_ratio', 'val_ratio', 'random_state',
                          'n_splits', 'fold_idx', 'kfold_mode', 'file_list',

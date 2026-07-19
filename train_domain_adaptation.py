@@ -98,10 +98,12 @@ def build_source_dataset(data_cfg, img_size=224):
             return GenericDataset(
                 image_dir=image_dir, mask_dir=mask_dir,
                 split='train', transform=transform, img_size=img_size,
+                no_split=True,
             )
         return GenericDataset(
             root_dir=root_dir,
             split='train', transform=transform, img_size=img_size,
+            no_split=('train_dir' in source_cfg and source_cfg['train_dir']),
         )
     else:
         raise ValueError(f"Unknown source dataset type: {dataset_type}")
@@ -167,10 +169,12 @@ def build_val_dataset(data_cfg, img_size=224):
             return GenericDataset(
                 image_dir=image_dir, mask_dir=mask_dir,
                 split=split, transform=transform, img_size=img_size,
+                no_split=True,
             )
         return GenericDataset(
             root_dir=root_dir,
             split=split, transform=transform, img_size=img_size,
+            no_split=('val_dir' in val_cfg or 'test_dir' in val_cfg),
         )
     else:
         raise ValueError(f"Unknown val dataset type: {dataset_type}")
