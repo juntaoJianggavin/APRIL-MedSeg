@@ -37,3 +37,6 @@ training:
     name: poly
     min_lr: 1.0e-06
     power: 0.9
+
+evaluation:
+  include_background: false  # set true to include background class in metrics

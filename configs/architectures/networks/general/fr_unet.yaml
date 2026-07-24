@@ -34,3 +34,6 @@ training:
   scheduler:
     name: cosine
     min_lr: 0
+
+evaluation:
+  include_background: false  # set true to include background class in metrics

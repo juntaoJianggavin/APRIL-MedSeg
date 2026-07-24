@@ -380,7 +380,6 @@ class SkinMamba(nn.Module):
         self.d1 = DecoderBlock(32, 32, 16)
 
         self.conv_out = nn.Conv2d(16, num_classes, kernel_size=1)
-        self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         H, W = x.shape[2:]
@@ -410,8 +409,6 @@ class SkinMamba(nn.Module):
         x = self.d1(x, skip1)
 
         x = self.conv_out(x)
-        if self.num_classes == 1:
-            x = self.sigmoid(x)
 
         # Crop to original size
         if pH != H or pW != W:

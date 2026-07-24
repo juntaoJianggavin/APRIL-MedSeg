@@ -34,3 +34,5 @@ data:
 
 training:
   batch_size: 8
+evaluation:
+  include_background: false  # set true to include background class in metrics

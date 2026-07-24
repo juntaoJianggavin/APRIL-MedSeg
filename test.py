@@ -198,7 +198,7 @@ def build_inference_model(cfg, args):
 
 # ---------------------------------------------------------------------------
 @torch.no_grad()
-def test(model, dataloader, num_classes, device, save_dir=None):
+def test(model, dataloader, num_classes, device, save_dir=None, include_background=False):
     """Test model and compute metrics."""
     model.eval()
     all_metrics = {'dice': {}, 'iou': {}, 'hd95': {}}
@@ -215,7 +215,7 @@ def test(model, dataloader, num_classes, device, save_dir=None):
         preds = outputs.argmax(dim=1).cpu().numpy()
 
         for pred, target, case_name in zip(preds, labels, case_names):
-            metrics = compute_metrics(pred, target, num_classes)
+            metrics = compute_metrics(pred, target, num_classes, include_background)
 
             result = {'case_name': case_name}
             for metric_name in ['dice', 'iou', 'hd95']:
@@ -308,7 +308,9 @@ def main():
     logger.info(f"Test dataset: {len(test_dataset)} samples")
 
     save_dir = os.path.join(args.output_dir, 'predictions') if args.save_pred else None
-    test(model, test_loader, cfg['model']['num_classes'], args.device, save_dir)
+    eval_cfg = cfg.get('evaluation', {})
+    include_background = eval_cfg.get('include_background', False)
+    test(model, test_loader, cfg['model']['num_classes'], args.device, save_dir, include_background)
 
 
 if __name__ == '__main__':

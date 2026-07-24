@@ -5,11 +5,13 @@ import numpy as np
 import torch
 
 
-def dice_coefficient(pred: np.ndarray, target: np.ndarray, num_classes: int):
+def dice_coefficient(pred: np.ndarray, target: np.ndarray, num_classes: int,
+                     include_background: bool = False):
     """计算 per-class Dice coefficient。
         Compute per-class Dice coefficient."""
+    start = 0 if include_background else 1
     dice_scores = {}
-    for c in range(1, num_classes):  # skip background
+    for c in range(start, num_classes):
         pred_c = (pred == c).astype(np.float32)
         target_c = (target == c).astype(np.float32)
         intersection = (pred_c * target_c).sum()
@@ -21,11 +23,13 @@ def dice_coefficient(pred: np.ndarray, target: np.ndarray, num_classes: int):
     return dice_scores
 
 
-def iou_score(pred: np.ndarray, target: np.ndarray, num_classes: int):
+def iou_score(pred: np.ndarray, target: np.ndarray, num_classes: int,
+              include_background: bool = False):
     """计算 per-class IoU ( Jaccard index )。
         Compute per-class IoU (Jaccard index)."""
+    start = 0 if include_background else 1
     iou_scores = {}
-    for c in range(1, num_classes):
+    for c in range(start, num_classes):
         pred_c = (pred == c).astype(np.float32)
         target_c = (target == c).astype(np.float32)
         intersection = (pred_c * target_c).sum()
@@ -37,16 +41,19 @@ def iou_score(pred: np.ndarray, target: np.ndarray, num_classes: int):
     return iou_scores
 
 
-def hausdorff_distance_95(pred: np.ndarray, target: np.ndarray, num_classes: int):
+def hausdorff_distance_95(pred: np.ndarray, target: np.ndarray, num_classes: int,
+                           include_background: bool = False):
     """计算 per-class 95th percentile Hausdorff distance。
         Compute per-class 95th percentile Hausdorff distance."""
     try:
         from medpy.metric.binary import hd95
     except ImportError:
-        return {c: float("nan") for c in range(1, num_classes)}
+        start = 0 if include_background else 1
+        return {c: float("nan") for c in range(start, num_classes)}
 
+    start = 0 if include_background else 1
     hd_scores = {}
-    for c in range(1, num_classes):
+    for c in range(start, num_classes):
         pred_c = (pred == c).astype(np.uint8)
         target_c = (target == c).astype(np.uint8)
         if pred_c.sum() == 0 or target_c.sum() == 0:
@@ -56,11 +63,12 @@ def hausdorff_distance_95(pred: np.ndarray, target: np.ndarray, num_classes: int
     return hd_scores
 
 
-def compute_metrics(pred: np.ndarray, target: np.ndarray, num_classes: int):
+def compute_metrics(pred: np.ndarray, target: np.ndarray, num_classes: int,
+                    include_background: bool = False):
     """计算 all metrics。
         Compute all metrics."""
     return {
-        "dice": dice_coefficient(pred, target, num_classes),
-        "iou": iou_score(pred, target, num_classes),
-        "hd95": hausdorff_distance_95(pred, target, num_classes),
+        "dice": dice_coefficient(pred, target, num_classes, include_background),
+        "iou": iou_score(pred, target, num_classes, include_background),
+        "hd95": hausdorff_distance_95(pred, target, num_classes, include_background),
     }

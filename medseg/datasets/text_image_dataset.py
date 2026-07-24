@@ -49,6 +49,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from PIL import Image
+from .generic_dataset import build_pixel_lut
 
 
 def _read_caption_table(path: str) -> Dict[str, str]:
@@ -190,6 +191,10 @@ class TextImageDataset(Dataset):
         self.text_max_length = text_max_length
         self.tokenizer = _try_tokenizer(tokenizer_name, text_max_length)
 
+        # Build global pixel-value -> class-index mapping
+        mask_paths = [os.path.join(self._mask_dir, mf) for _, mf, _ in self.samples]
+        self.pixel_to_class: Optional[np.ndarray] = build_pixel_lut(mask_paths) if mask_paths else None
+
     # ------------------------------------------------------------------
 
     def __len__(self):
@@ -202,9 +207,10 @@ class TextImageDataset(Dataset):
     def _load_mask(self, path: str) -> np.ndarray:
         m = Image.open(path).resize(self.img_size, Image.NEAREST)
         arr = np.array(m, dtype=np.int64)
-        # binarise if mask is 0/255
-        if arr.max() > 1:
-            arr = (arr > 0).astype(np.int64)
+        if arr.ndim == 3:
+            arr = arr[..., 0]
+        if self.pixel_to_class is not None:
+            arr = self.pixel_to_class[arr]
         return arr
 
     def _tokenize(self, text: str):

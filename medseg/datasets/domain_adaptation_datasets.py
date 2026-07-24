@@ -12,6 +12,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 from typing import Optional, Dict, Any, List
+from .generic_dataset import build_pixel_lut
 
 
 class DomainAdaptationDataset(Dataset):
@@ -58,6 +59,10 @@ class DomainAdaptationDataset(Dataset):
         
         assert len(self.source_images) == len(self.source_masks), \
             "Source images and masks count mismatch"
+
+        # Build global pixel-value -> class-index mapping from source masks
+        png_masks = [p for p in self.source_masks if not (p.endswith('.npy') or p.endswith('.npz'))]
+        self.pixel_to_class: Optional[np.ndarray] = build_pixel_lut(png_masks) if png_masks else None
     
     def _load_images(self, directory: str) -> List[str]:
         """Load image paths."""
@@ -145,7 +150,12 @@ class DomainAdaptationDataset(Dataset):
         else:
             mask = Image.open(path)
             mask = mask.resize(self.img_size, Image.NEAREST)
-            return np.array(mask, dtype=np.int64)
+            arr = np.array(mask, dtype=np.int64)
+            if arr.ndim == 3:
+                arr = arr[..., 0]
+            if self.pixel_to_class is not None:
+                arr = self.pixel_to_class[arr]
+            return arr
 
 
 class SourceTargetDataset(Dataset):
@@ -225,6 +235,13 @@ class SourceFreeDataset(Dataset):
             self.masks = self._load_images(masks_dir)
         else:
             self.masks = None
+
+        # Build global pixel-value -> class-index mapping from available masks
+        if self.masks:
+            png_masks = [p for p in self.masks if not (p.endswith('.npy') or p.endswith('.npz'))]
+            self.pixel_to_class: Optional[np.ndarray] = build_pixel_lut(png_masks) if png_masks else None
+        else:
+            self.pixel_to_class = None
     
     def _load_images(self, directory: str) -> List[str]:
         """Load image paths."""
@@ -294,7 +311,12 @@ class SourceFreeDataset(Dataset):
         else:
             mask = Image.open(path)
             mask = mask.resize(self.img_size, Image.NEAREST)
-            return np.array(mask, dtype=np.int64)
+            arr = np.array(mask, dtype=np.int64)
+            if arr.ndim == 3:
+                arr = arr[..., 0]
+            if self.pixel_to_class is not None:
+                arr = self.pixel_to_class[arr]
+            return arr
 
 
 def build_da_dataloader(

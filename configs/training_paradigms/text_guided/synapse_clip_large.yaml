@@ -65,3 +65,6 @@ training:
 
   val_interval: 10
   save_interval: 50
+
+evaluation:
+  include_background: false  # set true to include background class in metrics

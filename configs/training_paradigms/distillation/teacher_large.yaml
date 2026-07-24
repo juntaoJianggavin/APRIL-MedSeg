@@ -48,3 +48,6 @@ training:
     params:
       ce_weight: 1.0
       dice_weight: 1.0
+
+evaluation:
+  include_background: false  # set true to include background class in metrics

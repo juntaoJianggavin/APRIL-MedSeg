@@ -41,3 +41,6 @@ mllm:
 
   refinement:
     enabled: false
+
+evaluation:
+  include_background: false  # set true to include background class in metrics

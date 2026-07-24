@@ -15,6 +15,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 from typing import Optional, Tuple, Dict, Any
+from .generic_dataset import build_pixel_lut
 
 
 class SemiSupervisedDataset(Dataset):
@@ -57,6 +58,10 @@ class SemiSupervisedDataset(Dataset):
         
         assert len(self.labeled_images) == len(self.labeled_masks), \
             "Number of labeled images and masks must match"
+
+        # Build global pixel-value -> class-index mapping from labeled masks
+        png_masks = [p for p in self.labeled_masks if not (p.endswith('.npy') or p.endswith('.npz'))]
+        self.pixel_to_class: Optional[np.ndarray] = build_pixel_lut(png_masks) if png_masks else None
     
     def _load_images(self, directory: str):
         """Load image file paths from directory."""
@@ -97,17 +102,26 @@ class SemiSupervisedDataset(Dataset):
         image = self._load_image(img_path)
         
         # Load mask
-        if mask_path.endswith('.npy') or mask_path.endswith('.npz'):
+        if mask_path.endswith('.npy'):
             mask = np.load(mask_path)
-            if isinstance(mask, np.ndarray):
-                if mask.ndim == 3:
-                    mask = mask.squeeze()
-            else:
-                mask = np.zeros(image.shape[:2], dtype=np.int64)
+            if mask.ndim == 3:
+                mask = mask.squeeze()
+            mask = mask.astype(np.int64)
+        elif mask_path.endswith('.npz'):
+            data = np.load(mask_path)
+            key = 'arr_0' if 'arr_0' in data else list(data.keys())[0]
+            mask = data[key]
+            if mask.ndim == 3:
+                mask = mask.squeeze()
+            mask = mask.astype(np.int64)
         else:
             mask = Image.open(mask_path)
             mask = mask.resize(self.img_size, Image.NEAREST)
             mask = np.array(mask, dtype=np.int64)
+            if mask.ndim == 3:
+                mask = mask[..., 0]
+            if self.pixel_to_class is not None:
+                mask = self.pixel_to_class[mask]
         
         # Apply transform
         if self.labeled_transform is not None:

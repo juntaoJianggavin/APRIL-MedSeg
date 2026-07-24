@@ -409,7 +409,7 @@ class LViT(nn.Module):
         self.text_module2 = nn.Conv1d(256, 128, kernel_size=3, padding=1)
         self.text_module1 = nn.Conv1d(128, 64, kernel_size=3, padding=1)
 
-        self.last_activation = nn.Sigmoid()
+        self.last_activation = None  # removed: loss functions include sigmoid internally
 
     # ------------------------------------------------------------------
     def forward(self, image, text=None, **kwargs):
@@ -479,8 +479,5 @@ class LViT(nn.Module):
         x = self.up2(x, x2)
         x = self.up1(x, x1)
 
-        if self.num_classes == 1:
-            logits = self.last_activation(self.outc(x))
-        else:
-            logits = self.outc(x)
+        logits = self.outc(x)
         return logits

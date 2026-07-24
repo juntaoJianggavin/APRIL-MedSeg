@@ -32,6 +32,27 @@ from PIL import Image
 from typing import Optional, List, Tuple
 
 
+def build_pixel_lut(mask_paths: List[str]) -> Optional[np.ndarray]:
+    """Scan all mask files and return a LUT mapping pixel values to class indices.
+
+    Returns None if pixel values are already contiguous 0..N-1 (no remap needed).
+    Only reads the original files (before any resize) to get the true pixel values.
+    """
+    global_vals: set = set()
+    for path in mask_paths:
+        m = np.array(Image.open(path), dtype=np.int64)
+        if m.ndim == 3:
+            m = m[..., 0]
+        global_vals.update(m.flat)
+    sorted_vals = sorted(global_vals)
+    if sorted_vals == list(range(len(sorted_vals))):
+        return None
+    lut = np.zeros(max(sorted_vals) + 1, dtype=np.int64)
+    for cls_idx, val in enumerate(sorted_vals):
+        lut[val] = cls_idx
+    return lut
+
+
 class GenericDataset(Dataset):
     """Image-mask segmentation dataset for arbitrary number of classes.
 
@@ -126,10 +147,17 @@ class GenericDataset(Dataset):
             # Auto train/val/test split mode
             bases = self._split_select(all_bases, split, train_ratio, val_ratio, random_state)
 
+        self._mask_suffix = mask_suffix
+
         # Build final sample list as (img_filename, mask_filename)
         self.samples: List[Tuple[str, str]] = [
             (b + img_suffix, b + mask_suffix) for b in bases
         ]
+
+        # Build global pixel-value -> class-index mapping by scanning all masks once.
+        # This ensures the same pixel value always maps to the same class across samples.
+        mask_paths = [os.path.join(self._mask_dir, mf) for _, mf in self.samples]
+        self.pixel_to_class: Optional[np.ndarray] = build_pixel_lut(mask_paths)
 
     # ------------------------------------------------------------------
     # Internal helpers
@@ -150,11 +178,22 @@ class GenericDataset(Dataset):
                       train_ratio: float, val_ratio: float,
                       random_state: int) -> List[str]:
         """Auto-split bases into train / val / test by ratio."""
+        import warnings
         rng = np.random.RandomState(random_state)
         indices = rng.permutation(len(bases))
         n = len(bases)
+        if n == 0:
+            warnings.warn("GenericDataset: no samples found, dataset is empty.")
+            return []
+        if n < 3:
+            warnings.warn(f"GenericDataset: only {n} sample(s), split may produce empty subsets.")
         n_train = int(n * train_ratio)
         n_val = int(n * val_ratio)
+        # ensure val is non-empty when there are enough samples
+        if n_val == 0 and n >= 3:
+            n_val = 1
+        if n_train + n_val > n:
+            n_train = n - n_val
 
         if split == 'train':
             sel = indices[:n_train]
@@ -207,8 +246,8 @@ class GenericDataset(Dataset):
         mask = np.array(mask, dtype=np.int64)
         if mask.ndim == 3:
             mask = mask[..., 0]
-        if mask.max() > 1:
-            mask = (mask > 0).astype(np.int64)
+        if self.pixel_to_class is not None:
+            mask = self.pixel_to_class[mask]
 
         # Apply transforms (contract: image HWC float, label HW int64)
         if self.transform is not None:

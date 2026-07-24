@@ -336,5 +336,5 @@ class LanGuideMedSeg(nn.Module):
             os4, "B (H W) C -> B C H W", H=self.spatial_dim[-1], W=self.spatial_dim[-1]
         )
         os1 = self.decoder1(os4)
-        out = self.out(os1).sigmoid()
+        out = self.out(os1)
         return out

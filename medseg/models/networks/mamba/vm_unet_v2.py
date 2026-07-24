@@ -263,17 +263,12 @@ class VMUNetV2(nn.Module):
             out_best = seg_outs[-1]
             out_second = self.deconv6(seg_outs[-2])
             result = out_best + out_second
-            if self.num_classes == 1:
-                result = torch.sigmoid(result)
-            # Crop / pad to original 输入 大小 / Crop/pad to original input size
             if result.shape[2:] != (H_in, W_in):
                 result = F.interpolate(result, size=(H_in, W_in),
                                        mode='bilinear', align_corners=False)
             return result
         else:
             result = seg_outs[-1]
-            if self.num_classes == 1:
-                result = torch.sigmoid(result)
             if result.shape[2:] != (H_in, W_in):
                 result = F.interpolate(result, size=(H_in, W_in),
                                        mode='bilinear', align_corners=False)

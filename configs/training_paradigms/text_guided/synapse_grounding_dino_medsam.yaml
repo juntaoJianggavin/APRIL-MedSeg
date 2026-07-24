@@ -57,3 +57,6 @@ data:
   img_size: 1024
   test_dir: ./data/Synapse/test_vol_h5
   test_list: ./data/Synapse/lists/lists_Synapse/test_vol.txt
+
+evaluation:
+  include_background: false  # set true to include background class in metrics
