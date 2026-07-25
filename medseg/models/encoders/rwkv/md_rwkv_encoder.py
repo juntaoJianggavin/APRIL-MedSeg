@@ -32,7 +32,7 @@ from medseg.kernels.wkv import run_wkv as _run_wkv
 
 def _RUN_WKV(B, T, C, w, u, k, v):
     """Matches official ``RUN_CUDA`` (float32 WKV dispatch)."""
-    return _run_wkv(B, T, C, w.float(), u.float(), k.float(), v.float())
+    return _run_wkv(B, T, C, w.float(), u.float(), k.float(), v.float(), t_max=1024)
 
 
 # ---------------------------------------------------------------------------
@@ -256,7 +256,7 @@ class _iR_RWKV(nn.Module):
         self.attn_s = attn_s
 
         self.sk = _SKAttention(dim_mid, reduction=sk_reduction) if use_sk else None
-        self.att = _VRWKV_SpatialMix(dim_mid, channel_gamma, shift_pixel) if attn_s else None
+        self.att = _VRWKV_SpatialMix(dim_mid, channel_gamma, shift_pixel)
 
         if se_ratio > 0.0:
             self.se = _SE(dim_mid, rd_ratio=se_ratio)

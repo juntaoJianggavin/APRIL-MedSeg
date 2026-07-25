@@ -57,12 +57,12 @@ class WKV:
 
     @staticmethod
     def apply(B, T, C, w, u, k, v):
-        return run_wkv(B, T, C, w, u, k, v)
+        return run_wkv(B, T, C, w, u, k, v, t_max=1024)
 
 
 def RUN_WKV(B, T, C, w, u, k, v):
     """Public WKV entry-point used inside this file (matches official RUN_CUDA)."""
-    return run_wkv(B, T, C, w.float(), u.float(), k.float(), v.float())
+    return run_wkv(B, T, C, w.float(), u.float(), k.float(), v.float(), t_max=1024)
 
 
 # 遗留 alias kept for any external import / Legacy alias kept for any external import.
@@ -344,7 +344,7 @@ class GLSP(nn.Module):
         self.conv = ConvNormAct(dim_in, dim_mid, kernel_size=1)
         self.has_skip = (dim_in == dim_out and stride == 1) and has_skip
         self.attn_s = attn_s
-        self.att = VRWKV_SpatialMix(dim_mid, channel_gamma, shift_pixel) if attn_s else None
+        self.att = VRWKV_SpatialMix(dim_mid, channel_gamma, shift_pixel)
         if se_ratio > 0.0:
             self.se = SE(dim_mid, rd_ratio=se_ratio, act_layer=get_act(act_layer))
         else:
