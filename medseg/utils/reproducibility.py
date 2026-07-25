@@ -56,13 +56,6 @@ def set_seed(seed: int = 42, deterministic: bool = True) -> None:
         # cuDNN 确定性模式 / cuDNN deterministic mode
         torch.backends.cudnn.deterministic = True
         torch.backends.cudnn.benchmark = False
-
-        # PyTorch 2.0+ 确定性算法 / PyTorch 2.0+ deterministic algorithms
-        if hasattr(torch, 'use_deterministic_algorithms'):
-            try:
-                torch.use_deterministic_algorithms(True, warn_only=True)
-            except Exception:
-                pass
     else:
         # 非确定性模式：开启 cuDNN benchmark 以获得更好性能
         # Non-deterministic: enable cuDNN 基准测试 for better performance / Non-deterministic: enable cuDNN benchmark for better performance
