@@ -106,15 +106,15 @@ def load_wkv_cuda(t_max: int = 8192, force: bool = False, verbose: bool = False)
                     raise FileNotFoundError(f"Missing WKV source: {src}")
 
             op = load(
-                name=f"wkv_t{t_max}",
+                name="wkv",
                 sources=sources,
                 verbose=verbose,
                 extra_cuda_cflags=[
                     "-res-usage",
+                    "--maxrregcount=60",
                     "--use_fast_math",
                     "-O3",
-                    "--maxrregcount=60",
-                    "--extra-device-vectorization",
+                    "-Xptxas -O3",
                     f"-DTmax={t_max}",
                 ],
             )

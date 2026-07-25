@@ -35,7 +35,7 @@ from medseg.kernels.wkv import run_wkv as _run_wkv
 
 def _RUN_WKV(B, T, C, w, u, k, v):
     """Matches official ``RUN_CUDA`` (float32 WKV dispatch)."""
-    return _run_wkv(B, T, C, w.float(), u.float(), k.float(), v.float())
+    return _run_wkv(B, T, C, w.float(), u.float(), k.float(), v.float(), t_max=1024)
 
 
 # ---------------------------------------------------------------------------
@@ -229,7 +229,7 @@ class GLSP(nn.Module):
         self.conv = ConvNormAct(dim_in, dim_mid, 1)
         self.has_skip = (dim_in == dim_out and stride == 1) and has_skip
         self.attn_s = attn_s
-        self.att = VRWKV_SpatialMix(dim_mid, channel_gamma, shift_pixel) if attn_s else None
+        self.att = VRWKV_SpatialMix(dim_mid, channel_gamma, shift_pixel)
         self.se = SE(dim_mid, rd_ratio=se_ratio) if se_ratio > 0.0 else nn.Identity()
         self.proj_drop = nn.Dropout(drop) if drop > 0 else nn.Identity()
         self.proj = ConvNormAct(dim_mid, dim_out, 1, norm_layer="none", act_layer="none")

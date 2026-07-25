@@ -89,7 +89,7 @@ def build_labeled_dataset(data_cfg, split='train'):
             transform=transform,
             img_size=img_size,
         )
-    elif dataset_type in ('image_mask', 'binary'):
+    elif dataset_type in ('image_mask', 'binary', 'generic'):
         root_dir = data_cfg.get('root_dir') or data_cfg.get('labeled_dir')
         return GenericDataset(
             root_dir=root_dir,
@@ -123,13 +123,19 @@ def build_unlabeled_dataset(semi_cfg, img_size=224, data_cfg=None):
             "semi.unlabeled_data.root or data.unlabeled_dir"
         )
 
+    # Auto-detect images/ subdir if not explicitly configured
+    use_subdir = ul_cfg.get('use_subdir', None)
+    if use_subdir is None:
+        subdir_path = os.path.join(root, 'images')
+        use_subdir = os.path.isdir(subdir_path) and bool(os.listdir(subdir_path))
+
     transform = get_train_transforms(img_size, augment_level='light')
     return UnlabeledDataset(
         root_dir=root,
         transform=transform,
         img_size=img_size,
         img_suffix=ul_cfg.get('img_suffix', None),
-        use_subdir=ul_cfg.get('use_subdir', False),
+        use_subdir=use_subdir,
     )
 
 
@@ -220,7 +226,7 @@ def main():
     from medseg.utils.reproducibility import set_seed, worker_init_fn, get_generator
     train_cfg_r = cfg.get('training', {})
     seed = train_cfg_r.get('random_state', args.seed)
-    deterministic = train_cfg_r.get('deterministic', True)
+    deterministic = train_cfg_r.get('deterministic', False)
     set_seed(seed, deterministic=deterministic)
 
     os.makedirs(args.output_dir, exist_ok=True)
@@ -251,10 +257,10 @@ def main():
 
     labeled_loader = DataLoader(
         labeled_dataset, batch_size=labeled_bs, shuffle=True,
-        num_workers=num_workers, pin_memory=True, drop_last=True)
+        num_workers=num_workers, pin_memory=True, drop_last=False)
     unlabeled_loader = DataLoader(
         unlabeled_dataset, batch_size=unlabeled_bs, shuffle=True,
-        num_workers=num_workers, pin_memory=True, drop_last=True)
+        num_workers=num_workers, pin_memory=True, drop_last=False)
 
     logger.info(f"Labeled: {len(labeled_dataset)} samples (bs={labeled_bs})")
     logger.info(f"Unlabeled: {len(unlabeled_dataset)} samples (bs={unlabeled_bs})")
