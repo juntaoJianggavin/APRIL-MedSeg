@@ -22,3 +22,4 @@ medpy>=0.4.0
 SimpleITK>=2.2.0
 huggingface_hub>=0.20.0
 gdown>=5.0.0
+ninja
