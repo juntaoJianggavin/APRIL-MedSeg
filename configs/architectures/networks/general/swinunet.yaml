@@ -7,21 +7,21 @@
 
 model:
   num_classes: 2
-  img_size: 256
+  img_size: 224            # must match swin_tiny_patch4_window7_224 checkpoint
   architecture: swinunet
   encoder:
     in_channels: 3
   arch_params:
     embed_dim: 96
-    depths: [2, 2, 2, 2]
+    depths: [2, 2, 6, 2]   # Swin-T; matches pretrained checkpoint
     num_heads: [3, 6, 12, 24]
-    window_size: 8
+    window_size: 7         # window 7 → relative_position_bias_table matches ckpt
     patch_size: 4
     drop_path_rate: 0.1
 
 data:
   type: generic
-  img_size: 256
+  img_size: 224
   train_dir: ./data/YourDataset/train
   val_dir: ./data/YourDataset/val
   test_dir: ./data/YourDataset/test

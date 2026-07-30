@@ -556,12 +556,31 @@ class VMUNet(nn.Module):
 
         if pretrained:
             from medseg.utils.weight_downloader import load_pretrained_standalone
+
+            def _mirror_encoder_to_decoder(state):
+                # Official VM-UNet load_from(): the VMamba backbone checkpoint
+                # only has encoder ``layers.*``. Mirror the three non-bottleneck
+                # encoder stages onto the decoder so ``layers_up`` is not left
+                # randomly initialised. layers.3 is the bottleneck (no mirror).
+                mapping = {"layers.0": "layers_up.3",
+                           "layers.1": "layers_up.2",
+                           "layers.2": "layers_up.1"}
+                out = dict(state)
+                for k, v in state.items():
+                    for src, dst in mapping.items():
+                        if k.startswith(src):
+                            out[dst + k[len(src):]] = v
+                            break
+                return out
+
             load_pretrained_standalone(
                 self,
                 pretrained_path=pretrained_path,
                 registry_key="vmunet_vmamba_tiny",
                 model_name="VMUNet",
                 strict=False,
+                remap_fn=_mirror_encoder_to_decoder,
+                drop_shape_mismatch=True,
             )
 
     def forward_features(self, x):

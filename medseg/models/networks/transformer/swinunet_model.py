@@ -527,12 +527,35 @@ class SwinUNet(nn.Module):
 
         if pretrained:
             from medseg.utils.weight_downloader import load_pretrained_standalone
+
+            n_layers = len(depths)
+
+            def _mirror_encoder_to_decoder(state):
+                # Official Swin-Unet load_from(): the ImageNet Swin backbone
+                # only has encoder ``layers.*``. Mirror encoder stage i onto
+                # decoder ``layers_up.(N-1-i)`` so the decoder is initialised
+                # from the pretrained encoder instead of at random. Shape
+                # mismatches (e.g. PatchExpand vs PatchMerging) are dropped by
+                # ``drop_shape_mismatch``.
+                out = dict(state)
+                for k, v in state.items():
+                    if k.startswith("layers."):
+                        try:
+                            i = int(k.split(".")[1])
+                        except (IndexError, ValueError):
+                            continue
+                        rest = k[len("layers.") + len(str(i)):]
+                        out["layers_up." + str(n_layers - 1 - i) + rest] = v
+                return out
+
             load_pretrained_standalone(
                 self.model,
                 pretrained_path=pretrained_path,
                 registry_key="swin_tiny_patch4_window7_224",
                 model_name="SwinUNet",
                 strict=False,
+                remap_fn=_mirror_encoder_to_decoder,
+                drop_shape_mismatch=True,
             )
 
     def forward(self, x):

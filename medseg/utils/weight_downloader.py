@@ -1192,12 +1192,26 @@ def load_pretrained_standalone(
     model_name: str = "Model",
     filter_prefixes: Optional[List[str]] = None,
     strict: bool = False,
+    remap_fn=None,
+    drop_shape_mismatch: bool = False,
 ) -> bool:
     """Load pretrained weights into a standalone segmentation model.
         加载 预训练 权重 into a standalone 分割 模型。
 
     Tries ``pretrained_path`` first, then ``registry_key`` via auto-download.
     Returns ``True`` on success, ``False`` on failure (with a warning logged).
+
+    Args:
+        remap_fn: Optional ``dict -> dict`` applied to the checkpoint state
+            after prefix filtering. Used to mirror encoder weights onto
+            decoder keys, matching the official Swin-Unet / VM-UNet
+            ``load_from`` behaviour (encoder-only checkpoints otherwise leave
+            the decoder randomly initialised).
+        drop_shape_mismatch: When ``True``, keys whose tensor shape differs
+            from the target parameter are dropped (and logged) instead of
+            letting ``load_state_dict`` raise. A single mismatch (e.g. a
+            window-size change) otherwise aborts the whole load and silently
+            falls back to random init.
     """
     import torch
 
@@ -1245,6 +1259,23 @@ def load_pretrained_standalone(
         if filter_prefixes:
             state = {k: v for k, v in state.items()
                      if not k.startswith(tuple(filter_prefixes))}
+        if remap_fn is not None:
+            state = remap_fn(state)
+        if drop_shape_mismatch:
+            model_sd = model.state_dict()
+            kept, dropped = {}, []
+            for k, v in state.items():
+                if (k in model_sd and hasattr(v, "shape")
+                        and tuple(v.shape) != tuple(model_sd[k].shape)):
+                    dropped.append(k)
+                    continue
+                kept[k] = v
+            state = kept
+            if dropped:
+                logger.info(
+                    "%s: dropped %d shape-mismatched key(s) before load "
+                    "(e.g. %s)",
+                    model_name, len(dropped), dropped[:5])
         msg = model.load_state_dict(state, strict=strict)
         logger.info("%s: loaded pretrained weights from %s: %s",
                     model_name, weight_path, msg)
