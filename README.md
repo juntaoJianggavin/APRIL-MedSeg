@@ -24,6 +24,7 @@
 <a id="updates"></a>
 ## 📰 Updates
 
+- **2026.07.30** — **Bug fix:** `semi_train.py` selected the best checkpoint with the EMA teacher but saved only the student weights, so `best_model.pth` could not reproduce the reported validation Dice for teacher-evaluated methods. The evaluated model is now stored in `model_state_dict`, and the student is kept in `student_state_dict` for resuming.
 - **2026.07.26** — Fixed RWKV-UNet WKV CUDA kernel loading and aligned GLSP with the official pretrained weights.
 - **2026.07.24** — **Bug fix:** Fixed multi-class mask loading across all datasets; pixel values are now correctly mapped to contiguous class indices.
 - **2026.07.20** — **Bug fix:** Fixed a critical data split issue in `GenericDataset` that caused incorrect train/val/test sample counts. All training/evaluation scripts updated. **New models:** Added support for SAM3 (Perception Encoder backbone), MedSAM2 (2D, Hiera backbone), and MedSAM3 (2D, PE backbone).

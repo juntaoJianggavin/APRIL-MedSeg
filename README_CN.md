@@ -25,6 +25,7 @@
 <a id="更新日志"></a>
 ## 📰 更新日志
 
+- **2026.07.30** — **Bug 修复：** `semi_train.py` 用 EMA 教师模型挑选最优 checkpoint，却只保存学生模型权重，导致以教师模型评估的方法无法用 `best_model.pth` 复现报告的验证 Dice。现在 `model_state_dict` 保存参与评估的模型，学生模型权重另存于 `student_state_dict` 以支持续训。
 - **2026.07.26** — 修复 RWKV-UNet 的 WKV CUDA kernel 加载问题，并使 GLSP 与官方预训练权重对齐。
 - **2026.07.24** — **Bug 修复：** 修复所有数据集的多类别 mask 加载问题，像素值现在通过全局映射表正确转换为连续类别编号。
 - **2026.07.20** — **Bug 修复：** 修复了 `GenericDataset` 数据划分中的严重问题，导致 train/val/test 样本数量不正确。所有训练/评估脚本已更新。**新增模型：** 新增 SAM3（Perception Encoder 骨干网络）、MedSAM2（2D 版，Hiera 骨干网络）、MedSAM3（2D 版，PE 骨干网络）三个模型的支持。

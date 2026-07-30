@@ -294,7 +294,10 @@ def main():
     best_dice = 0.0
     if args.resume and os.path.exists(args.resume):
         ckpt = torch.load(args.resume, map_location=device)
-        model.load_state_dict(ckpt['model_state_dict'])
+        # best_model.pth stores the eval model under 'model_state_dict'; the
+        # student lives in 'student_state_dict'. Prefer the latter when present.
+        model.load_state_dict(
+            ckpt.get('student_state_dict', ckpt['model_state_dict']))
         optimizer.load_state_dict(ckpt['optimizer_state_dict'])
         start_epoch = ckpt.get('epoch', 0) + 1
         best_dice = ckpt.get('best_dice', 0.0)
@@ -369,9 +372,14 @@ def main():
             log_msg += f" Val_Dice: {dice:.4f}"
             if dice > best_dice:
                 best_dice = dice
+                # 'model_state_dict' must hold the weights that produced
+                # best_dice, i.e. the eval model (EMA teacher for mean-teacher
+                # style methods, the student itself otherwise). The student is
+                # kept separately so training can be resumed.
                 torch.save({
                     'epoch': epoch,
-                    'model_state_dict': model.state_dict(),
+                    'model_state_dict': eval_model.state_dict(),
+                    'student_state_dict': model.state_dict(),
                     'optimizer_state_dict': optimizer.state_dict(),
                     'best_dice': best_dice,
                     'semi_method': semi_cfg.get('method', 'mean_teacher'),
