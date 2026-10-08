@@ -28,7 +28,21 @@ nvidia-smi
 docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
 ```
 
-## 构建与验证
+## 拉取已发布镜像
+
+`latest` 镜像由默认分支自动构建，无需克隆仓库即可拉取：
+
+```bash
+docker pull ghcr.io/juntaojianggavin/april-medseg:latest
+
+docker run --rm --gpus all ghcr.io/juntaojianggavin/april-medseg:latest \
+  python -c "import torch; print(torch.__version__); print(torch.cuda.get_device_name()); assert torch.cuda.is_available()"
+```
+
+发布 `v1.0.0` 等版本标签时会生成同名镜像标签；每次发布还会生成
+`sha-<commit>` 标签，用于固定和复现实验环境。
+
+## 本地构建与验证
 
 在仓库根目录执行：
 
@@ -47,6 +61,9 @@ docker build \
   --build-arg PYTORCH_IMAGE=pytorch/pytorch:<tag> \
   -t april-medseg:base .
 ```
+
+下方示例使用本地构建标签 `april-medseg:base`。如需直接使用已发布镜像，可替换为
+`ghcr.io/juntaojianggavin/april-medseg:latest`。
 
 ## 训练
 

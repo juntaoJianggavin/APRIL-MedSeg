@@ -32,7 +32,22 @@ nvidia-smi
 docker run --rm --gpus all nvidia/cuda:12.4.1-base-ubuntu22.04 nvidia-smi
 ```
 
-## Build and verify
+## Pull the published image
+
+The `latest` image is built automatically from the default branch and can be
+pulled without cloning the repository:
+
+```bash
+docker pull ghcr.io/juntaojianggavin/april-medseg:latest
+
+docker run --rm --gpus all ghcr.io/juntaojianggavin/april-medseg:latest \
+  python -c "import torch; print(torch.__version__); print(torch.cuda.get_device_name()); assert torch.cuda.is_available()"
+```
+
+Release tags such as `v1.0.0` produce matching image tags. Every published
+build also receives a `sha-<commit>` tag for reproducibility.
+
+## Build locally and verify
 
 From the repository root:
 
@@ -42,6 +57,9 @@ docker build -t april-medseg:base .
 docker run --rm --gpus all april-medseg:base \
   python -c "import torch; print(torch.__version__); print(torch.cuda.get_device_name()); assert torch.cuda.is_available()"
 ```
+
+The examples below use `april-medseg:base`, the local build tag. Replace it
+with `ghcr.io/juntaojianggavin/april-medseg:latest` to use the published image.
 
 The default base is `pytorch/pytorch:2.6.0-cuda12.4-cudnn9-runtime`. Override it
 only with a PyTorch image that satisfies the versions in `requirements.txt`:
