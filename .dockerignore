@@ -1,0 +1,30 @@
+.git
+.github
+.idea
+.vscode
+.venv
+__pycache__
+*.py[cod]
+*.egg-info
+
+# Datasets, weights, caches, and generated artifacts must be mounted at runtime.
+data
+checkpoints
+output
+runs
+logs
+wandb
+tensorboard
+*.pth
+*.ckpt
+*.onnx
+*.npz
+*.npy
+*.log
+
+# Local and publication artifacts are not required by the runtime image.
+.DS_Store
+APRIL_MedSeg
+APRIL_MedSeg.zip
+*.pdf
+*.tex

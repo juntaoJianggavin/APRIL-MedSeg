@@ -94,6 +94,19 @@ pip install causal-conv1d
 pip install mamba-ssm
 ```
 
+### Docker
+
+构建支持 CUDA 的基础镜像并验证 GPU：
+
+```bash
+docker build -t april-medseg:base .
+docker run --rm --gpus all april-medseg:base \
+  python -c "import torch; print(torch.cuda.get_device_name()); assert torch.cuda.is_available()"
+```
+
+硬件要求、训练/测试命令、目录挂载和可选模型依赖请参阅
+[Docker 文档](docs/docker/README_CN.md)。
+
 ### 预训练权重与迁移学习
 
 三个层级的权重加载，从轻量到重量：

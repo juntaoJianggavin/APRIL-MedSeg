@@ -92,6 +92,19 @@ pip install causal-conv1d
 pip install mamba-ssm
 ```
 
+### Docker
+
+Build the CUDA-enabled base image and verify GPU access:
+
+```bash
+docker build -t april-medseg:base .
+docker run --rm --gpus all april-medseg:base \
+  python -c "import torch; print(torch.cuda.get_device_name()); assert torch.cuda.is_available()"
+```
+
+See the [Docker guide](docs/docker/README.md) for hardware requirements,
+training/testing commands, volume mounts, and optional model dependencies.
+
 ### Pretrained Weights & Transfer Learning
 
 Three levels of weight loading, from lightest to heaviest:
